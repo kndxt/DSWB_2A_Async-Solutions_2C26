@@ -1,0 +1,24 @@
+{
+  "name": "dswb_2a_async-solutions_2c26",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kndxt/DSWB_2A_Async-Solutions_2C26.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/kndxt/DSWB_2A_Async-Solutions_2C26/issues"
+  },
+  "homepage": "https://github.com/kndxt/DSWB_2A_Async-Solutions_2C26#readme",
+  "dependencies": {
+    "express": "^4.18.1"
+  }
+}
