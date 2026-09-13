@@ -1,0 +1,28 @@
+[
+  {
+    "id": 1,
+    "nombre": "Festival Urbana",
+    "descripcion": "Festival de música urbana con artistas locales",
+    "tipo": "concierto",
+    "fechaInicio": "2026-10-20",
+    "fechaFin": "2026-10-20",
+    "fechaInicioVenta": "2026-09-01",
+    "fechaFinVenta": "2026-10-19",
+    "precioEntrada": 5000,
+    "estado": "activo",
+    "salaId": 1
+  },
+  {
+    "id": 2,
+    "nombre": "Festival Techno",
+    "descripcion": "nueva descripción del evento",
+    "tipo": "concierto",
+    "fechaInicio": "2026-10-20",
+    "fechaFin": "2026-10-20",
+    "fechaInicioVenta": "2026-09-01",
+    "fechaFinVenta": "2026-10-19",
+    "precioEntrada": 5000,
+    "estado": "finalizado",
+    "salaId": 2
+  }
+]
