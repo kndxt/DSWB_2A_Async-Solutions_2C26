@@ -9,6 +9,15 @@ app.use(express.json());
 const usuarioRoutes = require("./routes/usuarioRoutes");
 app.use("/usuarios", usuarioRoutes);
 
+// Importar y conectar rutas del módulo Salas
+const salaRoutes = require("./routes/salaRoutes");
+app.use("/salas", salaRoutes);
+
+// Importar y conectar rutas del módulo Eventos
+const eventoRoutes = require("./routes/eventoRoutes");
+app.use("/eventos", eventoRoutes);
+
+
 app.get("/", (req, res) => {
   res.send("Servidor Express activo y seguro.");
 });

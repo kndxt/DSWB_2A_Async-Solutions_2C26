@@ -1,0 +1,28 @@
+[
+  {
+    "id": 1,
+    "nombre": "Centro Cultural Urbana",
+    "capacidad": 80,
+    "direccion": "Av. Belgrano 123",
+    "precioReserva": 15000,
+    "responsable": {
+      "nombre": "Juan",
+      "apellido": "Pérez",
+      "telefono": "3854123456",
+      "email": "juan@example.com"
+    }
+  },
+  {
+    "id": 2,
+    "nombre": "Sala Principal",
+    "capacidad": 50,
+    "direccion": "Av. Belgrano 123",
+    "precioReserva": 500,
+    "responsable": {
+      "nombre": "Juana",
+      "apellido": "Diaz",
+      "telefono": "1114123456",
+      "email": "juana@example.com"
+    }
+  }
+]
