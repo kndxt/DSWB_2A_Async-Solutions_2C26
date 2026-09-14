@@ -96,6 +96,13 @@ class Evento {
 
     return hoy >= inicioVenta && hoy <= finVenta;
   }
+
+   static obtenerProximos() {
+    const hoy = new Date();
+    return this.obtenerTodos().filter(
+      (evento) => new Date(evento.fechaInicio) > hoy
+    );
+  }
 }
 
 module.exports = { Evento, ESTADOS_VALIDOS };
