@@ -17,6 +17,9 @@ app.use("/salas", salaRoutes);
 const eventoRoutes = require("./routes/eventoRoutes");
 app.use("/eventos", eventoRoutes);
 
+// Importar y conectar rutas del módulo Entradas
+const entradaRoutes = require("./routes/entradaRoutes");
+app.use("/entradas", entradaRoutes);
 
 app.get("/", (req, res) => {
   res.send("Servidor Express activo y seguro.");

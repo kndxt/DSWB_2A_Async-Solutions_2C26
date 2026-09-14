@@ -1,0 +1,58 @@
+[
+  {
+    "id": 1,
+    "eventoId": 1,
+    "usuarioId": 1,
+    "estado": "vendida",
+    "fechaVenta": "2026-09-10T18:30:00.000Z"
+  },
+  {
+    "id": 2,
+    "eventoId": 1,
+    "usuarioId": 3,
+    "estado": "vendida",
+    "fechaVenta": "2026-09-11T15:20:00.000Z"
+  },
+  {
+    "id": 3,
+    "eventoId": 1,
+    "usuarioId": 1,
+    "estado": "vendida",
+    "fechaVenta": "2026-09-12T20:10:00.000Z"
+  },
+  {
+    "id": 4,
+    "eventoId": 1,
+    "usuarioId": 3,
+    "estado": "cancelada",
+    "fechaVenta": "2026-09-09T13:45:00.000Z"
+  },
+  {
+    "id": 5,
+    "eventoId": 1,
+    "usuarioId": 1,
+    "estado": "vendida",
+    "fechaVenta": "2026-09-12T11:00:00.000Z"
+  },
+  {
+    "id": 6,
+    "eventoId": 1,
+    "usuarioId": 1,
+    "estado": "cancelada",
+    "fechaVenta": "2026-09-14T00:32:49.352Z"
+  },
+  {
+    "id": 7,
+    "eventoId": 1,
+    "usuarioId": 1,
+    "estado": "vendida",
+    "fechaVenta": "2026-09-14T00:34:23.485Z"
+  },
+  {
+    "id": 8,
+    "eventoId": 1,
+    "usuarioId": 3,
+    "estado": "vendida",
+    "fechaVenta": "2026-09-14T00:36:25.175Z"
+  }
+]
