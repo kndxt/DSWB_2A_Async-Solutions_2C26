@@ -3,7 +3,13 @@ const path = require("path");
 
 const filePath = path.join(__dirname, "../data/eventos.json");
 
-const ESTADOS_VALIDOS = ["activo", "finalizado", "cancelado"];
+const ESTADOS_EVENTO = {
+  ACTIVO: "activo",
+  FINALIZADO: "finalizado",
+  CANCELADO: "cancelado"
+};
+
+const ESTADOS_VALIDOS = Object.values(ESTADOS_EVENTO);
 
 class Evento {
   constructor(id, nombre, descripcion, tipo, fechaInicio, fechaFin, fechaInicioVenta, fechaFinVenta, precioEntrada, estado, salaId) {
@@ -73,12 +79,16 @@ class Evento {
     return eventos[index];
   }
 
-    // centraliza la regla "evento finalizado no permite nuevas ventas"
-  // y el chequeo de la ventana de venta.
-  static puedeVenderEntradas(id) {
-    const evento = this.obtenerPorId(id);
-    if (!evento) return false;
-    if (evento.estado !== "activo") return false;
+  // Verifica que el evento esté activo y dentro de su período de venta.
+  /*
+   * Los eventos recuperados del JSON son objetos planos y no instancias de Evento.
+   * Por este motivo, la validación se implementa como
+   * método estático y recibe el evento como parámetro.
+   */
+
+  static puedeVenderEntradas(evento) {
+
+    if (evento.estado !== ESTADOS_EVENTO.ACTIVO) return false;
 
     const hoy = new Date();
     const inicioVenta = new Date(evento.fechaInicioVenta);
