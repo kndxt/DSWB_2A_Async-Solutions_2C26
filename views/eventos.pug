@@ -1,0 +1,40 @@
+doctype html
+html
+  head
+    meta(charset="UTF-8")
+    title Eventos próximos - Urbana Cult
+    style.
+      body { font-family: Arial, sans-serif; padding: 20px; background: #f9f9f9; }
+      h1 { color: #333; }
+      table { border-collapse: collapse; width: 100%; margin-top: 20px; background: white; }
+      th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+      th { background-color: #f4f4f4; }
+      .vacio { color: #888; font-style: italic; }
+  body
+    h1 Eventos próximos
+
+    if eventos.length === 0
+      p.vacio No hay eventos próximos.
+    else
+      table
+        thead
+          tr
+            th ID
+            th Nombre
+            th Tipo
+            th Fecha inicio
+            th Fecha fin
+            th Precio
+            th Estado
+            th Sala
+        tbody
+          each evento in eventos
+            tr
+              td= evento.id
+              td= evento.nombre
+              td= evento.tipo
+              td= evento.fechaInicio
+              td= evento.fechaFin
+              td= "$" + evento.precioEntrada
+              td= evento.estado
+              td= evento.salaId
