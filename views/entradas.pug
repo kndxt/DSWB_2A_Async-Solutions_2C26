@@ -1,0 +1,51 @@
+doctype html
+html
+  head
+    meta(charset="UTF-8")
+    title Entradas del evento - Urbana Cult
+    style.
+      body { font-family: Arial, sans-serif; padding: 20px; background: #f9f9f9; }
+      h1 { color: #333; }
+      h2 { color: #555; margin-top: 30px; }
+      .resumen { background: #eef; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+      .resumen p { margin: 5px 0; font-size: 16px; }
+      table { border-collapse: collapse; width: 100%; margin-top: 10px; background: white; }
+      th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+      th { background-color: #f4f4f4; }
+      .vacio { color: #888; font-style: italic; }
+  body
+    h1 Entradas del evento ##{eventoId}
+
+    .resumen
+      p
+        strong Evento:
+        |  #{evento.nombre}
+      p
+        strong Sala:
+        |  #{sala.nombre} (capacidad: #{sala.capacidad})
+      p
+        strong Entradas vendidas:
+        |  #{vendidas.length}
+      p
+        strong Entradas disponibles:
+        |  #{disponibles}
+
+    h2 Entradas vendidas
+
+    if vendidas.length === 0
+      p.vacio No hay entradas vendidas para este evento.
+    else
+      table
+        thead
+          tr
+            th ID
+            th Usuario ID
+            th Estado
+            th Fecha de venta
+        tbody
+          each entrada in vendidas
+            tr
+              td= entrada.id
+              td= entrada.usuarioId
+              td= entrada.estado
+              td= entrada.fechaVenta
