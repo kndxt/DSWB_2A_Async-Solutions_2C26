@@ -131,9 +131,54 @@ const cancelarEntrada = (req, res) => {
   }
 };
 
+const obtenerVendidasPorEvento = (req, res) => {
+  try {
+    const { eventoId } = req.params;
+
+    const evento = Evento.obtenerPorId(eventoId);
+    if (!evento) {
+      return res.status(404).json({ error: "Evento no encontrado" });
+    }
+
+    const vendidas = Entrada.obtenerVendidasPorEvento(eventoId);
+    res.status(200).json(vendidas);
+  } catch (error) {
+    res.status(500).json({ error: "Error al obtener las entradas vendidas" });
+  }
+};
+
+const obtenerDisponiblesPorEvento = (req, res) => {
+  try {
+    const { eventoId } = req.params;
+
+    const evento = Evento.obtenerPorId(eventoId);
+    if (!evento) {
+      return res.status(404).json({ error: "Evento no encontrado" });
+    }
+
+    const sala = Sala.obtenerPorId(evento.salaId);
+    if (!sala) {
+      return res.status(404).json({
+        error: "La sala asociada al evento no existe",
+      });
+    }
+
+    const disponibles = Entrada.obtenerDisponiblesPorEvento(
+      eventoId,
+      sala.capacidad
+    );
+
+    res.status(200).json({ eventoId: parseInt(eventoId), disponibles });
+  } catch (error) {
+    res.status(500).json({ error: "Error al obtener las entradas disponibles" });
+  }
+};
+
 module.exports = {
   obtenerEntradas,
   obtenerEntradaPorId,
   venderEntrada,
   cancelarEntrada,
+  obtenerVendidasPorEvento,
+  obtenerDisponiblesPorEvento,
 };

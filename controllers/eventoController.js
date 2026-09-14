@@ -91,4 +91,13 @@ const actualizarEvento = (req, res) => {
   }
 };
 
-module.exports = { obtenerEventos, obtenerEventoPorId, crearEvento, actualizarEvento };
+const obtenerEventosProximos = (req, res) => {
+  try {
+    const eventos = Evento.obtenerProximos();
+    res.status(200).json(eventos);
+  } catch (error) {
+    res.status(500).json({ error: "Error al obtener los eventos próximos" });
+  }
+};
+
+module.exports = { obtenerEventos, obtenerEventoPorId, crearEvento, actualizarEvento, obtenerEventosProximos };
