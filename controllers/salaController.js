@@ -24,9 +24,9 @@ const crearSala = (req, res) => {
   try {
     const { nombre, capacidad, direccion, precioReserva, responsable } = req.body;
 
-    if (!nombre || !capacidad || !direccion || precioReserva === undefined) {
+    if (!nombre || !capacidad || !direccion || precioReserva === undefined || !responsable) {
       return res.status(400).json({
-        error: "Nombre, capacidad, dirección y precio de reserva son obligatorios",
+        error: "Nombre, capacidad, dirección, precio de reserva y responsable son obligatorios",
       });
     }
 
@@ -38,12 +38,12 @@ const crearSala = (req, res) => {
       return res.status(400).json({ error: "El precio de reserva debe ser un número mayor o igual a cero" });
     }
 
-    if (responsable && (!responsable.nombre || !responsable.apellido || !responsable.telefono || !responsable.email)) {
+    if (!responsable.nombre || !responsable.apellido || !responsable.telefono || !responsable.email) {
       return res.status(400).json({
         error: "El responsable debe incluir nombre, apellido, teléfono y email",
       });
     }
-    
+
     const nuevaSala = Sala.crear({ nombre, capacidad, direccion, precioReserva, responsable });
     res.status(201).json(nuevaSala);
   } catch (error) {

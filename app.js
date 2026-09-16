@@ -26,6 +26,7 @@ const entradaRoutes = require("./routes/entradaRoutes");
 app.use("/entradas", entradaRoutes);
 
 // Importar y conectar rutas del módulo Vistas
+//
 const vistasRoutes = require("./routes/vistasRoutes");
 app.use("/vistas", vistasRoutes);
 
