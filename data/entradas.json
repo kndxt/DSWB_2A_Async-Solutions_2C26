@@ -39,20 +39,20 @@
     "eventoId": 1,
     "usuarioId": 1,
     "estado": "cancelada",
-    "fechaVenta": "2026-09-14T00:32:49.352Z"
+    "fechaVenta": "2026-09-14T00:32:00.000Z"
   },
   {
     "id": 7,
     "eventoId": 1,
     "usuarioId": 1,
     "estado": "vendida",
-    "fechaVenta": "2026-09-14T00:34:23.485Z"
+    "fechaVenta": "2026-09-14T00:34:00.000Z"
   },
   {
     "id": 8,
     "eventoId": 1,
     "usuarioId": 3,
     "estado": "vendida",
-    "fechaVenta": "2026-09-14T00:36:25.175Z"
+    "fechaVenta": "2026-09-14T00:36:00.000Z"
   }
 ]
