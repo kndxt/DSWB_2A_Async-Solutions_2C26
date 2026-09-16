@@ -15,7 +15,7 @@
   {
     "id": 2,
     "nombre": "Sala Principal",
-    "capacidad": 50,
+    "capacidad": 80,
     "direccion": "Av. Belgrano 123",
     "precioReserva": 500,
     "responsable": {
@@ -23,6 +23,19 @@
       "apellido": "Diaz",
       "telefono": "1114123456",
       "email": "juana@example.com"
+    }
+  },
+  {
+    "id": 3,
+    "nombre": "Salón de usos múltiples (SUM)",
+    "capacidad": 2,
+    "direccion": "Av. Corrientes 123",
+    "precioReserva": 3000,
+    "responsable": {
+      "nombre": "Pedro",
+      "apellido": "Diaz",
+      "telefono": "1010102020",
+      "email": "Pedro@example.com"
     }
   }
 ]
