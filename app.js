@@ -1,4 +1,10 @@
-const express = require("express");
+import express from "express";
+import usuarioRoutes from "./routes/usuarioRoutes.js";
+import salaRoutes from "./routes/salaRoutes.js";
+import eventoRoutes from "./routes/eventoRoutes.js";
+import entradaRoutes from "./routes/entradaRoutes.js";
+import vistasRoutes from "./routes/vistasRoutes.js";
+
 const app = express();
 const PORT = 3000;
 
@@ -9,25 +15,11 @@ app.use(express.json());
 app.set("view engine", "pug");
 app.set("views", "./views");
 
-// Importar y conectar rutas del módulo Usuarios
-const usuarioRoutes = require("./routes/usuarioRoutes");
+// Rutas de los módulos
 app.use("/usuarios", usuarioRoutes);
-
-// Importar y conectar rutas del módulo Salas
-const salaRoutes = require("./routes/salaRoutes");
 app.use("/salas", salaRoutes);
-
-// Importar y conectar rutas del módulo Eventos
-const eventoRoutes = require("./routes/eventoRoutes");
 app.use("/eventos", eventoRoutes);
-
-// Importar y conectar rutas del módulo Entradas
-const entradaRoutes = require("./routes/entradaRoutes");
 app.use("/entradas", entradaRoutes);
-
-// Importar y conectar rutas del módulo Vistas
-//
-const vistasRoutes = require("./routes/vistasRoutes");
 app.use("/vistas", vistasRoutes);
 
 app.get("/", (req, res) => {
