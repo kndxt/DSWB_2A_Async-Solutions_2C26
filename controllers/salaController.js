@@ -1,4 +1,4 @@
-const Sala = require("../models/salaModel");
+import Sala from "../models/salaModel.js";
 
 const obtenerSalas = (req, res) => {
   try {
@@ -55,7 +55,7 @@ const actualizarSala = (req, res) => {
   try {
     const { id } = req.params;
     const salaExistente = Sala.obtenerPorId(id);
-    if (!salaExistente) return res.status(404).json({ error: "Sala no encontrada" });
+    if (!salaExistente) return res.status(404).json({ error: "Sala no encontrada"});
 
     if (req.body.capacidad !== undefined && (typeof req.body.capacidad !== "number" || req.body.capacidad <= 0)) {
       return res.status(400).json({ error: "La capacidad debe ser un número mayor a cero" });
@@ -72,4 +72,4 @@ const actualizarSala = (req, res) => {
   }
 };
 
-module.exports = { obtenerSalas, obtenerSalaPorId, crearSala, actualizarSala };
+export { obtenerSalas, obtenerSalaPorId, crearSala, actualizarSala };
