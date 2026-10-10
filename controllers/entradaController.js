@@ -1,7 +1,7 @@
-const { Entrada, ESTADOS_ENTRADA } = require("../models/entradaModel");
-const { Evento } = require("../models/eventoModel");
-const Sala = require("../models/salaModel");
-const Usuario = require("../models/usuarioModel");
+import { Entrada, ESTADOS_ENTRADA } from "../models/entradaModel.js";
+import { Evento } from "../models/eventoModel.js";
+import Sala from "../models/salaModel.js";
+import Usuario from "../models/usuarioModel.js";
 
 const obtenerEntradas = (req, res) => {
   try {
@@ -174,7 +174,7 @@ const obtenerDisponiblesPorEvento = (req, res) => {
   }
 };
 
-module.exports = {
+export {
   obtenerEntradas,
   obtenerEntradaPorId,
   venderEntrada,
