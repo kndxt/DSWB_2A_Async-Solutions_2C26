@@ -4,6 +4,7 @@ import salaRoutes from "./routes/salaRoutes.js";
 import eventoRoutes from "./routes/eventoRoutes.js";
 import entradaRoutes from "./routes/entradaRoutes.js";
 import vistasRoutes from "./routes/vistasRoutes.js";
+import notFound from "./middlewares/notFound.js";
 
 const app = express();
 const PORT = 3000;
@@ -21,6 +22,9 @@ app.use("/salas", salaRoutes);
 app.use("/eventos", eventoRoutes);
 app.use("/entradas", entradaRoutes);
 app.use("/vistas", vistasRoutes);
+
+// Middleware para manejar rutas no encontradas
+app.use(notFound); 
 
 app.get("/", (req, res) => {
   res.send("Servidor Express activo y seguro.");
