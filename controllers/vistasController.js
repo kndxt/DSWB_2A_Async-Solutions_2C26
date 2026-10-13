@@ -1,6 +1,6 @@
-const { Evento } = require("../models/eventoModel");
-const { Entrada } = require("../models/entradaModel");
-const Sala = require("../models/salaModel");
+import { Evento } from "../models/eventoModel.js";
+import { Entrada } from "../models/entradaModel.js";
+import Sala from "../models/salaModel.js";
 
 const renderizarEventosProximos = (req, res) => {
   try {
@@ -45,7 +45,4 @@ const renderizarEntradasPorEvento = (req, res) => {
   }
 };
 
-module.exports = {
-  renderizarEventosProximos,
-  renderizarEntradasPorEvento,
-};
+export { renderizarEventosProximos, renderizarEntradasPorEvento };
