@@ -1,4 +1,4 @@
-const Usuario = require("../models/usuarioModel");
+import Usuario from "../models/usuarioModel.js";
 
 // GET /usuarios
 const obtenerUsuarios = (req, res) => {
@@ -97,7 +97,7 @@ const eliminarUsuario = (req, res) => {
   }
 };
 
-module.exports = {
+export {
   obtenerUsuarios,
   obtenerUsuarioPorId,
   crearUsuario,

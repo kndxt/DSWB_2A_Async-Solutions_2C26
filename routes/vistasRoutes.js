@@ -1,9 +1,10 @@
-const express = require("express");
+import express from "express";
+import * as vistasController from "../controllers/vistasController.js";
+
 const router = express.Router();
-const vistasController = require("../controllers/vistasController");
 
 router.get("/eventos", vistasController.renderizarEventosProximos);
 
 router.get("/entradas/:eventoId", vistasController.renderizarEntradasPorEvento);
 
-module.exports = router;
+export default router;
