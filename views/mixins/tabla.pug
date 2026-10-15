@@ -1,0 +1,11 @@
+mixin tabla(columnas, filas)
+  table
+    thead
+      tr
+        each columna in columnas
+          th= columna
+    tbody
+      each fila in filas
+        tr
+          each valor in fila
+            td= valor
