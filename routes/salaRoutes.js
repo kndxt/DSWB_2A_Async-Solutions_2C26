@@ -10,3 +10,4 @@ router.post("/", asyncHandler(salaController.crearSala));
 router.put("/:id", asyncHandler(salaController.actualizarSala));
 
 export default router;
+export default router;
