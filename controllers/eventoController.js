@@ -1,5 +1,5 @@
-const { Evento, ESTADOS_VALIDOS } = require("../models/eventoModel");
-const Sala = require("../models/salaModel");
+import { Evento, ESTADOS_VALIDOS } from "../models/eventoModel.js";
+import Sala from "../models/salaModel.js";
 
 const obtenerEventos = (req, res) => {
   try {
@@ -100,4 +100,4 @@ const obtenerEventosProximos = (req, res) => {
   }
 };
 
-module.exports = { obtenerEventos, obtenerEventoPorId, crearEvento, actualizarEvento, obtenerEventosProximos };
+export { obtenerEventos, obtenerEventoPorId, crearEvento, actualizarEvento, obtenerEventosProximos };

@@ -1,19 +1,26 @@
-const express = require("express");
+import express from "express";
+
+import {
+  obtenerEntradas,
+  obtenerVendidasPorEvento,
+  obtenerDisponiblesPorEvento,
+  obtenerEntradaPorId,
+  venderEntrada,
+  cancelarEntrada,
+} from "../controllers/entradaController.js";
 
 const router = express.Router();
 
-const entradaController = require("../controllers/entradaController");
+router.get("/", obtenerEntradas);
 
-router.get("/", entradaController.obtenerEntradas);
+router.get("/vendidas/:eventoId", obtenerVendidasPorEvento);
 
-router.get("/vendidas/:eventoId", entradaController.obtenerVendidasPorEvento);
+router.get("/disponibles/:eventoId", obtenerDisponiblesPorEvento);
 
-router.get("/disponibles/:eventoId", entradaController.obtenerDisponiblesPorEvento);
+router.get("/:id", obtenerEntradaPorId);
 
-router.get("/:id", entradaController.obtenerEntradaPorId);
+router.post("/", venderEntrada);
 
-router.post("/", entradaController.venderEntrada);
+router.patch("/:id/cancelar", cancelarEntrada);
 
-router.patch("/:id/cancelar", entradaController.cancelarEntrada);
-
-module.exports = router;
+export default router;
