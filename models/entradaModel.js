@@ -1,116 +1,89 @@
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
+import mongoose from "mongoose";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const filePath = path.join(__dirname, "../data/entradas.json");
-
-// Estados posibles de una entrada, compartidos por todo el modelo.
-const ESTADOS_ENTRADA = {
+// Estados posibles de una entrada.
+export const ESTADOS_ENTRADA = {
   VENDIDA: "vendida",
   CANCELADA: "cancelada",
 };
 
-class Entrada {
-  constructor(id, eventoId, usuarioId, estado, fechaVenta) {
-    this.id = id;
-    this.eventoId = eventoId;
-    this.usuarioId = usuarioId;
-    this.estado = estado;
-    this.fechaVenta = fechaVenta;
-  }
+export const entradaSchema = new mongoose.Schema({
+  eventoId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Evento",
+    required: true,
+  },
+  usuarioId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Usuario",
+    required: true,
+  },
+  estado: {
+    type: String,
+    enum: Object.values(ESTADOS_ENTRADA),
+    default: ESTADOS_ENTRADA.VENDIDA,
+    required: true,
+  },
+  fechaVenta: {
+    type: Date,
+    default: Date.now,
+    required: true,
+  },
+});
 
-  static obtenerTodos() {
-    // Si el archivo todavía no existe, se considera que no hay entradas registradas.
-    if (!fs.existsSync(filePath)) return [];
+entradaSchema.statics.crear = function (data) {
+  return this.create(data);
+}
 
-    const data = fs.readFileSync(filePath, "utf-8");
-    return JSON.parse(data || "[]");
-  }
+entradaSchema.statics.obtenerTodos = function (){
+  return this.find();
+}
 
-  static guardarTodos(entradas) {
-    fs.writeFileSync(
-      filePath,
-      JSON.stringify(entradas, null, 2),
-      "utf-8"
-    );
-  }
+entradaSchema.statics.obtenerPorId = function (id) {
+  return this.findById(id);
+}
 
-  static obtenerPorId(id) {
-    const entradas = this.obtenerTodos();
+entradaSchema.statics.obtenerPorEvento = function (eventoId) {
+  return this.find({ eventoId });
+}
 
-    return entradas.find((entrada) => entrada.id === parseInt(id));
-  }
+entradaSchema.statics.obtenerVendidasPorEvento = function (eventoId) {
+  return this.find(
+    { 
+      eventoId, 
+      estado: ESTADOS_ENTRADA.VENDIDA 
+    }
+  );
+}
 
-  static obtenerPorEvento(eventoId) {
-    const entradas = this.obtenerTodos();
+entradaSchema.statics.cancelar = function (id) {
 
-    return entradas.filter(
-      (entrada) => entrada.eventoId === parseInt(eventoId)
-    );
-  }
-
-  static obtenerVendidasPorEvento(eventoId) {
-    return this.obtenerPorEvento(eventoId).filter(
-      (entrada) => entrada.estado === ESTADOS_ENTRADA.VENDIDA
-    );
-  }
-
-  static obtenerVendidas() {
-    return this.obtenerTodos().filter(
-      (entrada) => entrada.estado === ESTADOS_ENTRADA.VENDIDA
-    );
-  }
-
-  static crear(data) {
-    const entradas = this.obtenerTodos();
-
-    // Genera el siguiente ID disponible a partir del mayor ID registrado.
-    const nuevoId =
-      entradas.length > 0
-        ? Math.max(...entradas.map((entrada) => entrada.id)) + 1
-        : 1;
-
-    // La venta registra automáticamente la fecha y hora en que fue realizada.
-    const nuevaEntrada = new Entrada(
-      nuevoId,
-      parseInt(data.eventoId),
-      parseInt(data.usuarioId),
-      ESTADOS_ENTRADA.VENDIDA,
-      new Date().toISOString()
-    );
-
-    entradas.push(nuevaEntrada);
-    this.guardarTodos(entradas);
-
-    return nuevaEntrada;
-  }
-
-  // La entrada no se elimina: se conserva el registro y se cambia su estado.
-  static cancelar(id) {
-    const entradas = this.obtenerTodos();
-
-    const index = entradas.findIndex(
-      (entrada) => entrada.id === parseInt(id)
-    );
-
-    if (index === -1) return null;
-
-    entradas[index].estado = ESTADOS_ENTRADA.CANCELADA;
-
-    this.guardarTodos(entradas);
-
-    return entradas[index];
-  }
-
-  static obtenerDisponiblesPorEvento(eventoId, capacidad){
-    const entradasVendidas = this.obtenerVendidasPorEvento(eventoId);
-    return capacidad - entradasVendidas.length;
-  }
-
+  return this.findOneAndUpdate(
+    { 
+      _id: id, 
+      estado: ESTADOS_ENTRADA.VENDIDA 
+    },
+    { 
+      estado: ESTADOS_ENTRADA.CANCELADA 
+    },
+    {
+      returnDocument: 'after',
+      runValidators: true
+    }
+  );
 
 }
 
-export { Entrada, ESTADOS_ENTRADA };
+// Cuenta las entradas vendidas de un evento y calcula cuántas quedan disponibles según su capacidad.
+entradaSchema.statics.obtenerDisponiblesPorEvento = async function (eventoId, capacidad) {
+  const entradasVendidas = 
+    await this.countDocuments(
+      { eventoId, estado: ESTADOS_ENTRADA.VENDIDA }
+    );
+
+  return capacidad - entradasVendidas;
+}
+
+// Reutiliza el modelo Entrada si ya existe; de lo contrario, lo registra con el esquema y la colección "entradas".
+export const Entrada = mongoose.models.Entrada || mongoose.model("Entrada", entradaSchema, "entradas");
+
+export default Entrada;
