@@ -20,7 +20,7 @@ const errorHandler = (err, req, res, next) => {
       : 500;
 
   const response = {
-    message:
+    error:
       statusCode >= 500
         ? 'Error interno del servidor'
         : err.message || 'Error en la solicitud'
