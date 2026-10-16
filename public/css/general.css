@@ -234,7 +234,7 @@ th {
    Mensajes de éxito y error
    ======================================== */
 
-#mensajes p {
+#mensajes .mensaje {
   padding: 10px 12px;
   border-radius: 5px;
 }

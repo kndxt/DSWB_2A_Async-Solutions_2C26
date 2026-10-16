@@ -1,3 +1,4 @@
+
 import { apiFetch } from "./apiClient.js";
 import { renderTable } from "./tabla.js";
 import {
@@ -6,6 +7,10 @@ import {
   mostrarError,
   configurarCierreMensajes,
 } from "./mensajes.js";
+
+// ========================================
+// Elementos del DOM
+// ========================================
 
 const formVenta = document.querySelector("#form-venta");
 const campoEventoId = document.querySelector("#eventoId");
@@ -17,15 +22,45 @@ const estado = document.querySelector("#estado");
 const mensajeExito = document.querySelector("#mensaje-exito");
 const mensajeError = document.querySelector("#mensaje-error");
 
+// ========================================
+// Estado de la vista
+// ========================================
+
 let entradas = [];
 
-const obtenerId = (referencia) => {
+// ========================================
+// Comunicación con la API
+// ========================================
+
+const entradasApi = {
+  listar: () => apiFetch("/entradas"),
+
+  vender: (datos) =>
+    apiFetch("/entradas", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(datos),
+    }),
+
+  cancelar: (id) =>
+    apiFetch(`/entradas/${id}/cancelar`, {
+      method: "PATCH",
+    }),
+};
+
+// ========================================
+// Utilidades
+// ========================================
+
+function obtenerId(referencia) {
   if (referencia && typeof referencia === "object") {
     return referencia._id ?? referencia.id;
   }
 
   return referencia;
-};
+}
 
 function renderizarNombreEId(celda, nombre, id) {
   const nombreElemento = document.createElement("strong");
@@ -37,17 +72,20 @@ function renderizarNombreEId(celda, nombre, id) {
   celda.append(nombreElemento, idElemento);
 }
 
+// ========================================
+// Configuración de la tabla
+// ========================================
+
 const columnas = [
   {
     label: "Entrada",
     render: (celda, entrada) => {
-      const numero = entradas.indexOf(entrada) + 1;
-
-      renderizarNombreEId(
-        celda,
-        `Entrada ${numero}`,
-        obtenerId(entrada)
+      const id = obtenerId(entrada);
+      const indice = entradas.findIndex(
+        (item) => String(obtenerId(item)) === String(id)
       );
+
+      renderizarNombreEId(celda, `Entrada ${indice + 1}`, id);
     },
   },
   {
@@ -67,11 +105,13 @@ const columnas = [
     render: (celda, entrada) => {
       const usuario = entrada.usuarioId;
 
+      const nombreCompleto = usuario
+        ? `${usuario.nombre ?? ""} ${usuario.apellido ?? ""}`.trim()
+        : "";
+
       renderizarNombreEId(
         celda,
-        usuario
-          ? `${usuario.nombre ?? ""} ${usuario.apellido ?? ""}`.trim()
-          : "",
+        nombreCompleto,
         obtenerId(usuario)
       );
     },
@@ -108,28 +148,44 @@ const columnas = [
   },
 ];
 
+// ========================================
+// Renderizado y carga de entradas
+// ========================================
+
+function renderizarEntradas() {
+  renderTable(tabla, columnas, entradas);
+
+  estado.textContent =
+    entradas.length === 0
+      ? "No hay entradas registradas."
+      : `Entradas registradas: ${entradas.length}`;
+}
+
 async function cargarEntradas() {
   estado.textContent = "Cargando entradas...";
 
   try {
-    const resultado = await apiFetch("/entradas");
+    const resultado = await entradasApi.listar();
 
     if (!Array.isArray(resultado)) {
       throw new Error("La API devolvió un formato de entradas inesperado.");
     }
 
-    entradas = resultado.reverse();
-    renderTable(tabla, columnas, entradas);
+    entradas = [...resultado].reverse();
+    renderizarEntradas();
 
-    estado.textContent =
-      entradas.length === 0
-        ? "No hay entradas registradas."
-        : `Entradas registradas: ${entradas.length}`;
+    return true;
   } catch (error) {
     estado.textContent = "No se pudieron cargar las entradas.";
     mostrarError(mensajeError, error.message);
+
+    return false;
   }
 }
+
+// ========================================
+// Operaciones de entradas
+// ========================================
 
 async function venderEntrada(event) {
   event.preventDefault();
@@ -141,18 +197,15 @@ async function venderEntrada(event) {
   botonVender.disabled = true;
 
   try {
-    await apiFetch("/entradas", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ eventoId, usuarioId }),
-    });
+    await entradasApi.vender({ eventoId, usuarioId });
 
     formVenta.reset();
-    await cargarEntradas();
 
-    mostrarExito(mensajeExito, "La entrada se vendió correctamente.");
+    const cargaCorrecta = await cargarEntradas();
+
+    if (cargaCorrecta) {
+      mostrarExito(mensajeExito, "La entrada se vendió correctamente.");
+    }
   } catch (error) {
     mostrarError(mensajeError, error.message);
   } finally {
@@ -161,27 +214,35 @@ async function venderEntrada(event) {
 }
 
 async function cancelarEntrada(id) {
+  const confirmar = window.confirm(
+    "¿Estás segura de que querés cancelar esta entrada?"
+  );
+
+  if (!confirmar) {
+    return;
+  }
+
   limpiarMensajes(mensajeExito, mensajeError);
 
   try {
-    const entradaCancelada = await apiFetch(
-      `/entradas/${id}/cancelar`,
-      { method: "PATCH" }
-    );
+    const entradaCancelada = await entradasApi.cancelar(id);
 
     entradas = entradas.map((entrada) =>
-        String(obtenerId(entrada)) === String(id)
-            ? { ...entrada, estado: entradaCancelada.estado }
-            : entrada
-        );
+      String(obtenerId(entrada)) === String(id)
+        ? { ...entrada, estado: entradaCancelada.estado }
+        : entrada
+    );
 
-    renderTable(tabla, columnas, entradas);
-
+    renderizarEntradas();
     mostrarExito(mensajeExito, "La entrada se canceló correctamente.");
   } catch (error) {
     mostrarError(mensajeError, error.message);
   }
 }
+
+// ========================================
+// Inicialización y eventos
+// ========================================
 
 formVenta.addEventListener("submit", venderEntrada);
 
