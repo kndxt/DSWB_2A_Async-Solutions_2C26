@@ -3,12 +3,15 @@ import asyncHandler from "../middlewares/asyncHandler.js";
 import validarIds from "../middlewares/validarIds.js";
 
 import {
+    renderizarSalas,
     renderizarEventosProximos, 
     renderizarEntradasPorEvento,
     renderizarFetchPrueba,
 } from "../controllers/vistasController.js";
 
 const router = express.Router();
+
+router.get("/salas", renderizarSalas);
 
 router.get("/eventos", asyncHandler(renderizarEventosProximos));
 
