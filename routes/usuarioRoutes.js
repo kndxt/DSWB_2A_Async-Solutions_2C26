@@ -1,12 +1,26 @@
 import express from "express";
 import * as usuarioController from "../controllers/usuarioController.js";
+import asyncHandler from "../middlewares/asyncHandler.js";
+import validarIds from "../middlewares/validarIds.js";
 
 const router = express.Router();
 
-router.get("/", usuarioController.obtenerUsuarios);
-router.get("/:id", usuarioController.obtenerUsuarioPorId);
-router.post("/", usuarioController.crearUsuario);
-router.put("/:id", usuarioController.actualizarUsuario);
-router.delete("/:id", usuarioController.eliminarUsuario);
+router.get("/", asyncHandler(usuarioController.obtenerUsuarios));
+router.get(
+  "/:id",
+  validarIds("params", "id"),
+  asyncHandler(usuarioController.obtenerUsuarioPorId),
+);
+router.post("/", asyncHandler(usuarioController.crearUsuario));
+router.put(
+  "/:id",
+  validarIds("params", "id"),
+  asyncHandler(usuarioController.actualizarUsuario),
+);
+router.patch(
+  "/:id/estado",
+  validarIds("params", "id"),
+  asyncHandler(usuarioController.cambiarEstadoUsuario),
+);
 
 export default router;

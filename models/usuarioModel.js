@@ -1,94 +1,79 @@
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
+import mongoose from "mongoose";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+export const ESTADOS_USUARIO = {
+  ACTIVO: "activo",
+  INACTIVO: "inactivo",
+};
 
-const filePath = path.join(__dirname, "../data/usuarios.json");
+export const ESTADOS_VALIDOS = Object.values(ESTADOS_USUARIO);
 
-class Usuario {
-  constructor(id, nombre, apellido, email, telefono) {
-    this.id = id;
-    this.nombre = nombre;
-    this.apellido = apellido;
-    this.email = email;
-    this.telefono = telefono;
-  }
+const usuarioSchema = new mongoose.Schema(
+  {
+    nombre: {
+      type: String,
+      required: [true, "El nombre es obligatorio"],
+      trim: true,
+    },
+    apellido: {
+      type: String,
+      required: [true, "El apellido es obligatorio"],
+      trim: true,
+    },
+    email: {
+      type: String,
+      required: [true, "El email es obligatorio"],
+      unique: true,
+      lowercase: true,
+      trim: true,
+    },
+    telefono: { type: String, trim: true },
+    // Sin encriptar por ahora: la encriptación queda para la entrega final.
+    clave: { type: String, required: [true, "La clave es obligatoria"] },
+    estado: {
+      type: String,
+      enum: {
+        values: ESTADOS_VALIDOS,
+        message: `Estado inválido. Valores permitidos: ${ESTADOS_VALIDOS.join(", ")}`,
+      },
+      default: ESTADOS_USUARIO.ACTIVO,
+    },
+  },
+  {
+    versionKey: false,
+    toJSON: {
+      // Se responde `id` en lugar de `_id`, y la clave nunca se devuelve.
+      transform: (doc, { _id, clave, ...resto }) => ({
+        id: _id.toString(),
+        ...resto,
+      }),
+    },
+  },
+);
 
-  // Leer todos los usuarios del archivo JSON
-  static obtenerTodos() {
-    if (!fs.existsSync(filePath)) {
-      return [];
-    }
-    const data = fs.readFileSync(filePath, "utf-8");
-    return JSON.parse(data || "[]");
-  }
+usuarioSchema.statics.obtenerTodos = function () {
+  return this.find().sort({ _id: 1 });
+};
 
-  // Guardar la lista completa de usuarios en el JSON
-  static guardarTodos(usuarios) {
-    fs.writeFileSync(filePath, JSON.stringify(usuarios, null, 2), "utf-8");
-  }
+usuarioSchema.statics.obtenerPorId = function (id) {
+  return this.findById(id);
+};
 
-  // Buscar usuario por ID
-  static obtenerPorId(id) {
-    const usuarios = this.obtenerTodos();
-    return usuarios.find((u) => u.id === parseInt(id));
-  }
+usuarioSchema.statics.obtenerPorEmail = function (email) {
+  return this.findOne({ email: String(email).trim().toLowerCase() });
+};
 
-  // Buscar usuario por Email (para evitar duplicados)
-  static obtenerPorEmail(email) {
-    const usuarios = this.obtenerTodos();
-    return usuarios.find((u) => u.email.toLowerCase() === email.toLowerCase());
-  }
+usuarioSchema.statics.crear = function (data) {
+  return this.create(data);
+};
 
-  // Crear un nuevo usuario
-  static crear(nuevoUsuarioData) {
-    const usuarios = this.obtenerTodos();
-    const nuevoId =
-      usuarios.length > 0 ? Math.max(...usuarios.map((u) => u.id)) + 1 : 1;
+// Carga el usuario, aplica los cambios y guarda: así corren las validaciones del schema.
+usuarioSchema.statics.actualizar = async function (id, cambios) {
+  const usuario = await this.findById(id);
+  if (!usuario) return null;
+  usuario.set(cambios);
+  return usuario.save();
+};
 
-    const nuevoUsuario = new Usuario(
-      nuevoId,
-      nuevoUsuarioData.nombre,
-      nuevoUsuarioData.apellido,
-      nuevoUsuarioData.email,
-      nuevoUsuarioData.telefono,
-    );
-
-    usuarios.push(nuevoUsuario);
-    this.guardarTodos(usuarios);
-    return nuevoUsuario;
-  }
-
-  // Actualizar un usuario existente
-  static actualizar(id, datosActualizados) {
-    const usuarios = this.obtenerTodos();
-    const index = usuarios.findIndex((u) => u.id === parseInt(id));
-
-    if (index === -1) return null;
-
-    usuarios[index] = {
-      ...usuarios[index],
-      ...datosActualizados,
-      id: parseInt(id), // Mantener el ID original
-    };
-
-    this.guardarTodos(usuarios);
-    return usuarios[index];
-  }
-
-  // Eliminar un usuario por ID
-  static eliminar(id) {
-    const usuarios = this.obtenerTodos();
-    const index = usuarios.findIndex((u) => u.id === parseInt(id));
-
-    if (index === -1) return false;
-
-    usuarios.splice(index, 1);
-    this.guardarTodos(usuarios);
-    return true;
-  }
-}
+const Usuario = mongoose.model("Usuario", usuarioSchema);
 
 export default Usuario;
