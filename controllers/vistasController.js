@@ -39,9 +39,12 @@ const renderizarFetchPrueba = (req, res) => {
   res.render("fetchPrueba");
 };
 
+const renderizarReservas = (req, res) => res.render("reservas");
+
 export { 
   renderizarSalas,
   renderizarEventos, 
   renderizarEntradasPorEvento,
   renderizarFetchPrueba,
+  renderizarReservas
 };
