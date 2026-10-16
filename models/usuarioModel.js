@@ -28,7 +28,10 @@ const usuarioSchema = new mongoose.Schema(
     },
     telefono: { type: String, trim: true },
     // Sin encriptar por ahora: la encriptación queda para la entrega final.
-    clave: { type: String, required: [true, "La clave es obligatoria"] },
+    password: {
+      type: String,
+      required: [true, "La contraseña es obligatoria"],
+    },
     estado: {
       type: String,
       enum: {
@@ -41,8 +44,8 @@ const usuarioSchema = new mongoose.Schema(
   {
     versionKey: false,
     toJSON: {
-      // Se responde `id` en lugar de `_id`, y la clave nunca se devuelve.
-      transform: (doc, { _id, clave, ...resto }) => ({
+      // Se responde `id` en lugar de `_id`, y la password nunca se devuelve.
+      transform: (doc, { _id, password, ...resto }) => ({
         id: _id.toString(),
         ...resto,
       }),

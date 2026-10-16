@@ -1,7 +1,13 @@
 import Usuario, { ESTADOS_VALIDOS } from "../models/usuarioModel.js";
 
 // Campos que se pueden modificar con PUT. El estado tiene su propio endpoint.
-const CAMPOS_EDITABLES = ["nombre", "apellido", "email", "telefono", "clave"];
+const CAMPOS_EDITABLES = [
+  "nombre",
+  "apellido",
+  "email",
+  "telefono",
+  "password",
+];
 
 // Errores propios de las reglas de negocio; los inesperados se relanzan
 // y asyncHandler los deriva a errorHandler.
@@ -39,12 +45,12 @@ const obtenerUsuarioPorId = async (req, res) => {
 
 // POST /usuarios
 const crearUsuario = async (req, res) => {
-  const { nombre, apellido, email, telefono, clave } = req.body;
+  const { nombre, apellido, email, telefono, password } = req.body;
 
-  if (!nombre || !apellido || !email || !clave) {
+  if (!nombre || !apellido || !email || !password) {
     return res
       .status(400)
-      .json({ error: "Nombre, apellido, email y clave son obligatorios" });
+      .json({ error: "Nombre, apellido, email y contraseña son obligatorios" });
   }
 
   // Regla de negocio: evitar emails duplicados
@@ -61,7 +67,7 @@ const crearUsuario = async (req, res) => {
       apellido,
       email,
       telefono,
-      clave,
+      password,
     });
     res.status(201).json(nuevoUsuario);
   } catch (error) {
@@ -106,7 +112,7 @@ const actualizarUsuario = async (req, res) => {
   }
 };
 
-// PATCH /usuarios/:id/estado  (reemplaza al DELETE: se desactiva, no se elimina)
+// PATCH /usuarios/:id/estado
 const cambiarEstadoUsuario = async (req, res) => {
   const { estado } = req.body;
 
