@@ -1,4 +1,8 @@
-import Sala from "../models/salaModel.js";
+import Sala, { ESTADOS_SALA } from "../models/salaModel.js";
+import { Evento, ESTADOS_EVENTO } from "../models/eventoModel.js";
+
+const ESTADOS_VALIDOS = Object.values(ESTADOS_SALA);
+const CAMPOS_EDITABLES = ["nombre", "capacidad", "direccion", "precioReserva", "responsable", "estado"];
 
 // Los ids ahora son ObjectId de MongoDB (24 caracteres hexadecimales).
 const idValido = (id) => /^[0-9a-fA-F]{24}$/.test(id);
@@ -19,7 +23,6 @@ const mensajeValidacion = (error) =>
     .join(". ");
 
 // Los errores inesperados (500) se relanzan: asyncHandler los deriva a errorHandler.
-// Los controladores solo responden aquí los errores propios de reglas de negocio.
 const manejarError = (error, res) => {
   if (error.name === "ValidationError") {
     return res.status(400).json({ error: mensajeValidacion(error) });
@@ -72,8 +75,6 @@ const crearSala = async (req, res) => {
   }
 };
 
-const CAMPOS_EDITABLES = ["nombre", "capacidad", "direccion", "precioReserva", "responsable"];
-
 const actualizarSala = async (req, res) => {
   const { id } = req.params;
   if (!idValido(id)) return res.status(400).json({ error: "El ID de la sala no es válido" });
@@ -96,7 +97,30 @@ const actualizarSala = async (req, res) => {
     });
   }
 
-  // Solo se aplican los campos editables (ignora _id, id y operadores como $set).
+  // Validar si el estado enviado es válido
+  if (req.body.estado !== undefined && !ESTADOS_VALIDOS.includes(req.body.estado)) {
+    return res.status(400).json({ error: `Estado inválido. Valores permitidos: ${ESTADOS_VALIDOS.join(", ")}` });
+  }
+
+  // REGLA DE NEGOCIO: Bloquear la baja si la sala pasa de 'activa' a 'inactiva' y tiene eventos próximos activos
+  if (
+    req.body.estado === ESTADOS_SALA.INACTIVA &&
+    sala.estado === ESTADOS_SALA.ACTIVA
+  ) {
+        const hayEventosProximos = await Evento.exists({
+      salaId: sala._id,
+      estado: ESTADOS_EVENTO.ACTIVO,
+      fechaInicio: { $gte: new Date() },
+    });
+
+    if (hayEventosProximos) {
+      return res.status(400).json({
+        error: "No se puede dar de baja una sala que tiene eventos próximos activos",
+      });
+    }
+  }
+
+  // Solo se aplican los campos editables
   const cambios = Object.fromEntries(
     CAMPOS_EDITABLES.filter((campo) => req.body[campo] !== undefined).map((campo) => [campo, req.body[campo]]),
   );

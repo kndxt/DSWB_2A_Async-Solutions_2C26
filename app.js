@@ -1,5 +1,4 @@
 import express from "express";
-
 import dotenv from "dotenv";
 import { conectarDB } from "./config/db.js";
 
@@ -19,6 +18,9 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware para procesar datos en JSON
 app.use(express.json());
+
+// Servir archivos estáticos desde public/
+app.use(express.static("public"));
 
 // Configuración del motor de vistas
 app.set("view engine", "pug");
