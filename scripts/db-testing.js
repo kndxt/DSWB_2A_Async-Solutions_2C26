@@ -74,43 +74,43 @@ const responsables = [
     nombre: "Andrea",
     apellido: "Morales",
     telefono: "1100000001",
-    mail: "andrea.morales@example.com",
+    email: "andrea.morales@example.com",
   },
   {
     nombre: "Pablo",
     apellido: "Benítez",
     telefono: "1100000002",
-    mail: "pablo.benitez@example.com",
+    email: "pablo.benitez@example.com",
   },
   {
     nombre: "Carolina",
     apellido: "Vega",
     telefono: "1100000003",
-    mail: "carolina.vega@example.com",
+    email: "carolina.vega@example.com",
   },
   {
     nombre: "Diego",
     apellido: "Navarro",
     telefono: "1100000004",
-    mail: "diego.navarro@example.com",
+    email: "diego.navarro@example.com",
   },
   {
     nombre: "Mariana",
     apellido: "Ortiz",
     telefono: "1100000005",
-    mail: "mariana.ortiz@example.com",
+    email: "mariana.ortiz@example.com",
   },
   {
     nombre: "Gabriel",
     apellido: "Suárez",
     telefono: "1100000006",
-    mail: "gabriel.suarez@example.com",
+    email: "gabriel.suarez@example.com",
   },
   {
     nombre: "Paula",
     apellido: "Ibarra",
     telefono: "1100000007",
-    mail: "paula.ibarra@example.com",
+    email: "paula.ibarra@example.com",
   },
 ];
 
@@ -128,8 +128,8 @@ const sumarHoras = (fecha, horas) => {
 
 // Calcula una fecha dentro del período de venta.
 const fechaDentroDeVenta = (evento, proporcion = 0.5) => {
-  const inicio = evento.venta_inicio.getTime();
-  const fin = evento.venta_fin.getTime();
+  const inicio = evento.fechaInicioVenta.getTime();
+  const fin = evento.fechaFinVenta.getTime();
   return new Date(inicio + (fin - inicio) * proporcion);
 };
 
@@ -158,8 +158,8 @@ const generarSalas = () =>
     nombre: `Sala de prueba ${i + 1}`,
     capacidad: i === 0 ? CAPACIDAD_EVENTO_ESPECIAL : 40 + i * 5,
     direccion: `Calle de prueba ${100 + i}, CABA`,
-    precio_reserva: 10000 + i * 1500,
-    estado: i >= CANTIDAD_SALAS - SALAS_INACTIVAS ? "inactivo" : "activo",
+    precioReserva: 10000 + i * 1500,
+    estado: i >= CANTIDAD_SALAS - SALAS_INACTIVAS ? "inactiva" : "activa",
     responsable: { ...responsables[Math.floor(i / 3)] },
   }));
 
@@ -174,61 +174,61 @@ const generarEventos = (usuarios, salas) => {
 
   return Array.from({ length: CANTIDAD_EVENTOS }, (_, i) => {
     let fechaInicio;
-    let ventaInicio;
-    let ventaFin;
+    let fechaInicioVenta;
+    let fechaFinVenta;
     let estado = "activo";
 
     // 5 finalizados: evento y ventas en el pasado.
     if (i <= 4) {
       fechaInicio = sumarDias(base, -(20 + i * 3));
-      ventaInicio = sumarDias(fechaInicio, -15);
-      ventaFin = sumarDias(fechaInicio, -1);
+      fechaInicioVenta = sumarDias(fechaInicio, -15);
+      fechaFinVenta = sumarDias(fechaInicio, -1);
       estado = "finalizado";
     }
     // 2 con ventas vencidas y evento futuro.
     else if (i <= 6) {
       fechaInicio = sumarDias(base, 7 + (i - 5) * 3);
-      ventaInicio = sumarDias(ahora, -15);
-      ventaFin = sumarDias(ahora, -1);
+      fechaInicioVenta = sumarDias(ahora, -15);
+      fechaFinVenta = sumarDias(ahora, -1);
     }
     // 3 cancelados.
     else if (i <= 9) {
       fechaInicio = sumarDias(base, 15 + (i - 7) * 3);
-      ventaInicio = sumarDias(ahora, -3);
-      ventaFin = sumarDias(fechaInicio, -1);
+      fechaInicioVenta = sumarDias(ahora, -3);
+      fechaFinVenta = sumarDias(fechaInicio, -1);
       estado = "cancelado";
     }
     // 1 evento especial con 3 cupos libres.
     else if (i === 10) {
       fechaInicio = sumarDias(base, 25);
-      ventaInicio = sumarDias(ahora, -3);
-      ventaFin = sumarDias(fechaInicio, -1);
+      fechaInicioVenta = sumarDias(ahora, -3);
+      fechaFinVenta = sumarDias(fechaInicio, -1);
     }
     // 9 eventos futuros normales.
     else {
       fechaInicio = sumarDias(base, 30 + (i - 11) * 3);
-      ventaInicio = sumarDias(ahora, -3);
-      ventaFin = sumarDias(fechaInicio, -1);
+      fechaInicioVenta = sumarDias(ahora, -3);
+      fechaFinVenta = sumarDias(fechaInicio, -1);
     }
 
     const sala = i === 10 ? salas[0] : salas[(i % 14) + 1];
 
     return {
       _id: new ObjectId(),
-      sala_id: sala._id,
+      salaId: sala._id,
       nombre: `Evento de prueba ${i + 1}`,
       descripcion: `Descripción ficticia del evento ${i + 1}.`,
       tipo: ["musica", "teatro", "danza", "cine", "taller"][i % 5],
-      fecha_inicio: fechaInicio,
-      fecha_fin: sumarHoras(fechaInicio, 3),
-      venta_inicio: ventaInicio,
-      venta_fin: ventaFin,
-      precio_entrada: 5000 + i * 500,
+      fechaInicio: fechaInicio,
+      fechaFin: sumarHoras(fechaInicio, 3),
+      fechaInicioVenta: fechaInicioVenta,
+      fechaFinVenta: fechaFinVenta,
+      precioEntrada: 5000 + i * 500,
       estado,
       reserva: {
         usuarioId: usuarios[i]._id,
-        fecha_reserva: sumarDias(fechaInicio, -10),
-        precio_final: sala.precio_reserva,
+        fechaReserva: sumarDias(fechaInicio, -10),
+        precioFinal: sala.precioReserva,
       },
     };
   });
@@ -242,7 +242,7 @@ const generarEntradas = (usuarios, eventos, salas) => {
   const entradas = [];
 
   eventos.forEach((evento, i) => {
-    const sala = salas.find((s) => s._id.equals(evento.sala_id));
+    const sala = salas.find((s) => s._id.equals(evento.salaId));
 
     if (!sala) {
       throw new Error(`No se encontró la sala del evento ${evento.nombre}`);

@@ -28,7 +28,17 @@ export const entradaSchema = new mongoose.Schema({
     default: Date.now,
     required: true,
   },
-});
+},
+{
+    versionKey: false,
+    toJSON: {
+    transform: (doc, { _id, ...resto }) => ({
+      id: _id.toString(),
+      ...resto,
+    }),
+  },
+  }
+);
 
 entradaSchema.statics.crear = function (data) {
   return this.create(data);
@@ -82,6 +92,18 @@ entradaSchema.statics.obtenerDisponiblesPorEvento = async function (eventoId, ca
 
   return capacidad - entradasVendidas;
 }
+
+entradaSchema.statics.obtenerTodosConDetalles = function () {
+  return this.find()
+    .populate({
+      path: "eventoId",
+      select: "nombre",
+    })
+    .populate({
+      path: "usuarioId",
+      select: "nombre apellido",
+    });
+};
 
 // Reutiliza el modelo Entrada si ya existe; de lo contrario, lo registra con el esquema y la colección "entradas".
 export const Entrada = mongoose.models.Entrada || mongoose.model("Entrada", entradaSchema, "entradas");
