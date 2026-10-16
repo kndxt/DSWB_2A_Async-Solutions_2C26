@@ -1,5 +1,5 @@
 import { Evento, ESTADOS_VALIDOS } from "../models/eventoModel.js";
-import Sala from "../models/salaModel.js";
+import Sala, { ESTADOS_SALA } from "../models/salaModel.js";
 import Usuario from "../models/usuarioModel.js";
 
 const MENSAJE_DUPLICADO = "Ya existe un evento con el mismo nombre, sala y fecha de inicio";
@@ -44,7 +44,6 @@ const mensajeValidacion = (error) =>
     .join(". ");
 
 // Los errores inesperados (500) se relanzan: asyncHandler los deriva a errorHandler.
-// Los controladores solo responden aquí los errores propios de reglas de negocio.
 const manejarError = (error, res) => {
   if (error.name === "ValidationError") {
     return res.status(400).json({ error: mensajeValidacion(error) });
@@ -68,7 +67,6 @@ const obtenerEventoPorId = async (req, res) => {
 };
 
 const crearEvento = async (req, res) => {
-  // salaId y usuarioId llegan ya validados (obligatorios y con formato de ObjectId) por validarIds.
   const {
     nombre, descripcion, tipo,
     fechaInicio, fechaFin,
@@ -86,7 +84,6 @@ const crearEvento = async (req, res) => {
     return res.status(400).json({ error: "El precio de entrada debe ser un número mayor a cero" });
   }
 
-  // se convierte las fechas, así que un texto inválido se rechaza acá con un mensaje claro.
   if (![fechaInicio, fechaFin, fechaInicioVenta, fechaFinVenta].every(fechaValida)) {
     return res.status(400).json({ error: "Las fechas indicadas no tienen un formato válido" });
   }
@@ -96,6 +93,11 @@ const crearEvento = async (req, res) => {
 
   const sala = await Sala.findById(salaId);
   if (!sala) return res.status(400).json({ error: "La sala indicada no existe" });
+
+  // Regla 2: Una sala inactiva no admite eventos nuevos.
+  if (sala.estado !== ESTADOS_SALA.ACTIVA) {
+    return res.status(400).json({ error: "La sala indicada está inactiva" });
+  }
 
   const usuario = await Usuario.findById(usuarioId);
   if (!usuario) return res.status(400).json({ error: "El usuario indicado no existe" });
@@ -113,7 +115,6 @@ const crearEvento = async (req, res) => {
       fechaInicio, fechaFin,
       fechaInicioVenta, fechaFinVenta,
       precioEntrada, salaId,
-      // Registro histórico: el precio de la sala se copia al momento de crear el evento.
       reserva: { usuarioId, fechaReserva: new Date(), precioFinal: sala.precioReserva },
     });
     res.status(201).json(nuevoEvento);
@@ -128,13 +129,25 @@ const actualizarEvento = async (req, res) => {
   const evento = await Evento.obtenerPorId(id);
   if (!evento) return res.status(404).json({ error: "Evento no encontrado" });
 
-  // Solo se aplican los campos editables (ignora _id, id, reserva y operadores como $set).
+  // Al quitar la regla 3, exigimos que la sala actual del evento esté activa para poder editarlo.
+  const salaActual = await Sala.findById(evento.salaId);
+  if (salaActual && salaActual.estado !== ESTADOS_SALA.ACTIVA) {
+    return res.status(400).json({ error: "No se puede actualizar un evento cuya sala está inactiva" });
+  }
+
+  // Solo se aplican los campos editables.
   const cambios = Object.fromEntries(
     CAMPOS_EDITABLES.filter((campo) => req.body[campo] !== undefined).map((campo) => [campo, req.body[campo]]),
   );
 
-  if (cambios.salaId !== undefined && !(await buscarSala(cambios.salaId))) {
-    return res.status(400).json({ error: "La sala indicada no existe" });
+  if (cambios.salaId !== undefined) {
+    const sala = await buscarSala(cambios.salaId);
+    if (!sala) return res.status(400).json({ error: "La sala indicada no existe" });
+
+    // Si cambia de sala, la sala nueva también debe estar activa obligatoriamente.
+    if (sala.estado !== ESTADOS_SALA.ACTIVA) {
+      return res.status(400).json({ error: "La sala indicada está inactiva" });
+    }
   }
 
   if (cambios.estado !== undefined && !ESTADOS_VALIDOS.includes(cambios.estado)) {
@@ -149,7 +162,6 @@ const actualizarEvento = async (req, res) => {
     return res.status(400).json({ error: "Las fechas indicadas no tienen un formato válido" });
   }
 
-  // Las reglas de fechas se comprueban sobre el resultado final (valores actuales + cambios).
   const resultado = { ...evento.toObject(), ...cambios };
   const errorFechas = mensajeFechasIncoherentes(resultado);
   if (errorFechas) return res.status(400).json({ error: errorFechas });

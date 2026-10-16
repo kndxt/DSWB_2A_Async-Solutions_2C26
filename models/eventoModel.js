@@ -105,4 +105,4 @@ eventoSchema.statics.puedeVenderEntradas = function (evento) {
 
 const Evento = mongoose.model("Evento", eventoSchema);
 
-export { Evento, ESTADOS_VALIDOS };
+export { Evento, ESTADOS_EVENTO, ESTADOS_VALIDOS };
