@@ -38,13 +38,14 @@ const renderizarEntradasPorEvento = async (req, res) => {
 
 };
 
-const renderizarFetchPrueba = (req, res) => {
-  res.render("fetchPrueba");
+
+const renderizarEntradas = (req, res) => {
+  res.render("entradas/index");
 };
 
 export { 
   renderizarSalas,
   renderizarEventosProximos, 
   renderizarEntradasPorEvento,
-  renderizarFetchPrueba,
+  renderizarEntradas,
 };

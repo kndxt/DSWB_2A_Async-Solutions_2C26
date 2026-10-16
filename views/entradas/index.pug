@@ -1,0 +1,51 @@
+extends ../layout
+include ../mixins/tabla.pug
+
+block title
+  | Administración de entradas | Urbana Cult
+
+block content
+  h1 Administración de entradas
+
+  section#mensajes(aria-live="polite")
+    div#mensaje-exito.mensaje.mensaje-exito(role="status" hidden)
+      span.texto-mensaje
+      button.cerrar-mensaje(type="button" aria-label="Cerrar mensaje de éxito") ×
+
+    div#mensaje-error.mensaje.mensaje-error(role="alert" hidden)
+      span.texto-mensaje
+      button.cerrar-mensaje(type="button" aria-label="Cerrar mensaje de error") ×
+
+  section
+    h2 Vender una entrada
+
+    form#form-venta
+      div
+        label(for="eventoId") ID del evento
+        input#eventoId(
+          type="text"
+          name="eventoId"
+          required
+          placeholder="Ingresá el ID del evento"
+        )
+
+      div
+        label(for="usuarioId") ID del usuario
+        input#usuarioId(
+          type="text"
+          name="usuarioId"
+          required
+          placeholder="Ingresá el ID del usuario"
+        )
+
+      button#boton-vender(type="submit") Vender entrada
+
+  section
+    h2 Entradas registradas
+
+    p#estado Cargando entradas...
+
+    +tabla([], [], "tabla-entradas")
+
+block scripts
+  script(type="module" src="/js/entradas.js")

@@ -1,5 +1,5 @@
-mixin tabla(columnas, filas)
-  table
+mixin tabla(columnas, filas, id)
+  table(id=id)
     thead
       tr
         each columna in columnas

@@ -6,7 +6,7 @@ import {
     renderizarSalas,
     renderizarEventosProximos, 
     renderizarEntradasPorEvento,
-    renderizarFetchPrueba,
+    renderizarEntradas,
 } from "../controllers/vistasController.js";
 
 const router = express.Router();
@@ -15,7 +15,10 @@ router.get("/salas", renderizarSalas);
 
 router.get("/eventos", asyncHandler(renderizarEventosProximos));
 
-router.get("/fetch-prueba", renderizarFetchPrueba);
+router.get(
+  "/entradas",
+  renderizarEntradas
+);
 
 router.get("/entradas/:eventoId", validarIds("params", "eventoId"), asyncHandler(renderizarEntradasPorEvento));
 
