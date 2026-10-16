@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 
+
 const ESTADOS_SALA = {
   ACTIVA: "activa",
   INACTIVA: "inactiva",
