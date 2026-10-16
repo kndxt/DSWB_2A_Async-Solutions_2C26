@@ -3,6 +3,7 @@ import asyncHandler from "../middlewares/asyncHandler.js";
 import validarIds from "../middlewares/validarIds.js";
 
 import {
+    renderizarUsuarios, 
     renderizarSalas,
     renderizarEventos, 
     renderizarEntradasPorEvento,
@@ -10,6 +11,8 @@ import {
 } from "../controllers/vistasController.js";
 
 const router = express.Router();
+
+router.get("/usuarios", renderizarUsuarios);
 
 router.get("/salas", renderizarSalas);
 

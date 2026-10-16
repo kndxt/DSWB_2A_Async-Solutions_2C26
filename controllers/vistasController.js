@@ -2,6 +2,8 @@ import { Evento } from "../models/eventoModel.js";
 import { Entrada } from "../models/entradaModel.js";
 import Sala from "../models/salaModel.js";
 
+const renderizarUsuarios = (req, res) => res.render("usuarios");
+
 const renderizarSalas = (req, res) => res.render("salas");
 
 const renderizarEventos = (req, res) => res.render("eventos");
@@ -40,6 +42,7 @@ const renderizarFetchPrueba = (req, res) => {
 };
 
 export { 
+  renderizarUsuarios,
   renderizarSalas,
   renderizarEventos, 
   renderizarEntradasPorEvento,
