@@ -6,7 +6,6 @@ import {
     renderizarSalas,
     renderizarEventos, 
     renderizarEntradasPorEvento,
-    renderizarFetchPrueba,
     renderizarReservas,
     renderizarEntradas,
 } from "../controllers/vistasController.js";
