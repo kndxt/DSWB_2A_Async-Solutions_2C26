@@ -45,4 +45,12 @@ const renderizarEntradasPorEvento = (req, res) => {
   }
 };
 
-export { renderizarEventosProximos, renderizarEntradasPorEvento };
+const renderizarFetchPrueba = (req, res) => {
+  res.render("fetchPrueba");
+};
+
+export { 
+  renderizarEventosProximos, 
+  renderizarEntradasPorEvento,
+  renderizarFetchPrueba,
+};
