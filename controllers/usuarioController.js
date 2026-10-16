@@ -1,4 +1,7 @@
-import Usuario, { ESTADOS_VALIDOS } from "../models/usuarioModel.js";
+import Usuario, {
+  ESTADOS_USUARIO,
+  ESTADOS_VALIDOS,
+} from "../models/usuarioModel.js";
 
 // Campos que se pueden modificar con PUT. El estado tiene su propio endpoint.
 const CAMPOS_EDITABLES = [
@@ -130,10 +133,38 @@ const cambiarEstadoUsuario = async (req, res) => {
   res.status(200).json(usuario);
 };
 
+// POST /usuarios/login
+const login = async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res
+      .status(400)
+      .json({ error: "Email y contraseña son obligatorios" });
+  }
+
+  const usuario = await Usuario.obtenerPorEmail(email);
+
+  // Mismo mensaje si el usuario no existe o la contraseña no coincide:
+  // no se revela qué emails están registrados.
+  if (!usuario || usuario.password !== password) {
+    return res.status(401).json({ error: "Credenciales incorrectas" });
+  }
+
+  // Solo se informa que está inactivo a quien presentó credenciales correctas.
+  if (usuario.estado === ESTADOS_USUARIO.INACTIVO) {
+    return res.status(403).json({ error: "El usuario se encuentra inactivo" });
+  }
+
+  // El toJSON del modelo quita la password de la respuesta.
+  res.status(200).json({ mensaje: "Inicio de sesión exitoso", usuario });
+};
+
 export {
   obtenerUsuarios,
   obtenerUsuarioPorId,
   crearUsuario,
   actualizarUsuario,
   cambiarEstadoUsuario,
+  login,
 };

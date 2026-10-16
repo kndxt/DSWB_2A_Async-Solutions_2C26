@@ -11,7 +11,10 @@ router.get(
   validarIds("params", "id"),
   asyncHandler(usuarioController.obtenerUsuarioPorId),
 );
+
 router.post("/", asyncHandler(usuarioController.crearUsuario));
+router.post("/login", asyncHandler(usuarioController.login));
+
 router.put(
   "/:id",
   validarIds("params", "id"),
