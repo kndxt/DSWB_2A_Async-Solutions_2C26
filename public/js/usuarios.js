@@ -295,24 +295,6 @@ const iniciar = () => {
   cargarUsuarios();
 };
 
-const apiFetch = async (url, options = {}) => {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 15000); // 15s
-
-  let response;
-  try {
-    response = await fetch(url, { ...options, signal: controller.signal });
-  } catch (error) {
-    if (error.name === "AbortError") {
-      throw new Error("La operación tardó demasiado. Verificá tu conexión e intentá de nuevo.");
-    }
-    throw new Error("No se pudo conectar con el servidor. Verificá que esté activo.");
-  } finally {
-    clearTimeout(timeout);
-  }
-
-  // ... resto igual
-};
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", iniciar);
 } else {
