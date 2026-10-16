@@ -178,8 +178,7 @@ const generarUsuarios = () => {
     estado: i < 18 ? "activo" : "inactivo",
 
     // Credenciales ficticias, exclusivamente para pruebas.
-    // AJUSTAR si el schema utiliza "password" en lugar de "clave".
-    clave: `Prueba${String(i + 1).padStart(3, "0")}!`,
+    password: `Prueba${String(i + 1).padStart(3, "0")}!`,
   }));
 };
 
@@ -192,20 +191,14 @@ const generarSalas = () => {
     nombre: `Sala de prueba ${i + 1}`,
 
     // La primera sala tiene capacidad 30 para el evento especial.
-    capacidad:
-      i === 0
-        ? CAPACIDAD_EVENTO_ESPECIAL
-        : 40 + i * 5,
+    capacidad: i === 0 ? CAPACIDAD_EVENTO_ESPECIAL : 40 + i * 5,
 
     direccion: `Calle de prueba ${100 + i}, CABA`,
 
     precio_reserva: 10000 + i * 1500,
 
     // Las últimas cinco salas estarán inactivas.
-    estado:
-      i >= CANTIDAD_SALAS - SALAS_INACTIVAS
-        ? "inactivo"
-        : "activo",
+    estado: i >= CANTIDAD_SALAS - SALAS_INACTIVAS ? "inactivo" : "activo",
 
     // Tres salas como máximo por responsable.
     responsable: {
@@ -257,7 +250,6 @@ const generarEventos = (usuarios, salas) => {
     // --------------------------------------------------------
     // GRUPO 2: VENTA VENCIDA, EVENTO FUTURO (índices 5 y 6)
     // --------------------------------------------------------
-
     else if (i <= 6) {
       fechaInicio = sumarDias(base, 7 + (i - 5) * 3);
 
@@ -269,7 +261,6 @@ const generarEventos = (usuarios, salas) => {
     // --------------------------------------------------------
     // GRUPO 3: EVENTOS CANCELADOS (índices 7 a 9)
     // --------------------------------------------------------
-
     else if (i <= 9) {
       fechaInicio = sumarDias(base, 15 + (i - 7) * 3);
 
@@ -282,7 +273,6 @@ const generarEventos = (usuarios, salas) => {
     // --------------------------------------------------------
     // GRUPO 4: EVENTO CON POCOS CUPOS (índice 10)
     // --------------------------------------------------------
-
     else if (i === 10) {
       fechaInicio = sumarDias(base, 25);
 
@@ -295,7 +285,6 @@ const generarEventos = (usuarios, salas) => {
     // --------------------------------------------------------
     // GRUPO 5: EVENTOS NORMALES (índices 11 a 19)
     // --------------------------------------------------------
-
     else {
       fechaInicio = sumarDias(base, 30 + (i - 11) * 3);
 
@@ -310,10 +299,7 @@ const generarEventos = (usuarios, salas) => {
     // El evento especial usa la primera sala, cuya capacidad
     // es 30 según la función generarSalas del seed anterior.
     // Los demás utilizan salas activas (índices 1 a 14).
-    const sala =
-      i === 10
-        ? salas[0]
-        : salas[(i % 14) + 1];
+    const sala = i === 10 ? salas[0] : salas[(i % 14) + 1];
 
     return {
       sala_id: sala._id,
@@ -350,20 +336,15 @@ const generarEntradas = (usuarios, eventos, salas) => {
   const entradas = [];
 
   eventos.forEach((evento, i) => {
-    const sala = salas.find((s) =>
-      s._id.equals(evento.sala_id)
-    );
+    const sala = salas.find((s) => s._id.equals(evento.sala_id));
 
     if (!sala) {
-      throw new Error(
-        `No se encontró la sala del evento ${evento.nombre}`
-      );
+      throw new Error(`No se encontró la sala del evento ${evento.nombre}`);
     }
 
     // El evento número 11 (índice 10) tendrá capacidad - 3
     // entradas vendidas. Los otros tendrán 5 vendidas.
-    const cantidadVendidas =
-      i === 10 ? sala.capacidad - 3 : 5;
+    const cantidadVendidas = i === 10 ? sala.capacidad - 3 : 5;
 
     // Entradas vendidas.
     for (let j = 0; j < cantidadVendidas; j++) {
@@ -464,12 +445,12 @@ const seed = async () => {
     console.log(
       `Entradas vendidas: ${
         entradas.filter((e) => e.estado === ESTADOS_ENTRADA.VENDIDA).length
-      }`
+      }`,
     );
     console.log(
       `Entradas canceladas: ${
         entradas.filter((e) => e.estado === ESTADOS_ENTRADA.CANCELADA).length
-      }`
+      }`,
     );
   } catch (error) {
     console.error("\nError al ejecutar el seed:");
