@@ -57,6 +57,10 @@ const salaSchema = new mongoose.Schema(
   },
 );
 
+salaSchema.statics.obtenerPorId = function (id) {
+  return this.findById(id);
+};
+
 const Sala = mongoose.model("Sala", salaSchema);
 
 export { ESTADOS_SALA };

@@ -1,10 +1,10 @@
 import { Entrada } from "../models/entradaModel.js";
 import { Evento } from "../models/eventoModel.js";
 import Sala from "../models/salaModel.js";
-import Usuario from "../models/usuarioModel.js";
+import Usuario, { ESTADOS_USUARIO } from "../models/usuarioModel.js";
 
 const obtenerEntradas = async (req, res) => {
-  const entradas = await Entrada.obtenerTodos();
+  const entradas = await Entrada.obtenerTodosConDetalles();
   res.status(200).json(entradas);
 };
 
@@ -48,6 +48,13 @@ const venderEntrada = async (req, res) => {
   if (!usuario) {
     return res.status(404).json({
       error: "Cliente no encontrado",
+    });
+  }
+
+  // Un cliente inactivo no puede comprar entradas.
+  if (usuario.estado !== ESTADOS_USUARIO.ACTIVO) {
+    return res.status(400).json({
+      error: "El cliente está inactivo",
     });
   }
 
