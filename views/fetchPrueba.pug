@@ -1,0 +1,16 @@
+extends layout
+
+block title
+  | Listado de entradas | Urbana Cult
+
+block content
+  h1 Listado de entradas
+
+  p#estado Cargando entradas...
+
+  table#tabla-entradas(hidden)
+    thead
+    tbody
+
+block scripts
+  script(type="module" src="/js/fetchPrueba.js")

@@ -1,0 +1,19 @@
+
+doctype html
+html(lang="es")
+  head
+    meta(charset="UTF-8")
+    meta(name="viewport" content="width=device-width, initial-scale=1.0")
+    title
+      block title
+        | Urbana Cult
+    link(rel="stylesheet" href="/css/general.css")
+
+  body
+    header
+      include includes/navbar.pug
+
+    main
+      block content
+
+    block scripts
