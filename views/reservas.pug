@@ -1,0 +1,24 @@
+extends layout
+
+block content
+  h1 Reservas
+
+  //- Mensajes de éxito y error (include compartido de F5.1)
+  include includes/mensajes
+
+  section#listado-reservas
+    h2 Listado de reservas
+    table#tabla-reservas
+      thead
+        tr
+          th Usuario
+          th Evento
+          th Fecha del evento
+          th Fecha de reserva
+          th Precio registrado
+      tbody#reservas-body
+        tr
+          td(colspan="5") Cargando reservas...
+
+block scripts
+  script(type="module" src="/js/reservas.js")
