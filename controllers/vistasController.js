@@ -2,6 +2,8 @@ import { Evento } from "../models/eventoModel.js";
 import { Entrada } from "../models/entradaModel.js";
 import Sala from "../models/salaModel.js";
 
+const renderizarSalas = (req, res) => res.render("salas");
+
 const renderizarEventosProximos = async (req, res) => {
   const eventos = await Evento.obtenerProximos();
   res.render("eventos", { eventos });
@@ -41,6 +43,7 @@ const renderizarFetchPrueba = (req, res) => {
 };
 
 export { 
+  renderizarSalas,
   renderizarEventosProximos, 
   renderizarEntradasPorEvento,
   renderizarFetchPrueba,
