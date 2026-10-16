@@ -40,9 +40,12 @@ const renderizarEntradas = (req, res) => {
   res.render("entradas/index");
 };
 
+const renderizarReservas = (req, res) => res.render("reservas");
+
 export { 
   renderizarSalas,
   renderizarEventos, 
   renderizarEntradasPorEvento,
   renderizarEntradas,
+  renderizarReservas,
 };

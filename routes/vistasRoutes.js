@@ -6,6 +6,8 @@ import {
     renderizarSalas,
     renderizarEventos, 
     renderizarEntradasPorEvento,
+    renderizarFetchPrueba,
+    renderizarReservas,
     renderizarEntradas,
 } from "../controllers/vistasController.js";
 
@@ -21,5 +23,7 @@ router.get(
 );
 
 router.get("/entradas/:eventoId", validarIds("params", "eventoId"), asyncHandler(renderizarEntradasPorEvento));
+
+router.get("/reservas", renderizarReservas);
 
 export default router;
