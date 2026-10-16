@@ -1,4 +1,7 @@
-import Sala from "../models/salaModel.js";
+import Sala, { ESTADOS_SALA } from "../models/salaModel.js";
+
+const ESTADOS_VALIDOS = Object.values(ESTADOS_SALA);
+const CAMPOS_EDITABLES = ["nombre", "capacidad", "direccion", "precioReserva", "responsable", "estado"];
 
 // Los ids ahora son ObjectId de MongoDB (24 caracteres hexadecimales).
 const idValido = (id) => /^[0-9a-fA-F]{24}$/.test(id);
@@ -95,7 +98,9 @@ const actualizarSala = async (req, res) => {
       error: "El responsable debe incluir nombre, apellido, teléfono y email",
     });
   }
-
+  if (req.body.estado !== undefined && !ESTADOS_VALIDOS.includes(req.body.estado)) {
+    return res.status(400).json({ error: `Estado inválido. Valores permitidos: ${ESTADOS_VALIDOS.join(", ")}` });
+  }
   // Solo se aplican los campos editables (ignora _id, id y operadores como $set).
   const cambios = Object.fromEntries(
     CAMPOS_EDITABLES.filter((campo) => req.body[campo] !== undefined).map((campo) => [campo, req.body[campo]]),

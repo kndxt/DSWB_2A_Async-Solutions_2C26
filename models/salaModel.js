@@ -1,5 +1,12 @@
 import mongoose from "mongoose";
 
+const ESTADOS_SALA = {
+  ACTIVA: "activa",
+  INACTIVA: "inactiva",
+};
+
+const ESTADOS_VALIDOS = Object.values(ESTADOS_SALA);
+
 // Subdocumento embebido con los datos de contacto del responsable.
 // No necesita _id propio porque siempre vive dentro de una sala.
 const responsableSchema = new mongoose.Schema(
@@ -29,7 +36,16 @@ const salaSchema = new mongoose.Schema(
       required: [true, "El precio de reserva es obligatorio"],
       min: [0, "El precio de reserva debe ser un número mayor o igual a cero"],
     },
-    responsable: { type: responsableSchema, required: [true, "El responsable es obligatorio"] },
+    responsable: { type: responsableSchema, required: [true, "El responsable es obligatorio"] 
+    },
+    estado: {
+      type: String,
+      enum: {
+        values: ESTADOS_VALIDOS,
+        message: `Estado inválido. Valores permitidos: ${ESTADOS_VALIDOS.join(", ")}`,
+      },
+      default: ESTADOS_SALA.ACTIVA,
+    },
   },
   {
     versionKey: false,
@@ -42,4 +58,5 @@ const salaSchema = new mongoose.Schema(
 
 const Sala = mongoose.model("Sala", salaSchema);
 
+export { ESTADOS_SALA };
 export default Sala;
