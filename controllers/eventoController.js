@@ -2,7 +2,10 @@ import { Evento, ESTADOS_VALIDOS } from "../models/eventoModel.js";
 import Sala, { ESTADOS_SALA } from "../models/salaModel.js";
 import Usuario from "../models/usuarioModel.js";
 
-const MENSAJE_DUPLICADO = "Ya existe un evento con el mismo nombre, sala y fecha de inicio";
+const MENSAJE_DUPLICADO =
+  "Ya existe un evento con el mismo nombre, sala y fecha de inicio";
+const MENSAJE_SOLAPAMIENTO =
+  "El evento se superpone con otro evento de la misma sala";
 
 const CAMPOS_FECHA = ["fechaInicio", "fechaFin", "fechaInicioVenta", "fechaFinVenta"];
 
@@ -35,6 +38,19 @@ const mensajeFechasIncoherentes = ({ fechaInicio, fechaFin, fechaInicioVenta, fe
     return "La venta de entradas debe cerrar antes de que comience el evento";
   }
   return null;
+};
+
+// Detecta solapamiento de rangos de fechas para una misma sala.
+// Dos eventos se superponen si uno empieza antes de que termine el otro
+// y termina después de que el otro empiece.
+const existeSolapamiento = async ({ salaId, fechaInicio, fechaFin, excluirId }) => {
+  const filtro = {
+    salaId,
+    fechaInicio: { $lt: new Date(fechaFin) },
+    fechaFin: { $gt: new Date(fechaInicio) },
+  };
+  if (excluirId) filtro._id = { $ne: excluirId };
+  return Boolean(await Evento.exists(filtro));
 };
 
 // Une los mensajes de las validaciones del esquema en un solo texto.
@@ -94,7 +110,7 @@ const crearEvento = async (req, res) => {
   const sala = await Sala.findById(salaId);
   if (!sala) return res.status(400).json({ error: "La sala indicada no existe" });
 
-  // Regla 2: Una sala inactiva no admite eventos nuevos.
+  // Regla: una sala inactiva no admite eventos nuevos.
   if (sala.estado !== ESTADOS_SALA.ACTIVA) {
     return res.status(400).json({ error: "La sala indicada está inactiva" });
   }
@@ -109,13 +125,29 @@ const crearEvento = async (req, res) => {
     return res.status(400).json({ error: MENSAJE_DUPLICADO });
   }
 
+  // Regla nueva: una sala no puede tener dos eventos cuyos rangos de fechas se superpongan.
+  if (await existeSolapamiento({ salaId, fechaInicio, fechaFin })) {
+    return res.status(400).json({ error: MENSAJE_SOLAPAMIENTO });
+  }
+
+  // La reserva se construye SIEMPRE en el servidor, con datos ya verificados:
+  // - usuarioId: el _id del usuario validado más arriba (existe y está activo)
+  // - fechaReserva: el momento actual, para dejar registro del alta
+  // - precioFinal: el precio de reserva vigente de la sala al momento de crear
+  // Cualquier valor de `reserva` recibido en el body se ignora por completo.
+  const reserva = {
+    usuarioId: usuario._id,
+    fechaReserva: new Date(),
+    precioFinal: sala.precioReserva,
+  };
+
   try {
     const nuevoEvento = await Evento.crear({
       nombre, descripcion, tipo,
       fechaInicio, fechaFin,
       fechaInicioVenta, fechaFinVenta,
       precioEntrada, salaId,
-      reserva: { usuarioId, fechaReserva: new Date(), precioFinal: sala.precioReserva },
+      reserva,
     });
     res.status(201).json(nuevoEvento);
   } catch (error) {
@@ -166,6 +198,7 @@ const actualizarEvento = async (req, res) => {
   const errorFechas = mensajeFechasIncoherentes(resultado);
   if (errorFechas) return res.status(400).json({ error: errorFechas });
 
+  // Duplicado exacto (mismo nombre + sala + fecha de inicio) si cambió alguno de esos campos.
   if (["nombre", "salaId", "fechaInicio"].some((campo) => cambios[campo] !== undefined)) {
     const duplicado = await Evento.existeDuplicado({
       nombre: resultado.nombre,
@@ -174,6 +207,18 @@ const actualizarEvento = async (req, res) => {
       excluirId: id,
     });
     if (duplicado) return res.status(400).json({ error: MENSAJE_DUPLICADO });
+  }
+
+  // Regla nueva: si cambian las fechas o la sala, verificar que el nuevo rango no se
+  // superponga con el de otro evento de la misma sala (excluyendo el evento actual).
+  if (["fechaInicio", "fechaFin", "salaId"].some((campo) => cambios[campo] !== undefined)) {
+    const solapa = await existeSolapamiento({
+      salaId: resultado.salaId,
+      fechaInicio: resultado.fechaInicio,
+      fechaFin: resultado.fechaFin,
+      excluirId: id,
+    });
+    if (solapa) return res.status(400).json({ error: MENSAJE_SOLAPAMIENTO });
   }
 
   try {
@@ -190,4 +235,10 @@ const obtenerEventosProximos = async (req, res) => {
   res.status(200).json(eventos);
 };
 
-export { obtenerEventos, obtenerEventoPorId, crearEvento, actualizarEvento, obtenerEventosProximos };
+export {
+  obtenerEventos,
+  obtenerEventoPorId,
+  crearEvento,
+  actualizarEvento,
+  obtenerEventosProximos,
+};

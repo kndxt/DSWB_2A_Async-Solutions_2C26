@@ -37,8 +37,9 @@ const renderizarEntradasPorEvento = async (req, res) => {
 
 };
 
-const renderizarFetchPrueba = (req, res) => {
-  res.render("fetchPrueba");
+
+const renderizarEntradas = (req, res) => {
+  res.render("entradas/index");
 };
 
 const renderizarReservas = (req, res) => res.render("reservas");
@@ -48,6 +49,6 @@ export {
   renderizarSalas,
   renderizarEventos, 
   renderizarEntradasPorEvento,
-  renderizarFetchPrueba,
-  renderizarReservas
+  renderizarEntradas,
+  renderizarReservas,
 };
