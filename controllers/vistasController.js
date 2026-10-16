@@ -4,10 +4,7 @@ import Sala from "../models/salaModel.js";
 
 const renderizarSalas = (req, res) => res.render("salas");
 
-const renderizarEventosProximos = async (req, res) => {
-  const eventos = await Evento.obtenerProximos();
-  res.render("eventos", { eventos });
-};
+const renderizarEventos = (req, res) => res.render("eventos");
 
 const renderizarEntradasPorEvento = async (req, res) => {
   const { eventoId } = req.params;
@@ -44,7 +41,7 @@ const renderizarFetchPrueba = (req, res) => {
 
 export { 
   renderizarSalas,
-  renderizarEventosProximos, 
+  renderizarEventos, 
   renderizarEntradasPorEvento,
   renderizarFetchPrueba,
 };

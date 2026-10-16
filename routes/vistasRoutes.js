@@ -4,7 +4,7 @@ import validarIds from "../middlewares/validarIds.js";
 
 import {
     renderizarSalas,
-    renderizarEventosProximos, 
+    renderizarEventos, 
     renderizarEntradasPorEvento,
     renderizarFetchPrueba,
 } from "../controllers/vistasController.js";
@@ -13,7 +13,7 @@ const router = express.Router();
 
 router.get("/salas", renderizarSalas);
 
-router.get("/eventos", asyncHandler(renderizarEventosProximos));
+router.get("/eventos", renderizarEventos);
 
 router.get("/fetch-prueba", renderizarFetchPrueba);
 

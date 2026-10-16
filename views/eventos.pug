@@ -1,31 +1,115 @@
-
 extends layout
-include mixins/tabla.pug
-
-block title
-  | Eventos próximos | Urbana Cult
 
 block content
-  h1 Eventos próximos
+  h1 Eventos
 
-  if eventos.length === 0
-    p.vacio No hay eventos próximos.
-  else
-    -
-      const columnas = [
-        "ID", "Nombre", "Tipo", "Fecha inicio",
-        "Fecha fin", "Precio", "Estado", "Sala"
-      ]
+  //- Mensajes de éxito y error (include compartido de F5.1)
+  include includes/mensajes
 
-      const filas = eventos.map(evento => [
-        evento.id,
-        evento.nombre,
-        evento.tipo,
-        evento.fechaInicio,
-        evento.fechaFin,
-        "$" + evento.precioEntrada,
-        evento.estado,
-        evento.salaId
-      ])
+  //- Estilos propios de esta página para distinguir eventos finalizados y cancelados.
+  //- Se pueden mover a public/css/estilos.css si el equipo prefiere centralizarlos.
+  style.
+    .evento-finalizado td { color: #6b7280; background: #f3f4f6; }
+    .evento-cancelado td { color: #991b1b; background: #fef2f2; text-decoration: line-through; }
+    .evento-cancelado td:last-child, .evento-cancelado td.celda-estado { text-decoration: none; }
+    .estado { display: inline-block; padding: 0.1rem 0.5rem; border-radius: 999px; font-size: 0.85rem; font-weight: 600; }
+    .estado-activo { background: #dcfce7; color: #166534; }
+    .estado-finalizado { background: #e5e7eb; color: #374151; }
+    .estado-cancelado { background: #fee2e2; color: #991b1b; }
 
-    +tabla(columnas, filas)
+  section.acciones
+    button#btn-nuevo-evento(type="button") Nuevo evento
+
+  section#eventos-proximos
+    h2 Eventos próximos
+    table#tabla-proximos
+      thead
+        tr
+          th Nombre
+          th Sala
+          th Inicio
+          th Precio de entrada
+          th Estado
+      tbody#proximos-body
+        tr
+          td(colspan="5") Cargando eventos próximos...
+
+  section#listado-eventos
+    h2 Todos los eventos
+    table#tabla-eventos
+      thead
+        tr
+          th Nombre
+          th Tipo
+          th Sala
+          th Evento (inicio - fin)
+          th Venta (inicio - fin)
+          th Precio de entrada
+          th Estado
+          th Acciones
+      tbody#eventos-body
+        tr
+          td(colspan="8") Cargando eventos...
+
+  section#formulario-evento(hidden)
+    h2#titulo-formulario Nuevo evento
+    //- novalidate y sin min/max: las reglas de negocio las valida el backend
+    //- y son sus mensajes los que se muestran.
+    form#form-evento(novalidate)
+      input#evento-id(type="hidden" name="id")
+
+      fieldset
+        legend Datos del evento
+        div.campo
+          label(for="nombre") Nombre
+          input#nombre(type="text" name="nombre" autocomplete="off")
+        div.campo
+          label(for="tipo") Tipo
+          input#tipo(type="text" name="tipo" autocomplete="off")
+        div.campo
+          label(for="descripcion") Descripción
+          textarea#descripcion(name="descripcion" rows="3")
+        div.campo
+          label(for="precioEntrada") Precio de entrada
+          input#precioEntrada(type="number" name="precioEntrada" step="any")
+
+      fieldset
+        legend Fechas
+        div.campo
+          label(for="fechaInicio") Inicio del evento
+          input#fechaInicio(type="datetime-local" name="fechaInicio")
+        div.campo
+          label(for="fechaFin") Fin del evento
+          input#fechaFin(type="datetime-local" name="fechaFin")
+        div.campo
+          label(for="fechaInicioVenta") Inicio de la venta
+          input#fechaInicioVenta(type="datetime-local" name="fechaInicioVenta")
+        div.campo
+          label(for="fechaFinVenta") Fin de la venta
+          input#fechaFinVenta(type="datetime-local" name="fechaFinVenta")
+
+      fieldset
+        legend Relaciones
+        div.campo
+          label(for="salaId") Sala
+          select#salaId(name="salaId")
+            option(value="") Cargando salas...
+          small Solo se pueden usar salas activas.
+        div.campo#campo-usuario
+          label(for="usuarioId") Usuario responsable
+          select#usuarioId(name="usuarioId")
+            option(value="") Cargando usuarios...
+          small Solo se pueden usar usuarios activos.
+        div.campo#campo-estado(hidden)
+          label(for="estado") Estado
+          select#estado(name="estado")
+            option(value="activo") activo
+            option(value="finalizado") finalizado
+            option(value="cancelado") cancelado
+
+      div.botones
+        button#btn-guardar(type="submit") Guardar
+        button#btn-cancelar-formulario(type="button") Cancelar
+
+block scripts
+  script(type="module" src="/js/eventos.js")
