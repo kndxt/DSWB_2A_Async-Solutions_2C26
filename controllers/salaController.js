@@ -1,5 +1,5 @@
 import Sala, { ESTADOS_SALA } from "../models/salaModel.js";
-import Evento from "../models/eventoModel.js";
+import { Evento, ESTADOS_EVENTO } from "../models/eventoModel.js";
 
 const ESTADOS_VALIDOS = Object.values(ESTADOS_SALA);
 const CAMPOS_EDITABLES = ["nombre", "capacidad", "direccion", "precioReserva", "responsable", "estado"];
@@ -107,9 +107,9 @@ const actualizarSala = async (req, res) => {
     req.body.estado === ESTADOS_SALA.INACTIVA &&
     sala.estado === ESTADOS_SALA.ACTIVA
   ) {
-    const hayEventosProximos = await Evento.exists({
+        const hayEventosProximos = await Evento.exists({
       salaId: sala._id,
-      estado: "activo",
+      estado: ESTADOS_EVENTO.ACTIVO,
       fechaInicio: { $gte: new Date() },
     });
 
