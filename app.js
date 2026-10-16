@@ -7,6 +7,7 @@ import salaRoutes from "./routes/salaRoutes.js";
 import eventoRoutes from "./routes/eventoRoutes.js";
 import entradaRoutes from "./routes/entradaRoutes.js";
 import vistasRoutes from "./routes/vistasRoutes.js";
+import reservaRoutes from "./routes/reservaRoutes.js";
 import notFound from "./middlewares/notFound.js";
 import errorHandler from "./middlewares/errorHandler.js";
 
@@ -32,6 +33,7 @@ app.use("/salas", salaRoutes);
 app.use("/eventos", eventoRoutes);
 app.use("/entradas", entradaRoutes);
 app.use("/vistas", vistasRoutes);
+app.use("/reservas", reservaRoutes);
 
 app.get("/", (req, res) => {
   res.send("Servidor Express activo y seguro.");
