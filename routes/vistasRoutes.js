@@ -3,12 +3,14 @@ import asyncHandler from "../middlewares/asyncHandler.js";
 import validarIds from "../middlewares/validarIds.js";
 
 import {
-    renderizarUsuarios, 
-    renderizarSalas,
-    renderizarEventos, 
-    renderizarEntradasPorEvento,
-    renderizarFetchPrueba,
-    renderizarReservas,
+  renderizarUsuarios,
+  renderizarSalas,
+  renderizarEventos,
+  renderizarEntradasPorEvento,
+  renderizarFetchPrueba,
+  renderizarReservas,
+  renderizarLogin,
+  renderizarInicio,
 } from "../controllers/vistasController.js";
 
 const router = express.Router();
@@ -21,7 +23,15 @@ router.get("/eventos", renderizarEventos);
 
 router.get("/fetch-prueba", renderizarFetchPrueba);
 
-router.get("/entradas/:eventoId", validarIds("params", "eventoId"), asyncHandler(renderizarEntradasPorEvento));
+router.get("/login", renderizarLogin);
+
+router.get("/inicio", renderizarInicio);
+
+router.get(
+  "/entradas/:eventoId",
+  validarIds("params", "eventoId"),
+  asyncHandler(renderizarEntradasPorEvento),
+);
 
 router.get("/reservas", renderizarReservas);
 

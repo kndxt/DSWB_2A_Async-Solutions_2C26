@@ -1,0 +1,24 @@
+
+extends layout
+
+block title
+  | Inicio | Urbana Cult
+
+block content
+  section.inicio
+    h1 Menú principal
+    p Bienvenido a Urbana Cult.
+    p Seleccioná el módulo al que querés acceder.
+
+    nav.menu-principal(aria-label="Módulos del sistema")
+      ul
+        li
+          a(href="/vistas/usuarios") Usuarios
+        li
+          a(href="/vistas/salas") Salas
+        li
+          a(href="/vistas/eventos") Eventos
+        li
+          a(href="/vistas/eventos") Entradas
+        li
+          a(href="/vistas/reservas") Reservas
