@@ -1,0 +1,89 @@
+extends layout
+
+block content
+  h1 Salas
+
+  //- Mensajes de éxito y error (include compartido de F5.1)
+  include includes/mensajes
+
+  //- Estilos propios de esta página para distinguir las salas inactivas.
+  //- Se pueden mover a public/css/estilos.css si el equipo prefiere centralizarlos.
+  style.
+    .sala-inactiva td { color: #6b7280; background: #f3f4f6; }
+    .estado { display: inline-block; padding: 0.1rem 0.5rem; border-radius: 999px; font-size: 0.85rem; font-weight: 600; }
+    .estado-activa { background: #dcfce7; color: #166534; }
+    .estado-inactiva { background: #e5e7eb; color: #374151; }
+
+  section.acciones
+    button#btn-nueva-sala(type="button") Nueva sala
+
+  section#listado-salas
+    h2 Listado de salas
+    table#tabla-salas
+      thead
+        tr
+          th Nombre
+          th Capacidad
+          th Dirección
+          th Precio de reserva
+          th Estado
+          th Acciones
+      tbody#salas-body
+        tr
+          td(colspan="6") Cargando salas...
+
+  section#detalle-sala(hidden)
+    h2 Detalle de la sala
+    dl#detalle-datos
+    button#btn-cerrar-detalle(type="button") Cerrar
+
+  section#formulario-sala(hidden)
+    h2#titulo-formulario Nueva sala
+    //- novalidate y sin min/max en los inputs: las validaciones de negocio
+    //- las hace el backend y sus mensajes son los que se muestran.
+    form#form-sala(novalidate)
+      input#sala-id(type="hidden" name="id")
+
+      fieldset
+        legend Datos de la sala
+        div.campo
+          label(for="nombre") Nombre
+          input#nombre(type="text" name="nombre" autocomplete="off")
+        div.campo
+          label(for="capacidad") Capacidad
+          input#capacidad(type="number" name="capacidad" step="any")
+        div.campo
+          label(for="direccion") Dirección
+          input#direccion(type="text" name="direccion" autocomplete="off")
+        div.campo
+          label(for="precioReserva") Precio de reserva
+          input#precioReserva(type="number" name="precioReserva" step="any")
+        //- Las salas nuevas siempre se crean activas: el estado solo se cambia al editar.
+        div.campo#campo-estado(hidden)
+          label(for="estado") Estado
+          select#estado(name="estado")
+            option(value="activa") activa
+            option(value="inactiva") inactiva
+
+      fieldset
+        legend Responsable de la sala
+        div.campo
+          label(for="responsableNombre") Nombre
+          input#responsableNombre(type="text" name="responsableNombre" autocomplete="off")
+        div.campo
+          label(for="responsableApellido") Apellido
+          input#responsableApellido(type="text" name="responsableApellido" autocomplete="off")
+        div.campo
+          label(for="responsableTelefono") Teléfono
+          input#responsableTelefono(type="text" name="responsableTelefono" autocomplete="off")
+        div.campo
+          label(for="responsableEmail") Email
+          input#responsableEmail(type="text" name="responsableEmail" autocomplete="off")
+
+      div.botones
+        button#btn-guardar(type="submit") Guardar
+        button#btn-cancelar(type="button") Cancelar
+
+block scripts
+  script(type="module" src="/js/salas.js")
+

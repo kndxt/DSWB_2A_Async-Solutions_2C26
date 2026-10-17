@@ -1,112 +1,108 @@
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const filePath = path.join(__dirname, "../data/eventos.json");
+import mongoose from "mongoose";
+import { reservaSchema } from "./reservaModel.js";
 
 const ESTADOS_EVENTO = {
   ACTIVO: "activo",
   FINALIZADO: "finalizado",
-  CANCELADO: "cancelado"
+  CANCELADO: "cancelado",
 };
 
 const ESTADOS_VALIDOS = Object.values(ESTADOS_EVENTO);
 
-class Evento {
-  constructor(id, nombre, descripcion, tipo, fechaInicio, fechaFin, fechaInicioVenta, fechaFinVenta, precioEntrada, estado, salaId) {
-    this.id = id;
-    this.nombre = nombre;
-    this.descripcion = descripcion;
-    this.tipo = tipo;
-    this.fechaInicio = fechaInicio;
-    this.fechaFin = fechaFin;
-    this.fechaInicioVenta = fechaInicioVenta;
-    this.fechaFinVenta = fechaFinVenta;
-    this.precioEntrada = precioEntrada;
-    this.estado = estado;
-    this.salaId = salaId;
-  }
+const fechaObligatoria = (mensaje) => ({ type: Date, required: [true, mensaje] });
 
-  static obtenerTodos() {
-    if (!fs.existsSync(filePath)) return [];
-    const data = fs.readFileSync(filePath, "utf-8");
-    return JSON.parse(data || "[]");
-  }
+const eventoSchema = new mongoose.Schema(
+  {
+    nombre: { type: String, required: [true, "El nombre es obligatorio"], trim: true },
+    descripcion: { type: String, trim: true },
+    tipo: { type: String, required: [true, "El tipo es obligatorio"], trim: true },
+    fechaInicio: fechaObligatoria("La fecha de inicio es obligatoria"),
+    fechaFin: fechaObligatoria("La fecha de fin es obligatoria"),
+    fechaInicioVenta: fechaObligatoria("La fecha de inicio de venta es obligatoria"),
+    fechaFinVenta: fechaObligatoria("La fecha de fin de venta es obligatoria"),
+    precioEntrada: {
+      type: Number,
+      required: [true, "El precio de entrada es obligatorio"],
+      validate: {
+        validator: (valor) => valor > 0,
+        message: "El precio de entrada debe ser un número mayor a cero",
+      },
+    },
+    estado: {
+      type: String,
+      enum: {
+        values: ESTADOS_VALIDOS,
+        message: `Estado inválido. Valores permitidos: ${ESTADOS_VALIDOS.join(", ")}`,
+      },
+      default: ESTADOS_EVENTO.ACTIVO,
+    },
+    // Referencia a la sala: se guarda su ObjectId y se responde como string.
+    salaId: { type: mongoose.Schema.Types.ObjectId, ref: "Sala", required: [true, "La sala es obligatoria"] },
+    // Registro histórico de la reserva, creado junto con el evento.
+    reserva: { type: reservaSchema, required: [true, "La reserva es obligatoria"] },
+  },
+  {
+    versionKey: false,
+    toJSON: {
+      // Mantiene el contrato de la API: se responde `id` (string) en lugar de `_id`.
+      transform: (doc, { _id, ...resto }) => ({ id: _id.toString(), ...resto }),
+    },
+  },
+);
 
-  static guardarTodos(eventos) {
-    fs.writeFileSync(filePath, JSON.stringify(eventos, null, 2), "utf-8");
-  }
+// Regla de duplicados: mismo nombre + misma sala + misma fecha de inicio.
+// Permite varios eventos en una misma sala si cambia el horario o la fecha de inicio.
+eventoSchema.index({ nombre: 1, salaId: 1, fechaInicio: 1 }, { unique: true });
 
-  static obtenerPorId(id) {
-    const eventos = this.obtenerTodos();
-    return eventos.find((e) => e.id === parseInt(id));
-  }
+eventoSchema.statics.obtenerTodos = function () {
+  return this.find().sort({ _id: 1 });
+};
 
-  static obtenerPorSala(salaId) {
-    const eventos = this.obtenerTodos();
-    return eventos.filter((e) => e.salaId === parseInt(salaId));
-  }
+eventoSchema.statics.obtenerPorId = async function (id) {
+  if (!mongoose.isObjectIdOrHexString(id)) return null;
+  return this.findById(id);
+};
 
-  static crear(data) {
-    const eventos = this.obtenerTodos();
-    const nuevoId = eventos.length > 0 ? Math.max(...eventos.map((e) => e.id)) + 1 : 1;
+eventoSchema.statics.obtenerPorSala = async function (salaId) {
+  if (!mongoose.isObjectIdOrHexString(salaId)) return [];
+  return this.find({ salaId }).sort({ _id: 1 });
+};
 
-    const nuevoEvento = new Evento(
-      nuevoId,
-      data.nombre,
-      data.descripcion,
-      data.tipo,
-      data.fechaInicio,
-      data.fechaFin,
-      data.fechaInicioVenta,
-      data.fechaFinVenta,
-      data.precioEntrada,
-      "activo",
-      parseInt(data.salaId),
-    );
+eventoSchema.statics.obtenerProximos = function () {
+  return this.find({ fechaInicio: { $gt: new Date() } }).sort({ _id: 1 });
+};
 
-    eventos.push(nuevoEvento);
-    this.guardarTodos(eventos);
-    return nuevoEvento;
-  }
+eventoSchema.statics.crear = function (data) {
+  return this.create(data);
+};
 
-  static actualizar(id, datosActualizados) {
-    const eventos = this.obtenerTodos();
-    const index = eventos.findIndex((e) => e.id === parseInt(id));
-    if (index === -1) return null;
+// Carga el evento, aplica los cambios y guarda: así corren todas las validaciones del esquema.
+eventoSchema.statics.actualizar = async function (id, cambios) {
+  const evento = await this.obtenerPorId(id);
+  if (!evento) return null;
+  evento.set(cambios);
+  return evento.save();
+};
 
-    eventos[index] = { ...eventos[index], ...datosActualizados, id: parseInt(id) };
-    this.guardarTodos(eventos);
-    return eventos[index];
-  }
+// Indica si ya existe un evento con el mismo nombre, sala y fecha de inicio.
+eventoSchema.statics.existeDuplicado = async function ({ nombre, salaId, fechaInicio, excluirId }) {
+  const filtro = { nombre: String(nombre).trim(), salaId, fechaInicio: new Date(fechaInicio) };
+  if (excluirId) filtro._id = { $ne: excluirId };
+  return Boolean(await this.exists(filtro));
+};
 
-  // Verifica que el evento esté activo y dentro de su período de venta.
-  /*
-   * Los eventos recuperados del JSON son objetos planos y no instancias de Evento.
-   * Por este motivo, la validación se implementa como
-   * método estático y recibe el evento como parámetro.
-   */
+// Verifica que el evento esté activo y dentro de su período de venta.
+// Recibe el evento como parámetro (documento de Mongoose u objeto plano).
+eventoSchema.statics.puedeVenderEntradas = function (evento) {
+  if (evento.estado !== ESTADOS_EVENTO.ACTIVO) return false;
 
-  static puedeVenderEntradas(evento) {
+  const hoy = new Date();
+  const inicioVenta = new Date(evento.fechaInicioVenta);
+  const finVenta = new Date(evento.fechaFinVenta);
 
-    if (evento.estado !== ESTADOS_EVENTO.ACTIVO) return false;
+  return hoy >= inicioVenta && hoy <= finVenta;
+};
 
-    const hoy = new Date();
-    const inicioVenta = new Date(evento.fechaInicioVenta);
-    const finVenta = new Date(evento.fechaFinVenta);
+const Evento = mongoose.model("Evento", eventoSchema);
 
-    return hoy >= inicioVenta && hoy <= finVenta;
-  }
-
-   static obtenerProximos() {
-    const hoy = new Date();
-    return this.obtenerTodos().filter(
-      (evento) => new Date(evento.fechaInicio) > hoy
-    );
-  }
-}
-
-export { Evento, ESTADOS_VALIDOS };
+export { Evento, ESTADOS_EVENTO, ESTADOS_VALIDOS };

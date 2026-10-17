@@ -1,0 +1,493 @@
+
+/* ========================================
+   Urbana Cult — Estilos compartidos
+   ======================================== */
+
+/* ----- Base y estructura ----- */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 24px;
+  font-family: Arial, sans-serif;
+  color: #333;
+  background-color: #f9f9f9;
+}
+
+main {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+h1,
+h2 {
+  color: #333;
+}
+
+/* Tablas */
+
+table {
+  width: 100%;
+  margin-top: 16px;
+  border-collapse: collapse;
+  background-color: #fff;
+}
+
+th,
+td {
+  padding: 10px;
+  border: 1px solid #ccc;
+  text-align: left;
+}
+
+th {
+  background-color: #eee;
+}
+
+.vacio {
+  color: #777;
+  font-style: italic;
+}
+
+/* Resumen de información de un evento */
+
+.resumen {
+  padding: 15px;
+  margin-bottom: 20px;
+  background-color: #eef;
+  border-radius: 5px;
+}
+
+.resumen p {
+  margin: 5px 0;
+  font-size: 16px;
+}
+
+/* Navegación principal */
+
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  max-width: 1100px;
+  margin: 0 auto 32px;
+}
+
+.navbar-brand,
+.navbar-links a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.navbar-brand {
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.navbar-links {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.navbar-links a {
+  font-size: 0.95rem;
+  transition: opacity 0.2s ease;
+}
+
+.navbar-links a:hover,
+.cerrar-mensaje:hover {
+  opacity: 0.65;
+}
+
+.navbar a:focus-visible,
+.cerrar-mensaje:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+.navbar a:focus-visible {
+  border-radius: 2px;
+}
+
+/* ========================================
+   Administración de entradas
+   ======================================== */
+
+/* Formulario de venta */
+
+#form-venta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  max-width: 720px;
+  padding: 20px;
+  margin-top: 16px;
+  background-color: #fff;
+  border: 1px solid #e2e2e2;
+  border-radius: 8px;
+}
+
+#form-venta > div {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+#form-venta label {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+#form-venta input {
+  width: 100%;
+  padding: 10px 12px;
+  font: inherit;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+#form-venta input:focus-visible {
+  outline: 2px solid #7777aa;
+  outline-offset: 2px;
+}
+
+/* Botón para vender entradas */
+
+#boton-vender {
+  justify-self: start;
+  padding: 10px 16px;
+  color: #fff;
+  background-color: #45456b;
+  border: none;
+  border-radius: 5px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+#boton-vender:hover {
+  background-color: #343451;
+}
+
+#boton-vender:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+/* Tabla de entradas */
+
+#tabla-entradas {
+  overflow-wrap: anywhere;
+}
+
+#tabla-entradas th {
+  background-color: #e9e9f3;
+  font-size: 0.9rem;
+}
+
+#tabla-entradas tbody tr:nth-child(even) {
+  background-color: #f5f5f8;
+}
+
+#tabla-entradas tbody tr:hover {
+  background-color: #eeeeF7;
+}
+
+#tabla-entradas button {
+  padding: 6px 10px;
+  color: #8b2525;
+  background-color: #fff;
+  border: 1px solid #d9baba;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+#tabla-entradas button:hover {
+  background-color: #fbeeee;
+}
+
+#tabla-entradas td strong,
+#tabla-entradas td small {
+  display: block;
+}
+
+#tabla-entradas td small {
+  margin-top: 4px;
+  color: #777;
+  font-size: 0.75rem;
+  overflow-wrap: anywhere;
+}
+
+/* ========================================
+   Mensajes de éxito y error
+   ======================================== */
+
+#mensajes .mensaje {
+  padding: 10px 12px;
+  border-radius: 5px;
+}
+
+#mensajes .mensaje {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+#mensajes .mensaje[hidden] {
+  display: none;
+}
+
+#mensajes .mensaje-exito {
+  color: #245b37;
+  background-color: #e8f5ec;
+}
+
+#mensajes .mensaje-error {
+  color: #8b2525;
+  background-color: #fbeeee;
+}
+
+/* Botón para cerrar un mensaje */
+
+.cerrar-mensaje {
+  padding: 0 4px;
+  color: inherit;
+  background: transparent;
+  border: none;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+/* ========================================
+   Adaptación a pantallas pequeñas
+   ======================================== */
+
+@media (max-width: 600px) {
+  #form-venta {
+    grid-template-columns: 1fr;
+  }
+
+  #tabla-entradas {
+    font-size: 0.85rem;
+  }
+
+  #tabla-entradas th,
+  #tabla-entradas td {
+    padding: 7px;
+  }
+}
+
+/* Formularios */
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.campo label {
+  font-weight: 600;
+}
+
+.campo input {
+  width: 100%;
+  max-width: 420px;
+  padding: 10px 12px;
+  font: inherit;
+  color: inherit;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.campo input:focus-visible {
+  outline: 2px solid #555;
+  outline-offset: 2px;
+}
+
+/* Botones */
+
+.botones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+button,
+.boton {
+  display: inline-block;
+  padding: 10px 16px;
+  font: inherit;
+  color: #fff;
+  background-color: #333;
+  border: 1px solid #333;
+  border-radius: 4px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+button:hover,
+.boton:hover {
+  background-color: #555;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+button:focus-visible,
+.boton:focus-visible {
+  outline: 2px solid #555;
+  outline-offset: 3px;
+}
+
+/* Vistas de inicio y login */
+
+.inicio,
+#formulario-login {
+  margin-top: 24px;
+}
+
+/* Menú principal */
+
+.menu-principal ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 24px 0;
+  padding: 0;
+  list-style: none;
+}
+
+.menu-principal a {
+  display: block;
+  padding: 12px 16px;
+  color: #333;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  text-decoration: none;
+}
+
+.menu-principal a:hover {
+  background-color: #eee;
+}
+
+.menu-principal a:focus-visible {
+  outline: 2px solid #555;
+  outline-offset: 3px;
+}
+
+/* Mensajes de éxito y error */
+
+.mensaje {
+  margin: 12px 0;
+  padding: 10px 12px;
+  border-radius: 4px;
+}
+
+.mensaje-exito {
+  color: #166534;
+  background-color: #dcfce7;
+}
+
+.mensaje-error {
+  color: #991b1b;
+  background-color: #fee2e2;
+}
+
+/* Adaptación a pantallas pequeñas */
+
+@media (max-width: 768px) {
+  .navbar {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .navbar-links {
+    flex-wrap: wrap;
+    gap: 12px 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  body {
+    padding: 16px;
+  }
+
+  .navbar {
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .navbar-links {
+    gap: 16px;
+  }
+
+  table {
+    font-size: 0.9rem;
+  }
+
+  th,
+  td {
+    padding: 8px;
+  }
+}
+
+/* Acciones de las tablas de eventos */
+
+#tabla-eventos td:last-child {
+  min-width: 150px;
+  white-space: normal;
+}
+
+#tabla-eventos td:last-child button {
+  display: inline-block;
+  padding: 5px 8px;
+  margin: 2px 4px 2px 0;
+  font-size: 0.8rem;
+  line-height: 1.3;
+  vertical-align: middle;
+}
+
+/* Acciones de otras tablas: estilo compacto */
+
+#tabla-proximos td button {
+  padding: 5px 8px;
+  font-size: 0.8rem;
+}
+
+/* Acciones de la tabla de salas */
+#tabla-salas td:last-child {
+  min-width: 150px;
+  white-space: normal;
+}
+
+#tabla-salas td:last-child button {
+  display: inline-block;
+  padding: 5px 8px;
+  margin: 2px 4px 2px 0;
+  font-size: 0.8rem;
+  line-height: 1.3;
+  vertical-align: middle;
+}
+
+[hidden] {
+  display: none !important;
+}
