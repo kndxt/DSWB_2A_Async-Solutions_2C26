@@ -11,7 +11,6 @@ import reservaRoutes from "./routes/reservaRoutes.js";
 import notFound from "./middlewares/notFound.js";
 import errorHandler from "./middlewares/errorHandler.js";
 
-
 dotenv.config();
 
 const app = express();
@@ -36,7 +35,7 @@ app.use("/vistas", vistasRoutes);
 app.use("/reservas", reservaRoutes);
 
 app.get("/", (req, res) => {
-  res.send("Servidor Express activo y seguro.");
+  res.redirect("/vistas/inicio");
 });
 
 // Middleware para manejar rutas no encontradas
@@ -49,9 +48,7 @@ try {
 
   app.listen(PORT, () => {
     console.log(`Servidor corriendo en http://localhost:${PORT}`);
-
   });
-
 } catch (error) {
   console.error("No se pudo iniciar el servidor:", error.message);
   process.exitCode = 1;

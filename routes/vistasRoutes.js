@@ -9,6 +9,8 @@ import {
     renderizarEntradasPorEvento,
     renderizarReservas,
     renderizarEntradas,
+    renderizarLogin,
+    renderizarInicio,
 } from "../controllers/vistasController.js";
 
 const router = express.Router();
@@ -24,7 +26,15 @@ router.get(
   renderizarEntradas
 );
 
-router.get("/entradas/:eventoId", validarIds("params", "eventoId"), asyncHandler(renderizarEntradasPorEvento));
+router.get("/login", renderizarLogin);
+
+router.get("/inicio", renderizarInicio);
+
+router.get(
+  "/entradas/:eventoId",
+  validarIds("params", "eventoId"),
+  asyncHandler(renderizarEntradasPorEvento),
+);
 
 router.get("/reservas", renderizarReservas);
 

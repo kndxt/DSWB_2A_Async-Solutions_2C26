@@ -24,7 +24,7 @@ const renderizarEntradasPorEvento = async (req, res) => {
   const vendidas = await Entrada.obtenerVendidasPorEvento(eventoId);
   const disponibles = await Entrada.obtenerDisponiblesPorEvento(
     eventoId,
-    sala.capacidad
+    sala.capacidad,
   );
 
   res.render("entradas", {
@@ -34,7 +34,6 @@ const renderizarEntradasPorEvento = async (req, res) => {
     vendidas,
     disponibles,
   });
-
 };
 
 
@@ -44,11 +43,17 @@ const renderizarEntradas = (req, res) => {
 
 const renderizarReservas = (req, res) => res.render("reservas");
 
-export { 
+const renderizarLogin = (req, res) => res.render("login");
+
+const renderizarInicio = (req, res) => res.render("inicio");
+
+export {
   renderizarUsuarios,
   renderizarSalas,
-  renderizarEventos, 
+  renderizarEventos,
   renderizarEntradasPorEvento,
   renderizarEntradas,
   renderizarReservas,
+  renderizarLogin,
+  renderizarInicio,
 };
