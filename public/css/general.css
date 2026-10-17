@@ -449,3 +449,45 @@ button:focus-visible,
     padding: 8px;
   }
 }
+
+/* Acciones de las tablas de eventos */
+
+#tabla-eventos td:last-child {
+  min-width: 150px;
+  white-space: normal;
+}
+
+#tabla-eventos td:last-child button {
+  display: inline-block;
+  padding: 5px 8px;
+  margin: 2px 4px 2px 0;
+  font-size: 0.8rem;
+  line-height: 1.3;
+  vertical-align: middle;
+}
+
+/* Acciones de otras tablas: estilo compacto */
+
+#tabla-proximos td button {
+  padding: 5px 8px;
+  font-size: 0.8rem;
+}
+
+/* Acciones de la tabla de salas */
+#tabla-salas td:last-child {
+  min-width: 150px;
+  white-space: normal;
+}
+
+#tabla-salas td:last-child button {
+  display: inline-block;
+  padding: 5px 8px;
+  margin: 2px 4px 2px 0;
+  font-size: 0.8rem;
+  line-height: 1.3;
+  vertical-align: middle;
+}
+
+[hidden] {
+  display: none !important;
+}

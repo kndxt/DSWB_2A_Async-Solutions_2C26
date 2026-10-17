@@ -134,7 +134,7 @@ const crearFilaEvento = (evento) => {
   acciones.append(crearBoton("Editar", "editar", evento.id));
   // Solo se puede cancelar un evento activo; el registro y su reserva se conservan.
   if (evento.estado === "activo") {
-    acciones.append(" ", crearBoton("Cancelar evento", "cancelar", evento.id));
+    acciones.append(" ", crearBoton("Cancelar", "cancelar", evento.id));
   }
   acciones.dataset.nombre = evento.nombre;
 
