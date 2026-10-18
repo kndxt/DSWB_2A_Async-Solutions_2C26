@@ -55,11 +55,7 @@ Estas tareas se retomarán en la siguiente etapa para completar la integración 
 | **Git / GitHub** | Control de versiones, gestión de ramas y colaboración entre los integrantes. |
 | **Thunder Client / Postman** | Herramientas para probar los endpoints de la API. |
 
-                                     |
-
 ---
-
-## 4. Estructura del proyecto
 
 ## 4. Estructura del proyecto
 
@@ -213,6 +209,7 @@ node app.js
 ```
 
 La aplicación estará disponible en `http://localhost:3000`, siempre que el servidor esté configurado para utilizar ese puerto.
+
 ---
 
 ## 6. Persistencia de datos
