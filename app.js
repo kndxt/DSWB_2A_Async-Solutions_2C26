@@ -1,6 +1,4 @@
 import express from "express";
-import dotenv from "dotenv";
-import { conectarDB } from "./config/db.js";
 
 import usuarioRoutes from "./routes/usuarioRoutes.js";
 import salaRoutes from "./routes/salaRoutes.js";
@@ -11,10 +9,7 @@ import reservaRoutes from "./routes/reservaRoutes.js";
 import notFound from "./middlewares/notFound.js";
 import errorHandler from "./middlewares/errorHandler.js";
 
-dotenv.config();
-
 const app = express();
-const PORT = process.env.PORT || 3000;
 
 // Middleware para procesar datos en JSON
 app.use(express.json());
@@ -38,18 +33,8 @@ app.get("/", (req, res) => {
   res.redirect("/vistas/inicio");
 });
 
-// Middleware para manejar rutas no encontradas
+// Middleware para manejar rutas no encontradas y errores
 app.use(notFound);
 app.use(errorHandler);
 
-// Conectamos a MongoDB antes de levantar el servidor.
-try {
-  await conectarDB();
-
-  app.listen(PORT, () => {
-    console.log(`Servidor corriendo en http://localhost:${PORT}`);
-  });
-} catch (error) {
-  console.error("No se pudo iniciar el servidor:", error.message);
-  process.exitCode = 1;
-}
+export default app;
