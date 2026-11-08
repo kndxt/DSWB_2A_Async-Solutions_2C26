@@ -3,12 +3,13 @@ import http from "node:http";
 
 import app from "./app.js";
 import { conectarDB } from "./config/db.js";
+import { inicializarSockets } from "./sockets/index.js";
 
 const PORT = process.env.PORT || 3000;
 
-// Se crea el servidor HTTP a partir de la app para poder
-// engancharle Socket.IO más adelante
+// El servidor HTTP es compartido por Express y Socket.IO.
 const server = http.createServer(app);
+inicializarSockets(server);
 
 // El servidor solo empieza a escuchar si la conexión a MongoDB fue exitosa.
 try {
