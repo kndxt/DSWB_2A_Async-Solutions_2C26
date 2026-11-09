@@ -1,42 +1,45 @@
 import mongoose from "mongoose";
+import {entradaDefinicion} from "../definitions/entrada.js";
+import {obtenerTipoMongoose} from "../utils/tiposMongoose.js";
 
-// Estados posibles de una entrada.
-export const ESTADOS_ENTRADA = {
-  VENDIDA: "vendida",
-  CANCELADA: "cancelada",
-};
 
-export const entradaSchema = new mongoose.Schema({
-  eventoId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Evento",
-    required: true,
+// Atributos y estados definidos centralmente.
+const atributos = entradaDefinicion.atributos;
+export const ESTADOS_ENTRADA = atributos.estado.valores;
+
+// Esquema de persistencia de Entrada.
+export const entradaSchema = new mongoose.Schema(
+  {
+    eventoId: {
+      type: obtenerTipoMongoose(atributos.eventoId.tipo),
+      ref: "Evento",
+      required: atributos.eventoId.requerido,
+    },
+    usuarioId: {
+      type: obtenerTipoMongoose(atributos.usuarioId.tipo),
+      ref: "Usuario",
+      required: atributos.usuarioId.requerido,
+    },
+    estado: {
+      type: obtenerTipoMongoose(atributos.estado.tipo),
+      enum: Object.values(atributos.estado.valores),
+      default: ESTADOS_ENTRADA.VENDIDA,
+      required: atributos.estado.requerido,
+    },
+    fechaVenta: {
+      type: obtenerTipoMongoose(atributos.fechaVenta.tipo),
+      default: Date.now,
+      required: atributos.fechaVenta.requerido,
+    },
   },
-  usuarioId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Usuario",
-    required: true,
-  },
-  estado: {
-    type: String,
-    enum: Object.values(ESTADOS_ENTRADA),
-    default: ESTADOS_ENTRADA.VENDIDA,
-    required: true,
-  },
-  fechaVenta: {
-    type: Date,
-    default: Date.now,
-    required: true,
-  },
-},
-{
+  {
     versionKey: false,
     toJSON: {
-    transform: (doc, { _id, ...resto }) => ({
-      id: _id.toString(),
-      ...resto,
-    }),
-  },
+      transform: (doc, { _id, ...resto }) => ({
+        id: _id.toString(),
+        ...resto,
+      }),
+    },
   }
 );
 
