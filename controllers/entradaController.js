@@ -4,13 +4,13 @@ import Sala from "../models/salaModel.js";
 import Usuario, { ESTADOS_USUARIO } from "../models/usuarioModel.js";
 
 const obtenerEntradas = async (req, res) => {
-  const entradas = await Entrada.obtenerTodosConDetalles();
+  const entradas = await Entrada.obtenerTodos({ detalles: true });
   res.status(200).json(entradas);
 };
 
 const obtenerEntradaPorId = async (req, res) => {
   const { id } = req.params;
-  const entrada = await Entrada.obtenerPorId(id);
+  const entrada = await Entrada.obtenerPorId(id, { detalles: true });
 
   if (!entrada) {
     return res.status(404).json({
@@ -92,7 +92,7 @@ const cancelarEntrada = async (req, res) => {
  
   const { id } = req.params;
 
-  const entradaCancelada = await Entrada.cancelar(id);
+  const entradaCancelada = await Entrada.cancelar(id, { detalles: true });
 
   if(!entradaCancelada) {
     return res.status(400).json({

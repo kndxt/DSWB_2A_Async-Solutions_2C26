@@ -35,7 +35,7 @@ export const entradaSchema = new mongoose.Schema(
   {
     versionKey: false,
     toJSON: {
-      transform: (doc, { _id, ...resto }) => ({
+      transform: (_doc, { _id, ...resto }) => ({
         id: _id.toString(),
         ...resto,
       }),
@@ -43,17 +43,38 @@ export const entradaSchema = new mongoose.Schema(
   }
 );
 
+// Construye una consulta con los detalles relacionados cuando se solicitan.
+const incluirDetalles = (consulta, incluir) => {
+  if (incluir) {
+    return consulta
+      .populate({
+        path: "eventoId",
+        select: "nombre",
+      })
+      .populate({
+        path: "usuarioId",
+        select: "nombre apellido",
+      });
+  }
+
+  return consulta;
+};
+
 entradaSchema.statics.crear = function (data) {
   return this.create(data);
 }
 
-entradaSchema.statics.obtenerTodos = function (){
-  return this.find();
-}
+entradaSchema.statics.obtenerTodos = function (opciones = {}) {
+  const { detalles = false } = opciones;
 
-entradaSchema.statics.obtenerPorId = function (id) {
-  return this.findById(id);
-}
+  return incluirDetalles(this.find(), detalles);
+};
+
+entradaSchema.statics.obtenerPorId = function (id, opciones = {}) {
+  const { detalles = false } = opciones;
+
+  return incluirDetalles(this.findById(id), detalles);
+};
 
 entradaSchema.statics.obtenerPorEvento = function (eventoId) {
   return this.find({ eventoId });
@@ -68,23 +89,25 @@ entradaSchema.statics.obtenerVendidasPorEvento = function (eventoId) {
   );
 }
 
-entradaSchema.statics.cancelar = function (id) {
+entradaSchema.statics.cancelar = function (id, opciones = {}) {
+  const { detalles = false } = opciones;
 
-  return this.findOneAndUpdate(
-    { 
-      _id: id, 
-      estado: ESTADOS_ENTRADA.VENDIDA 
-    },
-    { 
-      estado: ESTADOS_ENTRADA.CANCELADA 
+  const consulta = this.findOneAndUpdate(
+    {
+      _id: id,
+      estado: ESTADOS_ENTRADA.VENDIDA,
     },
     {
-      returnDocument: 'after',
-      runValidators: true
+      estado: ESTADOS_ENTRADA.CANCELADA,
+    },
+    {
+      returnDocument: "after",
+      runValidators: true,
     }
   );
 
-}
+  return incluirDetalles(consulta, detalles);
+};
 
 // Cuenta las entradas vendidas de un evento y calcula cuántas quedan disponibles según su capacidad.
 entradaSchema.statics.obtenerDisponiblesPorEvento = async function (eventoId, capacidad) {
@@ -95,18 +118,6 @@ entradaSchema.statics.obtenerDisponiblesPorEvento = async function (eventoId, ca
 
   return capacidad - entradasVendidas;
 }
-
-entradaSchema.statics.obtenerTodosConDetalles = function () {
-  return this.find()
-    .populate({
-      path: "eventoId",
-      select: "nombre",
-    })
-    .populate({
-      path: "usuarioId",
-      select: "nombre apellido",
-    });
-};
 
 // Reutiliza el modelo Entrada si ya existe; de lo contrario, lo registra con el esquema y la colección "entradas".
 export const Entrada = mongoose.models.Entrada || mongoose.model("Entrada", entradaSchema, "entradas");
