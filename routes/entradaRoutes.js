@@ -1,6 +1,7 @@
 import express from "express";
 import asyncHandler from "../middlewares/asyncHandler.js";
-import validarIds from "../middlewares/validarIds.js";
+import validarDatos from "../middlewares/validarDatos.js";
+import { entradaDefinicion } from "../definitions/entrada.js";
 
 import {
   obtenerEntradas,
@@ -13,16 +14,19 @@ import {
 
 const router = express.Router();
 
+const { operaciones } = entradaDefinicion;
+const validarEntrada = validarDatos(entradaDefinicion);
+
 router.get("/", asyncHandler(obtenerEntradas));
 
-router.get("/vendidas/:eventoId", validarIds("params", "eventoId"), asyncHandler(obtenerVendidasPorEvento));
+router.get("/vendidas/:eventoId", validarEntrada(operaciones.obtenerVendidasPorEvento), asyncHandler(obtenerVendidasPorEvento));
 
-router.get("/disponibles/:eventoId", validarIds("params", "eventoId"), asyncHandler(obtenerDisponiblesPorEvento));
+router.get("/disponibles/:eventoId", validarEntrada(operaciones.obtenerDisponiblesPorEvento), asyncHandler(obtenerDisponiblesPorEvento));
 
-router.get("/:id", validarIds("params", "id"), asyncHandler(obtenerEntradaPorId));
+router.get("/:id", validarEntrada(operaciones.obtenerPorId), asyncHandler(obtenerEntradaPorId));
 
-router.post("/", validarIds("body", "eventoId", "usuarioId") , asyncHandler(venderEntrada));
+router.post("/", validarEntrada(operaciones.vender), asyncHandler(venderEntrada));
 
-router.patch("/:id/cancelar", validarIds("params", "id"), asyncHandler(cancelarEntrada));
+router.patch("/:id/cancelar", validarEntrada(operaciones.cancelar), asyncHandler(cancelarEntrada));
 
 export default router;
