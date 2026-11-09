@@ -8,7 +8,10 @@
     "dev": "node --watch server.js",
     "test": "node --test",
     "format": "prettier . --write --ignore-unknown",
-    "format:check": "prettier . --check --ignore-unknown"
+    "format:check": "prettier . --check --ignore-unknown",
+    "seed:verificar": "node scripts/verificar-seed.js",
+    "seed": "node scripts/seed.js --destino=atlas",
+    "seed:local": "node scripts/seed.js --destino=local"
   },
   "repository": {
     "type": "git",
