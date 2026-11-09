@@ -7,6 +7,14 @@ export const ESTADOS_USUARIO = {
 
 export const ESTADOS_VALIDOS = Object.values(ESTADOS_USUARIO);
 
+export const ROLES_USUARIO = {
+  ADMIN: "admin",
+  CLIENTE: "cliente",
+};
+
+export const ROLES_VALIDOS = Object.values(ROLES_USUARIO);
+
+
 const usuarioSchema = new mongoose.Schema(
   {
     nombre: {
@@ -39,6 +47,14 @@ const usuarioSchema = new mongoose.Schema(
         message: `Estado inválido. Valores permitidos: ${ESTADOS_VALIDOS.join(", ")}`,
       },
       default: ESTADOS_USUARIO.ACTIVO,
+    },
+    rol: {
+      type: String,
+      enum: {
+        values: ROLES_VALIDOS,
+        message: `Rol inválido. Valores permitidos: ${ROLES_VALIDOS.join(", ")}`,
+      },
+      default: ROLES_USUARIO.CLIENTE,
     },
   },
   {
