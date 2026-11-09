@@ -1,8 +1,13 @@
 import test, { before, after } from "node:test";
 import assert from "node:assert/strict";
 import {
-  iniciarEntorno, cerrarEntorno, peticion, respuestaJSON,
-  crearUsuario, registrarCreado, Usuario,
+  iniciarEntorno,
+  cerrarEntorno,
+  peticion,
+  respuestaJSON,
+  crearUsuario,
+  registrarCreado,
+  Usuario,
 } from "../helpers/environment.js";
 
 before(iniciarEntorno);
@@ -47,11 +52,13 @@ test("POST /usuarios crea un usuario válido", async () => {
 
 test("POST /usuarios rechaza campos obligatorios faltantes y email duplicado", async () => {
   const faltante = await peticion("/usuarios", {
-    method: "POST", body: { nombre: "Ana", apellido: "Prueba", email: "sin-password@example.test" },
+    method: "POST",
+    body: { nombre: "Ana", apellido: "Prueba", email: "sin-password@example.test" },
   });
   const usuario = await crearUsuario();
   const duplicado = await peticion("/usuarios", {
-    method: "POST", body: { nombre: "Otro", apellido: "Usuario", email: usuario.email, password: "123456" },
+    method: "POST",
+    body: { nombre: "Otro", apellido: "Usuario", email: usuario.email, password: "123456" },
   });
   assert.equal(faltante.status, 400);
   assert.equal(duplicado.status, 400);
@@ -62,7 +69,12 @@ test("PUT /usuarios/:id actualiza campos permitidos e ignora estado e ID", async
   const usuario = await crearUsuario();
   const response = await peticion(`/usuarios/${usuario.id}`, {
     method: "PUT",
-    body: { nombre: "Nombre actualizado", telefono: "1199999999", estado: "inactivo", id: "000000000000000000000001" },
+    body: {
+      nombre: "Nombre actualizado",
+      telefono: "1199999999",
+      estado: "inactivo",
+      id: "000000000000000000000001",
+    },
   });
   const body = await respuestaJSON(response);
   assert.equal(response.status, 200);
@@ -73,9 +85,18 @@ test("PUT /usuarios/:id actualiza campos permitidos e ignora estado e ID", async
 
 test("PUT /usuarios/:id rechaza email duplicado, contraseña vacía e ID inexistente", async () => {
   const [usuario, otro] = await Promise.all([crearUsuario(), crearUsuario()]);
-  const emailDuplicado = await peticion(`/usuarios/${usuario.id}`, { method: "PUT", body: { email: otro.email } });
-  const passwordVacia = await peticion(`/usuarios/${usuario.id}`, { method: "PUT", body: { password: "" } });
-  const inexistente = await peticion("/usuarios/000000000000000000000001", { method: "PUT", body: { nombre: "X" } });
+  const emailDuplicado = await peticion(`/usuarios/${usuario.id}`, {
+    method: "PUT",
+    body: { email: otro.email },
+  });
+  const passwordVacia = await peticion(`/usuarios/${usuario.id}`, {
+    method: "PUT",
+    body: { password: "" },
+  });
+  const inexistente = await peticion("/usuarios/000000000000000000000001", {
+    method: "PUT",
+    body: { nombre: "X" },
+  });
   assert.equal(emailDuplicado.status, 400);
   assert.equal(passwordVacia.status, 400);
   assert.equal(inexistente.status, 404);
@@ -83,15 +104,24 @@ test("PUT /usuarios/:id rechaza email duplicado, contraseña vacía e ID inexist
 
 test("PUT /usuarios/:id permite actualmente cambiar la contraseña por un valor no vacío", async () => {
   const usuario = await crearUsuario();
-  const response = await peticion(`/usuarios/${usuario.id}`, { method: "PUT", body: { password: "nueva-clave" } });
+  const response = await peticion(`/usuarios/${usuario.id}`, {
+    method: "PUT",
+    body: { password: "nueva-clave" },
+  });
   assert.equal(response.status, 200);
   assert.equal((await Usuario.findById(usuario.id)).password, "nueva-clave");
 });
 
 test("PATCH /usuarios/:id/estado cambia estado y rechaza valores inválidos", async () => {
   const usuario = await crearUsuario();
-  const actualizado = await peticion(`/usuarios/${usuario.id}/estado`, { method: "PATCH", body: { estado: "inactivo", nombre: "No modificar" } });
-  const invalido = await peticion(`/usuarios/${usuario.id}/estado`, { method: "PATCH", body: { estado: "bloqueado" } });
+  const actualizado = await peticion(`/usuarios/${usuario.id}/estado`, {
+    method: "PATCH",
+    body: { estado: "inactivo", nombre: "No modificar" },
+  });
+  const invalido = await peticion(`/usuarios/${usuario.id}/estado`, {
+    method: "PATCH",
+    body: { estado: "bloqueado" },
+  });
   const body = await respuestaJSON(actualizado);
   assert.equal(actualizado.status, 200);
   assert.equal(body.estado, "inactivo");

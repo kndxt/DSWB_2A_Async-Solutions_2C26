@@ -1,4 +1,3 @@
-
 /**
  * Envuelve un handler asíncrono para derivar los rechazos
  * de su promesa al middleware centralizado de errores.

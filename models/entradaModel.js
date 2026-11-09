@@ -1,111 +1,120 @@
 import mongoose from "mongoose";
+import { entradaDefinicion } from "../definitions/entrada.js";
+import { obtenerTipoMongoose } from "../utils/tiposMongoose.js";
 
-// Estados posibles de una entrada.
-export const ESTADOS_ENTRADA = {
-  VENDIDA: "vendida",
-  CANCELADA: "cancelada",
-};
+// Atributos y estados definidos centralmente.
+const atributos = entradaDefinicion.atributos;
+export const ESTADOS_ENTRADA = atributos.estado.valores;
 
-export const entradaSchema = new mongoose.Schema({
-  eventoId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Evento",
-    required: true,
+// Esquema de persistencia de Entrada.
+export const entradaSchema = new mongoose.Schema(
+  {
+    eventoId: {
+      type: obtenerTipoMongoose(atributos.eventoId.tipo),
+      ref: "Evento",
+      required: atributos.eventoId.requerido,
+    },
+    usuarioId: {
+      type: obtenerTipoMongoose(atributos.usuarioId.tipo),
+      ref: "Usuario",
+      required: atributos.usuarioId.requerido,
+    },
+    estado: {
+      type: obtenerTipoMongoose(atributos.estado.tipo),
+      enum: Object.values(atributos.estado.valores),
+      default: ESTADOS_ENTRADA.VENDIDA,
+      required: atributos.estado.requerido,
+    },
+    fechaVenta: {
+      type: obtenerTipoMongoose(atributos.fechaVenta.tipo),
+      default: Date.now,
+      required: atributos.fechaVenta.requerido,
+    },
   },
-  usuarioId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Usuario",
-    required: true,
-  },
-  estado: {
-    type: String,
-    enum: Object.values(ESTADOS_ENTRADA),
-    default: ESTADOS_ENTRADA.VENDIDA,
-    required: true,
-  },
-  fechaVenta: {
-    type: Date,
-    default: Date.now,
-    required: true,
-  },
-},
-{
+  {
     versionKey: false,
     toJSON: {
-    transform: (doc, { _id, ...resto }) => ({
-      id: _id.toString(),
-      ...resto,
-    }),
+      transform: (_doc, { _id, ...resto }) => ({
+        id: _id.toString(),
+        ...resto,
+      }),
+    },
   },
-  }
 );
+
+// Construye una consulta con los detalles relacionados cuando se solicitan.
+const incluirDetalles = (consulta, incluir) => {
+  if (incluir) {
+    return consulta
+      .populate({
+        path: "eventoId",
+        select: "nombre",
+      })
+      .populate({
+        path: "usuarioId",
+        select: "nombre apellido",
+      });
+  }
+
+  return consulta;
+};
 
 entradaSchema.statics.crear = function (data) {
   return this.create(data);
-}
+};
 
-entradaSchema.statics.obtenerTodos = function (){
-  return this.find();
-}
+entradaSchema.statics.obtenerTodos = function (opciones = {}) {
+  const { detalles = false } = opciones;
 
-entradaSchema.statics.obtenerPorId = function (id) {
-  return this.findById(id);
-}
+  return incluirDetalles(this.find(), detalles);
+};
+
+entradaSchema.statics.obtenerPorId = function (id, opciones = {}) {
+  const { detalles = false } = opciones;
+
+  return incluirDetalles(this.findById(id), detalles);
+};
 
 entradaSchema.statics.obtenerPorEvento = function (eventoId) {
   return this.find({ eventoId });
-}
+};
 
 entradaSchema.statics.obtenerVendidasPorEvento = function (eventoId) {
-  return this.find(
-    { 
-      eventoId, 
-      estado: ESTADOS_ENTRADA.VENDIDA 
-    }
-  );
-}
+  return this.find({
+    eventoId,
+    estado: ESTADOS_ENTRADA.VENDIDA,
+  });
+};
 
-entradaSchema.statics.cancelar = function (id) {
+entradaSchema.statics.cancelar = function (id, opciones = {}) {
+  const { detalles = false } = opciones;
 
-  return this.findOneAndUpdate(
-    { 
-      _id: id, 
-      estado: ESTADOS_ENTRADA.VENDIDA 
-    },
-    { 
-      estado: ESTADOS_ENTRADA.CANCELADA 
+  const consulta = this.findOneAndUpdate(
+    {
+      _id: id,
+      estado: ESTADOS_ENTRADA.VENDIDA,
     },
     {
-      returnDocument: 'after',
-      runValidators: true
-    }
+      estado: ESTADOS_ENTRADA.CANCELADA,
+    },
+    {
+      returnDocument: "after",
+      runValidators: true,
+    },
   );
 
-}
+  return incluirDetalles(consulta, detalles);
+};
 
 // Cuenta las entradas vendidas de un evento y calcula cuántas quedan disponibles según su capacidad.
 entradaSchema.statics.obtenerDisponiblesPorEvento = async function (eventoId, capacidad) {
-  const entradasVendidas = 
-    await this.countDocuments(
-      { eventoId, estado: ESTADOS_ENTRADA.VENDIDA }
-    );
+  const entradasVendidas = await this.countDocuments({ eventoId, estado: ESTADOS_ENTRADA.VENDIDA });
 
   return capacidad - entradasVendidas;
-}
-
-entradaSchema.statics.obtenerTodosConDetalles = function () {
-  return this.find()
-    .populate({
-      path: "eventoId",
-      select: "nombre",
-    })
-    .populate({
-      path: "usuarioId",
-      select: "nombre apellido",
-    });
 };
 
 // Reutiliza el modelo Entrada si ya existe; de lo contrario, lo registra con el esquema y la colección "entradas".
-export const Entrada = mongoose.models.Entrada || mongoose.model("Entrada", entradaSchema, "entradas");
+export const Entrada =
+  mongoose.models.Entrada || mongoose.model("Entrada", entradaSchema, "entradas");
 
 export default Entrada;
