@@ -1,3 +1,5 @@
+
+import mongoose from "mongoose";
 import { ValidationError, ConflictError } from "./errores.js";
 
 /**
@@ -5,14 +7,17 @@ import { ValidationError, ConflictError } from "./errores.js";
  */
 const traducirError = (err) => {
   // Error de validación del esquema de Mongoose.
-  if (err.name === "ValidationError") {
+  if (err instanceof mongoose.Error.ValidationError) {
     const error = new ValidationError("Los datos proporcionados no son válidos.");
     error.cause = err;
     return error;
   }
 
   // Error por intentar guardar un valor duplicado en un índice único.
-  if (err.code === 11000) {
+  if (
+    err instanceof mongoose.mongo.MongoServerError &&
+    err.code === 11000
+  ) {
     const error = new ConflictError("El recurso ya existe o contiene un dato duplicado.");
     error.cause = err;
     return error;
