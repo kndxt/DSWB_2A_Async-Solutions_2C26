@@ -4,9 +4,8 @@ import traducirError from "../errors/traducirError.js";
  * Genera una respuesta HTTP uniforme para los errores de la aplicación.
  */
 const errorHandler = (err, req, res, next) => {
-
-// Si los encabezados de la respuesta ya se enviaron, evita intentar enviar otra respuesta.
-// Delega el error a Express para que lo maneje según corresponda.
+  // Si los encabezados de la respuesta ya se enviaron, evita intentar enviar otra respuesta.
+  // Delega el error a Express para que lo maneje según corresponda.
   if (res.headersSent) {
     return next(err);
   }
@@ -48,9 +47,7 @@ const errorHandler = (err, req, res, next) => {
       }
     : undefined;
 
-
-  const esVista =
-    req.path === "/vistas" || req.path.startsWith("/vistas/");
+  const esVista = req.path === "/vistas" || req.path.startsWith("/vistas/");
 
   // Para las vistas, renderiza la página de error.
   if (esVista) {
@@ -69,7 +66,6 @@ const errorHandler = (err, req, res, next) => {
   }
 
   return res.status(statusCode).json(response);
-
 };
 
 export default errorHandler;

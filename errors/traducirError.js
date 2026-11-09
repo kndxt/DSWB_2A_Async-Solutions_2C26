@@ -1,4 +1,3 @@
-
 import mongoose from "mongoose";
 import { ValidationError, ConflictError } from "./errores.js";
 
@@ -14,10 +13,7 @@ const traducirError = (err) => {
   }
 
   // Error por intentar guardar un valor duplicado en un índice único.
-  if (
-    err instanceof mongoose.mongo.MongoServerError &&
-    err.code === 11000
-  ) {
+  if (err instanceof mongoose.mongo.MongoServerError && err.code === 11000) {
     const error = new ConflictError("El recurso ya existe o contiene un dato duplicado.");
     error.cause = err;
     return error;

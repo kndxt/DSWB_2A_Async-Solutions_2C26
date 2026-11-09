@@ -1,4 +1,3 @@
-
 import test from "node:test";
 import assert from "node:assert/strict";
 
@@ -24,9 +23,7 @@ const idValido = "507f1f77bcf86cd799439011";
 
 // Comprueba la validación de parámetros de ruta.
 test("acepta un ObjectId válido en params", () => {
-  const middleware = validarEntrada(
-    entradaDefinicion.operaciones.obtenerPorId
-  );
+  const middleware = validarEntrada(entradaDefinicion.operaciones.obtenerPorId);
 
   const nextLlamado = ejecutarMiddleware(middleware, {
     params: { id: idValido },
@@ -36,23 +33,20 @@ test("acepta un ObjectId válido en params", () => {
 });
 
 test("rechaza un ObjectId inválido en params", () => {
-  const middleware = validarEntrada(
-    entradaDefinicion.operaciones.obtenerPorId
-  );
+  const middleware = validarEntrada(entradaDefinicion.operaciones.obtenerPorId);
 
   assert.throws(
-    () => ejecutarMiddleware(middleware, {
-      params: { id: "123" },
-    }),
-    ValidationError
+    () =>
+      ejecutarMiddleware(middleware, {
+        params: { id: "123" },
+      }),
+    ValidationError,
   );
 });
 
 // Comprueba la validación de datos enviados en el body.
 test("acepta ObjectIds válidos en body", () => {
-  const middleware = validarEntrada(
-    entradaDefinicion.operaciones.vender
-  );
+  const middleware = validarEntrada(entradaDefinicion.operaciones.vender);
 
   const nextLlamado = ejecutarMiddleware(middleware, {
     body: {
@@ -65,51 +59,48 @@ test("acepta ObjectIds válidos en body", () => {
 });
 
 test("rechaza ObjectIds inválidos en body", () => {
-  const middleware = validarEntrada(
-    entradaDefinicion.operaciones.vender
-  );
+  const middleware = validarEntrada(entradaDefinicion.operaciones.vender);
 
   assert.throws(
-    () => ejecutarMiddleware(middleware, {
-      body: {
-        eventoId: "123",
-        usuarioId: idValido,
-      },
-    }),
-    ValidationError
+    () =>
+      ejecutarMiddleware(middleware, {
+        body: {
+          eventoId: "123",
+          usuarioId: idValido,
+        },
+      }),
+    ValidationError,
   );
 });
 
 // Comprueba la presencia de campos obligatorios.
 test("rechaza campos requeridos ausentes", () => {
-  const middleware = validarEntrada(
-    entradaDefinicion.operaciones.vender
-  );
+  const middleware = validarEntrada(entradaDefinicion.operaciones.vender);
 
   assert.throws(
-    () => ejecutarMiddleware(middleware, {
-      body: {
-        eventoId: idValido,
-      },
-    }),
-    ValidationError
+    () =>
+      ejecutarMiddleware(middleware, {
+        body: {
+          eventoId: idValido,
+        },
+      }),
+    ValidationError,
   );
 });
 
 test("rechaza campos requeridos vacíos o nulos", () => {
-  const middleware = validarEntrada(
-    entradaDefinicion.operaciones.vender
-  );
+  const middleware = validarEntrada(entradaDefinicion.operaciones.vender);
 
   for (const valor of ["", null]) {
     assert.throws(
-      () => ejecutarMiddleware(middleware, {
-        body: {
-          eventoId: valor,
-          usuarioId: idValido,
-        },
-      }),
-      ValidationError
+      () =>
+        ejecutarMiddleware(middleware, {
+          body: {
+            eventoId: valor,
+            usuarioId: idValido,
+          },
+        }),
+      ValidationError,
     );
   }
 });
@@ -141,21 +132,20 @@ test("valida el tipo de los campos opcionales cuando se envían", () => {
   });
 
   assert.throws(
-    () => ejecutarMiddleware(middleware, {
-      body: {
-        eventoId: idValido,
-        usuarioId: "123",
-      },
-    }),
-    ValidationError
+    () =>
+      ejecutarMiddleware(middleware, {
+        body: {
+          eventoId: idValido,
+          usuarioId: "123",
+        },
+      }),
+    ValidationError,
   );
 });
 
 // Comprueba que los campos ajenos a la operación no se validen.
 test("ignora campos no contemplados por la operación", () => {
-  const middleware = validarEntrada(
-    entradaDefinicion.operaciones.vender
-  );
+  const middleware = validarEntrada(entradaDefinicion.operaciones.vender);
 
   const nextLlamado = ejecutarMiddleware(middleware, {
     body: {
@@ -170,9 +160,7 @@ test("ignora campos no contemplados por la operación", () => {
 
 // Comprueba operaciones que no requieren validación de datos.
 test("permite continuar cuando la operación no tiene campos definidos", () => {
-  const middleware = validarEntrada(
-    entradaDefinicion.operaciones.obtenerTodos
-  );
+  const middleware = validarEntrada(entradaDefinicion.operaciones.obtenerTodos);
 
   const nextLlamado = ejecutarMiddleware(middleware, {
     body: {},

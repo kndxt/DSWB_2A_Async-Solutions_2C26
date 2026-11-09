@@ -1,13 +1,8 @@
-
 import test from "node:test";
 import assert from "node:assert/strict";
 
 import errorHandler from "../../../middlewares/errorHandler.js";
-import {
-  ValidationError,
-  NotFoundError,
-  ConflictError,
-} from "../../../errors/errores.js";
+import { ValidationError, NotFoundError, ConflictError } from "../../../errors/errores.js";
 
 /**
  * Ejecuta el errorHandler simulando req y res.
@@ -15,11 +10,7 @@ import {
  */
 const ejecutarErrorHandler = (
   error,
-  {
-    path = "/api/entradas",
-    headersSent = false,
-    nodeEnv = "production",
-  } = {}
+  { path = "/api/entradas", headersSent = false, nodeEnv = "production" } = {},
 ) => {
   const entornoAnterior = process.env.NODE_ENV;
 
@@ -111,10 +102,7 @@ test("responde con un mensaje seguro para errores internos en producción", () =
   });
 
   assert.equal(resultado.statusCode, 500);
-  assert.equal(
-    resultado.json.error,
-    "Ocurrió un error interno. Intentá nuevamente más tarde."
-  );
+  assert.equal(resultado.json.error, "Ocurrió un error interno. Intentá nuevamente más tarde.");
   assert.equal(resultado.json.detalles, undefined);
 });
 
@@ -127,15 +115,9 @@ test("incluye detalles técnicos en desarrollo", () => {
   });
 
   assert.equal(resultado.statusCode, 500);
-  assert.equal(
-    resultado.json.error,
-    "Ocurrió un error interno. Intentá nuevamente más tarde."
-  );
+  assert.equal(resultado.json.error, "Ocurrió un error interno. Intentá nuevamente más tarde.");
   assert.equal(resultado.json.detalles.nombre, "Error");
-  assert.equal(
-    resultado.json.detalles.mensaje,
-    "Detalle técnico interno"
-  );
+  assert.equal(resultado.json.detalles.mensaje, "Detalle técnico interno");
   assert.ok(resultado.json.detalles.stack);
 });
 
@@ -149,10 +131,7 @@ test("incluye detalles técnicos de errores de aplicación en desarrollo", () =>
 
   assert.equal(resultado.statusCode, 400);
   assert.equal(resultado.json.error, "Datos inválidos");
-  assert.equal(
-    resultado.json.detalles.mensaje,
-    "Datos inválidos"
-  );
+  assert.equal(resultado.json.detalles.mensaje, "Datos inválidos");
 });
 
 // Comprueba que las rutas de vistas rendericen la página de error.
@@ -165,10 +144,7 @@ test("renderiza la vista de error para rutas /vistas", () => {
 
   assert.equal(resultado.statusCode, 404);
   assert.equal(resultado.vista, "error");
-  assert.equal(
-    resultado.datosVista.mensaje,
-    "Recurso no encontrado"
-  );
+  assert.equal(resultado.datosVista.mensaje, "Recurso no encontrado");
   assert.equal(resultado.json, null);
 });
 
@@ -207,8 +183,5 @@ test("utiliza 500 cuando el código de estado del error no es válido", () => {
   const resultado = ejecutarErrorHandler(error);
 
   assert.equal(resultado.statusCode, 500);
-  assert.equal(
-    resultado.json.error,
-    "Ocurrió un error interno. Intentá nuevamente más tarde."
-  );
+  assert.equal(resultado.json.error, "Ocurrió un error interno. Intentá nuevamente más tarde.");
 });

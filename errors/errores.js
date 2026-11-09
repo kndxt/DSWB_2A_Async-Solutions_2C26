@@ -1,4 +1,3 @@
-
 /**
  * Clase base para representar errores esperados de la aplicación.
  */

@@ -1,4 +1,3 @@
-
 import test, { before, after } from "node:test";
 import assert from "node:assert/strict";
 
@@ -31,7 +30,6 @@ async function assertError(response, status, mensaje) {
   const body = await respuestaJSON(response);
   assert.equal(body.error, mensaje);
 }
-
 
 // ============================================================
 // VENTA DE ENTRADAS
@@ -97,7 +95,6 @@ test("POST /entradas rechaza IDs inválidos y recursos inexistentes", async () =
   await assertError(usuarioInexistente, 404, "Cliente no encontrado");
 });
 
-
 // ============================================================
 // RESTRICCIONES DE VENTA
 // ============================================================
@@ -138,17 +135,9 @@ test("POST /entradas rechaza eventos que no admiten nuevas ventas", async () => 
     },
   });
 
-  await assertError(
-    ventaCancelado,
-    409,
-    "El evento no permite nuevas ventas"
-  );
+  await assertError(ventaCancelado, 409, "El evento no permite nuevas ventas");
 
-  await assertError(
-    ventaFinalizado,
-    409,
-    "El evento no permite nuevas ventas"
-  );
+  await assertError(ventaFinalizado, 409, "El evento no permite nuevas ventas");
 });
 
 test("POST /entradas rechaza la compra de un cliente inactivo", async () => {
@@ -182,11 +171,7 @@ test("POST /entradas rechaza la venta cuando la capacidad está completa", async
     },
   });
 
-  await assertError(
-    response,
-    409,
-    "El evento ya alcanzó su capacidad máxima"
-  );
+  await assertError(response, 409, "El evento ya alcanzó su capacidad máxima");
 });
 
 test("POST /entradas rechaza eventos cuya sala asociada no existe", async () => {
@@ -205,13 +190,8 @@ test("POST /entradas rechaza eventos cuya sala asociada no existe", async () => 
     },
   });
 
-  await assertError(
-    response,
-    404,
-    "La sala asociada al evento no existe"
-  );
+  await assertError(response, 404, "La sala asociada al evento no existe");
 });
-
 
 // ============================================================
 // CANCELACIÓN DE ENTRADAS
@@ -220,10 +200,7 @@ test("POST /entradas rechaza eventos cuya sala asociada no existe", async () => 
 test("PATCH /entradas/:id/cancelar cancela una entrada", async () => {
   const entrada = await crearEntrada();
 
-  const response = await peticion(
-    `/entradas/${entrada.id}/cancelar`,
-    { method: "PATCH" }
-  );
+  const response = await peticion(`/entradas/${entrada.id}/cancelar`, { method: "PATCH" });
 
   const body = await respuestaJSON(response);
 
@@ -238,38 +215,20 @@ test("PATCH /entradas/:id/cancelar rechaza una cancelación repetida", async () 
     method: "PATCH",
   });
 
-  const response = await peticion(
-    `/entradas/${entrada.id}/cancelar`,
-    { method: "PATCH" }
-  );
+  const response = await peticion(`/entradas/${entrada.id}/cancelar`, { method: "PATCH" });
 
-  await assertError(
-    response,
-    409,
-    "Entrada no encontrada o ya está cancelada"
-  );
+  await assertError(response, 409, "Entrada no encontrada o ya está cancelada");
 });
 
 test("PATCH /entradas/:id/cancelar rechaza IDs inválidos y entradas inexistentes", async () => {
-  const invalida = await peticion(
-    `/entradas/${ID_INVALIDO}/cancelar`,
-    { method: "PATCH" }
-  );
+  const invalida = await peticion(`/entradas/${ID_INVALIDO}/cancelar`, { method: "PATCH" });
 
   assert.equal(invalida.status, 400);
 
-  const inexistente = await peticion(
-    `/entradas/${ID_INEXISTENTE}/cancelar`,
-    { method: "PATCH" }
-  );
+  const inexistente = await peticion(`/entradas/${ID_INEXISTENTE}/cancelar`, { method: "PATCH" });
 
-  await assertError(
-    inexistente,
-    409,
-    "Entrada no encontrada o ya está cancelada"
-  );
+  await assertError(inexistente, 409, "Entrada no encontrada o ya está cancelada");
 });
-
 
 // ============================================================
 // CONSULTAS DE ENTRADAS
@@ -293,11 +252,7 @@ test("GET /entradas, /:id, /vendidas/:eventoId y /disponibles/:eventoId funciona
   assert.equal((await respuestaJSON(una)).id, entrada.id);
 
   assert.equal(vendidas.status, 200);
-  assert.ok(
-    (await respuestaJSON(vendidas)).some(
-      (item) => item.id === entrada.id
-    )
-  );
+  assert.ok((await respuestaJSON(vendidas)).some((item) => item.id === entrada.id));
 
   assert.equal(disponibles.status, 200);
   assert.equal((await respuestaJSON(disponibles)).disponibles, 2);
@@ -311,44 +266,24 @@ test("GET de entradas rechaza IDs inválidos y recursos inexistentes", async () 
   // Entrada inexistente con un identificador válido.
   const entradaInexistente = await peticion(`/entradas/${ID_INEXISTENTE}`);
 
-  await assertError(
-    entradaInexistente,
-    404,
-    "Entrada no encontrada"
-  );
+  await assertError(entradaInexistente, 404, "Entrada no encontrada");
 
   // Identificadores inválidos para consultas por evento.
-  const vendidasInvalido = await peticion(
-    `/entradas/vendidas/${ID_INVALIDO}`
-  );
+  const vendidasInvalido = await peticion(`/entradas/vendidas/${ID_INVALIDO}`);
 
-  const disponiblesInvalido = await peticion(
-    `/entradas/disponibles/${ID_INVALIDO}`
-  );
+  const disponiblesInvalido = await peticion(`/entradas/disponibles/${ID_INVALIDO}`);
 
   assert.equal(vendidasInvalido.status, 400);
   assert.equal(disponiblesInvalido.status, 400);
 
   // Evento inexistente.
-  const vendidasInexistente = await peticion(
-    `/entradas/vendidas/${ID_INEXISTENTE}`
-  );
+  const vendidasInexistente = await peticion(`/entradas/vendidas/${ID_INEXISTENTE}`);
 
-  const disponiblesInexistente = await peticion(
-    `/entradas/disponibles/${ID_INEXISTENTE}`
-  );
+  const disponiblesInexistente = await peticion(`/entradas/disponibles/${ID_INEXISTENTE}`);
 
-  await assertError(
-    vendidasInexistente,
-    404,
-    "Evento no encontrado"
-  );
+  await assertError(vendidasInexistente, 404, "Evento no encontrado");
 
-  await assertError(
-    disponiblesInexistente,
-    404,
-    "Evento no encontrado"
-  );
+  await assertError(disponiblesInexistente, 404, "Evento no encontrado");
 });
 
 test("GET /entradas/disponibles/:eventoId rechaza eventos cuya sala no existe", async () => {
@@ -358,13 +293,7 @@ test("GET /entradas/disponibles/:eventoId rechaza eventos cuya sala no existe", 
 
   await Sala.findByIdAndDelete(sala.id);
 
-  const response = await peticion(
-    `/entradas/disponibles/${evento.id}`
-  );
+  const response = await peticion(`/entradas/disponibles/${evento.id}`);
 
-  await assertError(
-    response,
-    404,
-    "La sala asociada al evento no existe"
-  );
+  await assertError(response, 404, "La sala asociada al evento no existe");
 });

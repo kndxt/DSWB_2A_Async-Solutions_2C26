@@ -1,12 +1,8 @@
-
 import { Entrada } from "../models/entradaModel.js";
 import { Evento } from "../models/eventoModel.js";
 import Sala from "../models/salaModel.js";
 import Usuario, { ESTADOS_USUARIO } from "../models/usuarioModel.js";
-import {
-  NotFoundError,
-  ConflictError,
-} from "../errors/errores.js";
+import { NotFoundError, ConflictError } from "../errors/errores.js";
 
 // Obtiene una entrada por su identificador.
 const obtenerEntradaPorId = async (id) => {
@@ -47,10 +43,7 @@ const venderEntrada = async ({ eventoId, usuarioId }) => {
     throw new NotFoundError("La sala asociada al evento no existe");
   }
 
-  const entradasDisponibles = await Entrada.obtenerDisponiblesPorEvento(
-    eventoId,
-    sala.capacidad
-  );
+  const entradasDisponibles = await Entrada.obtenerDisponiblesPorEvento(eventoId, sala.capacidad);
 
   if (entradasDisponibles <= 0) {
     throw new ConflictError("El evento ya alcanzó su capacidad máxima");
@@ -67,9 +60,7 @@ const cancelarEntrada = async (id) => {
   const entradaCancelada = await Entrada.cancelar(id, { detalles: true });
 
   if (!entradaCancelada) {
-    throw new ConflictError(
-      "Entrada no encontrada o ya está cancelada"
-    );
+    throw new ConflictError("Entrada no encontrada o ya está cancelada");
   }
 
   return entradaCancelada;
@@ -97,15 +88,10 @@ const obtenerDisponiblesPorEvento = async (eventoId) => {
   const sala = await Sala.obtenerPorId(evento.salaId);
 
   if (!sala) {
-    throw new NotFoundError(
-      "La sala asociada al evento no existe"
-    );
+    throw new NotFoundError("La sala asociada al evento no existe");
   }
 
-  const disponibles = await Entrada.obtenerDisponiblesPorEvento(
-    eventoId,
-    sala.capacidad
-  );
+  const disponibles = await Entrada.obtenerDisponiblesPorEvento(eventoId, sala.capacidad);
 
   return {
     eventoId,

@@ -13,39 +13,29 @@ const obtenerEntradas = async (req, res) => {
 };
 
 const obtenerEntradaPorId = async (req, res) => {
-
   const entrada = await obtenerEntradaPorIdService(req.params.id);
   res.status(200).json(entrada);
-
 };
 
 const venderEntrada = async (req, res) => {
-
   const nuevaEntrada = await venderEntradaService(req.body);
   res.status(201).json(nuevaEntrada);
-
 };
 
 const cancelarEntrada = async (req, res) => {
- 
   const entradaCancelada = await cancelarEntradaService(req.params.id);
   res.status(200).json(entradaCancelada);
-
 };
 
 const obtenerVendidasPorEvento = async (req, res) => {
-
   const vendidas = await obtenerVendidasPorEventoService(req.params.eventoId);
   res.status(200).json(vendidas);
-
 };
 
 const obtenerDisponiblesPorEvento = async (req, res) => {
-
   const resultado = await obtenerDisponiblesPorEventoService(req.params.eventoId);
 
   res.status(200).json(resultado);
-
 };
 
 export {

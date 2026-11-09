@@ -1,13 +1,9 @@
-
 import test from "node:test";
 import assert from "node:assert/strict";
 import mongoose from "mongoose";
 
 import traducirError from "../../../errors/traducirError.js";
-import {
-  ValidationError,
-  ConflictError,
-} from "../../../errors/errores.js";
+import { ValidationError, ConflictError } from "../../../errors/errores.js";
 
 // Comprueba la traducción de errores de validación de Mongoose.
 test("traduce un ValidationError de Mongoose", () => {

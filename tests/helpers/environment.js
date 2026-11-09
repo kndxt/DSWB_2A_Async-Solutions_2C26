@@ -58,7 +58,10 @@ export function siguienteSufijo() {
   return `${Date.now()}_${secuencia}`;
 }
 
-export async function peticion(ruta, { method = "GET", body, headers = {}, redirect = "follow" } = {}) {
+export async function peticion(
+  ruta,
+  { method = "GET", body, headers = {}, redirect = "follow" } = {},
+) {
   const opciones = { method, headers: { ...headers }, redirect };
   if (body !== undefined) {
     opciones.headers["content-type"] = "application/json";
@@ -121,8 +124,8 @@ export function fechasEvento({ dias = 30, duracion = 1 } = {}) {
 }
 
 export async function crearEvento({ sala, usuario, overrides = {}, dias = 30 } = {}) {
-  const salaFinal = sala ?? await crearSala();
-  const usuarioFinal = usuario ?? await crearUsuario();
+  const salaFinal = sala ?? (await crearSala());
+  const usuarioFinal = usuario ?? (await crearUsuario());
   const sufijo = siguienteSufijo();
   const evento = await Evento.create({
     nombre: `Evento de prueba ${sufijo}`,
@@ -141,8 +144,8 @@ export async function crearEvento({ sala, usuario, overrides = {}, dias = 30 } =
 }
 
 export async function crearEntrada({ evento, usuario, overrides = {} } = {}) {
-  const eventoFinal = evento ?? await crearEvento();
-  const usuarioFinal = usuario ?? await crearUsuario();
+  const eventoFinal = evento ?? (await crearEvento());
+  const usuarioFinal = usuario ?? (await crearUsuario());
   const entrada = await Entrada.create({
     eventoId: eventoFinal._id,
     usuarioId: usuarioFinal._id,

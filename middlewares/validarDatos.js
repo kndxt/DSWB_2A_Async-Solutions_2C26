@@ -38,10 +38,7 @@ const validarDatos = (definicion) => {
     return (req, res, next) => {
       for (const [origen, configuracion] of Object.entries(operacion)) {
         const datos = req[origen] ?? {};
-        const {
-          requeridos = [],
-          opcionales = [],
-        } = configuracion;
+        const { requeridos = [], opcionales = [] } = configuracion;
 
         const campos = [...requeridos, ...opcionales];
 
@@ -50,9 +47,7 @@ const validarDatos = (definicion) => {
           const valor = datos[campo];
 
           if (valor === undefined || valor === null || valor === "") {
-            throw new ValidationError(
-              `El campo '${campo}' es obligatorio`
-            );
+            throw new ValidationError(`El campo '${campo}' es obligatorio`);
           }
         }
 
@@ -61,31 +56,22 @@ const validarDatos = (definicion) => {
           const valor = datos[campo];
 
           // Los campos opcionales pueden omitirse.
-          if (
-            valor === undefined ||
-            valor === null ||
-            valor === ""
-          ) {
+          if (valor === undefined || valor === null || valor === "") {
             continue;
           }
 
           // El identificador de ruta no figura entre los atributos.
-          const tipo =
-            campo === "id"
-              ? "objectId"
-              : definicion.atributos[campo]?.tipo;
+          const tipo = campo === "id" ? "objectId" : definicion.atributos[campo]?.tipo;
 
           if (!tipo) {
-            throw new Error(
-              `No se definió un tipo para el campo '${campo}'`
-            );
+            throw new Error(`No se definió un tipo para el campo '${campo}'`);
           }
 
           if (!validarTipo(valor, tipo)) {
             throw new ValidationError(
               tipo === "objectId"
                 ? `El identificador '${campo}' no tiene un formato válido`
-                : `El campo '${campo}' no tiene un tipo de dato válido`
+                : `El campo '${campo}' no tiene un tipo de dato válido`,
             );
           }
         }

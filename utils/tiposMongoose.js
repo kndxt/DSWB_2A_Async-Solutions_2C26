@@ -1,4 +1,3 @@
-
 import mongoose from "mongoose";
 
 // Equivalencias entre los tipos declarativos y los tipos de Mongoose.

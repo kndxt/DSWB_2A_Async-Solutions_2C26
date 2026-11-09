@@ -1,7 +1,6 @@
 import mongoose from "mongoose";
-import {entradaDefinicion} from "../definitions/entrada.js";
-import {obtenerTipoMongoose} from "../utils/tiposMongoose.js";
-
+import { entradaDefinicion } from "../definitions/entrada.js";
+import { obtenerTipoMongoose } from "../utils/tiposMongoose.js";
 
 // Atributos y estados definidos centralmente.
 const atributos = entradaDefinicion.atributos;
@@ -40,7 +39,7 @@ export const entradaSchema = new mongoose.Schema(
         ...resto,
       }),
     },
-  }
+  },
 );
 
 // Construye una consulta con los detalles relacionados cuando se solicitan.
@@ -62,7 +61,7 @@ const incluirDetalles = (consulta, incluir) => {
 
 entradaSchema.statics.crear = function (data) {
   return this.create(data);
-}
+};
 
 entradaSchema.statics.obtenerTodos = function (opciones = {}) {
   const { detalles = false } = opciones;
@@ -78,16 +77,14 @@ entradaSchema.statics.obtenerPorId = function (id, opciones = {}) {
 
 entradaSchema.statics.obtenerPorEvento = function (eventoId) {
   return this.find({ eventoId });
-}
+};
 
 entradaSchema.statics.obtenerVendidasPorEvento = function (eventoId) {
-  return this.find(
-    { 
-      eventoId, 
-      estado: ESTADOS_ENTRADA.VENDIDA 
-    }
-  );
-}
+  return this.find({
+    eventoId,
+    estado: ESTADOS_ENTRADA.VENDIDA,
+  });
+};
 
 entradaSchema.statics.cancelar = function (id, opciones = {}) {
   const { detalles = false } = opciones;
@@ -103,7 +100,7 @@ entradaSchema.statics.cancelar = function (id, opciones = {}) {
     {
       returnDocument: "after",
       runValidators: true,
-    }
+    },
   );
 
   return incluirDetalles(consulta, detalles);
@@ -111,15 +108,13 @@ entradaSchema.statics.cancelar = function (id, opciones = {}) {
 
 // Cuenta las entradas vendidas de un evento y calcula cuántas quedan disponibles según su capacidad.
 entradaSchema.statics.obtenerDisponiblesPorEvento = async function (eventoId, capacidad) {
-  const entradasVendidas = 
-    await this.countDocuments(
-      { eventoId, estado: ESTADOS_ENTRADA.VENDIDA }
-    );
+  const entradasVendidas = await this.countDocuments({ eventoId, estado: ESTADOS_ENTRADA.VENDIDA });
 
   return capacidad - entradasVendidas;
-}
+};
 
 // Reutiliza el modelo Entrada si ya existe; de lo contrario, lo registra con el esquema y la colección "entradas".
-export const Entrada = mongoose.models.Entrada || mongoose.model("Entrada", entradaSchema, "entradas");
+export const Entrada =
+  mongoose.models.Entrada || mongoose.model("Entrada", entradaSchema, "entradas");
 
 export default Entrada;
