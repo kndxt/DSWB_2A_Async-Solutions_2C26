@@ -1,5 +1,5 @@
 import express from "express";
-
+import mongoose from "mongoose";
 import usuarioRoutes from "./routes/usuarioRoutes.js";
 import salaRoutes from "./routes/salaRoutes.js";
 import eventoRoutes from "./routes/eventoRoutes.js";
@@ -31,6 +31,15 @@ app.use("/reservas", reservaRoutes);
 
 app.get("/", (req, res) => {
   res.redirect("/vistas/inicio");
+});
+
+// Ruta de salud: Render y las pruebas manuales la usan para saber si la app responde.
+app.get("/health", (req, res) => {
+  const conectada = mongoose.connection.readyState === 1;
+  res.status(200).json({
+    estado: "ok",
+    baseDeDatos: conectada ? "conectada" : "desconectada",
+  });
 });
 
 // Middleware para manejar rutas no encontradas y errores
