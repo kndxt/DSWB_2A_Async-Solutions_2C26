@@ -8,11 +8,15 @@ import vistasRoutes from "./routes/vistasRoutes.js";
 import reservaRoutes from "./routes/reservaRoutes.js";
 import notFound from "./middlewares/notFound.js";
 import errorHandler from "./middlewares/errorHandler.js";
+import cookieParser from "cookie-parser";
 
 const app = express();
 
 // Middleware para procesar datos en JSON
 app.use(express.json());
+
+// Middleware para leer cookies
+app.use(cookieParser());
 
 // Servir archivos estáticos desde public/
 app.use(express.static("public"));

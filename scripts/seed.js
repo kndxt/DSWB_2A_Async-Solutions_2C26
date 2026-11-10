@@ -67,7 +67,7 @@ const seed = async () => {
     }
 
     // Se genera y valida antes de tocar la base: si algo falla, no se borra nada.
-    const datos = generarDatos();
+    const datos = await generarDatos();
     await validarDatos(datos);
 
     try {

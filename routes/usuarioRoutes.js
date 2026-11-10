@@ -14,6 +14,7 @@ router.get(
 
 router.post("/", asyncHandler(usuarioController.crearUsuario));
 router.post("/login", asyncHandler(usuarioController.login));
+router.post("/logout", asyncHandler(usuarioController.logout));
 
 router.put(
   "/:id",

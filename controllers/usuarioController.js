@@ -1,16 +1,16 @@
+import bcrypt from "bcryptjs";
 import Usuario, {
   ESTADOS_USUARIO,
   ESTADOS_VALIDOS,
 } from "../models/usuarioModel.js";
+import { generarToken } from "../utils/jwt.js";
+import {
+  setearCookieToken,
+  limpiarCookieToken,
+} from "../utils/cookies.js";
 
 // Campos que se pueden modificar con PUT. El estado tiene su propio endpoint.
-const CAMPOS_EDITABLES = [
-  "nombre",
-  "apellido",
-  "email",
-  "telefono",
-  "password",
-];
+const CAMPOS_EDITABLES = ["nombre", "apellido", "email", "telefono", "password"];
 
 // Errores propios de las reglas de negocio; los inesperados se relanzan
 // y asyncHandler los deriva a errorHandler.
@@ -65,12 +65,15 @@ const crearUsuario = async (req, res) => {
   }
 
   try {
+    const saltRounds = 10;
+    const passwordHash = await bcrypt.hash(password, saltRounds);
+
     const nuevoUsuario = await Usuario.crear({
       nombre,
       apellido,
       email,
       telefono,
-      password,
+      password: passwordHash,
     });
     res.status(201).json(nuevoUsuario);
   } catch (error) {
@@ -105,6 +108,12 @@ const actualizarUsuario = async (req, res) => {
         .status(400)
         .json({ error: "El nuevo email ya está en uso por otro usuario" });
     }
+  }
+
+  // Si se cambia la contraseña, hashearla
+  if (cambios.password) {
+    const saltRounds = 10;
+    cambios.password = await bcrypt.hash(cambios.password, saltRounds);
   }
 
   try {
@@ -147,7 +156,10 @@ const login = async (req, res) => {
 
   // Mismo mensaje si el usuario no existe o la contraseña no coincide:
   // no se revela qué emails están registrados.
-  if (!usuario || usuario.password !== password) {
+  const passwordCorrecta =
+    usuario && (await bcrypt.compare(password, usuario.password));
+
+  if (!passwordCorrecta) {
     return res.status(401).json({ error: "Credenciales incorrectas" });
   }
 
@@ -156,8 +168,22 @@ const login = async (req, res) => {
     return res.status(403).json({ error: "El usuario se encuentra inactivo" });
   }
 
+  // Generar el token y setearlo en la cookie
+  const token = generarToken(usuario);
+  setearCookieToken(res, token);
+
   // El toJSON del modelo quita la password de la respuesta.
-  res.status(200).json({ mensaje: "Inicio de sesión exitoso", usuario });
+  res.status(200).json({
+    mensaje: "Inicio de sesión exitoso",
+    usuario,
+    token,
+  });
+};
+
+// POST /usuarios/logout
+const logout = (req, res) => {
+  limpiarCookieToken(res);
+  res.status(200).json({ mensaje: "Sesión cerrada correctamente" });
 };
 
 export {
@@ -167,4 +193,5 @@ export {
   actualizarUsuario,
   cambiarEstadoUsuario,
   login,
+  logout,
 };

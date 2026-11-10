@@ -42,7 +42,7 @@ El script borra datos, así que tiene varias protecciones, aplicadas en este ord
 
 Cada ejecución elimina todos los documentos de las colecciones `usuarios`, `salas`, `eventos` y `entradas` de la base elegida y las vuelve a cargar. No toca otras colecciones. Los datos eliminados no se conservan.
 
-Las inserciones usan `insertMany`: los documentos se validan contra los esquemas, pero no se ejecutan los hooks de guardado (`pre("save")`). Esto importa para el hasheo de contraseñas de F7 (ver "Pendientes").
+Las inserciones usan `insertMany`: los documentos se validan contra los esquemas, pero no se ejecutan los hooks de guardado (`pre("save")`). Por eso el módulo `scripts/seeds/usuarios.js` hashea las contraseñas con `bcrypt` antes de insertarlas.
 
 ## Datos generados
 
@@ -59,8 +59,9 @@ Hay 20 usuarios. Los últimos dos (`usuario19` y `usuario20`) están inactivos.
 | Email | `usuario1@example.com` a `usuario20@example.com` |
 | Contraseña | `Prueba001!` a `Prueba020!` (el número coincide con el del usuario) |
 | Estado | activos del 1 al 18, inactivos 19 y 20 |
+| Rol | `usuario1` es administrador; del 2 al 20 son clientes |
 
-Todos son clientes: el rol se incorpora con F7. Las contraseñas de prueba son ficticias.
+El primer usuario (`usuario1@example.com`) es **administrador** y el resto son **clientes**. Las contraseñas de prueba son ficticias pero están **hasheadas con bcrypt** desde F7.2. La contraseña de prueba es `Prueba001!` para el usuario 1, `Prueba002!` para el 2, y así sucesivamente.
 
 ### Salas
 
@@ -117,6 +118,6 @@ Para operar sobre un evento hace falta su `id`: se obtiene con `GET /eventos` o 
 
 ## Pendientes
 
-- **Roles y permisos (F7).** Cuando el modelo de usuarios incorpore el rol, los seeds deben crear administradores y clientes, y esta guía debe listar qué usuarios tienen cada rol y los escenarios de permisos.
-- **Hash de contraseñas (F7.2).** Como `insertMany` no ejecuta hooks, el módulo `scripts/seeds/usuarios.js` tendrá que hashear las contraseñas por su cuenta. Las credenciales de prueba de esta guía seguirán siendo las mismas.
+- ~~**Roles y permisos (F7).**~~ **Implementado en F7.2.** El seed ya crea un administrador (`usuario1@example.com`) y 19 clientes. Los roles se asignan al generar los usuarios (`scripts/seeds/usuarios.js`).
+- ~~**Hash de contraseñas (F7.2).**~~ **Implementado en F7.2.** El módulo `scripts/seeds/usuarios.js` hashea las contraseñas con `bcrypt` antes de insertarlas. Las credenciales de prueba siguen siendo las mismas (`Prueba001!` a `Prueba020!`).
 - **Entradas y reservas a nombre de un cliente (F9).** Cuando se defina cómo se registra quién realizó la operación y quién es el titular, el seed debe incluir entradas registradas por un administrador.
