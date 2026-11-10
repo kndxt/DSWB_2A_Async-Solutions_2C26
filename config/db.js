@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 // Los errores del driver pueden incluir fragmentos de la URI
 // Antes de mostrarlos se tapan el usuario y la contraseña.
-const ocultarCredenciales = (texto) =>
+export const ocultarCredenciales = (texto) =>
   texto.replace(/(mongodb(?:\+srv)?:\/\/)[^@\s]+@/g, "$1***@");
 
 // Eventos de la conexión: se registran una sola vez al cargar el módulo.
