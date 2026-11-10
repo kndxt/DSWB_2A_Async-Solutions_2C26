@@ -122,17 +122,9 @@ salaSchema.statics.crear = function (datos) {
   return this.create(datos);
 };
 
-salaSchema.statics.actualizar = function (id, cambios) {
-  return this.findByIdAndUpdate(
-    id,
-    {
-      $set: prepararCambios(cambios, ["responsable"]),
-    },
-    {
-      returnDocument: "after",
-      runValidators: true,
-    },
-  );
+salaSchema.statics.actualizar = function (sala, cambios) {
+  sala.set(prepararCambios(cambios, ["responsable"]));
+  return sala.save();
 };
 
 export const Sala = mongoose.models.Sala || mongoose.model("Sala", salaSchema, "salas");

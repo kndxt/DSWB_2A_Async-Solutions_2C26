@@ -1,5 +1,5 @@
 import Sala, { ESTADOS_SALA } from "../models/salaModel.js";
-import { Evento, ESTADOS_EVENTO } from "../models/eventoModel.js";
+import { Evento } from "../models/eventoModel.js";
 import { NotFoundError, ConflictError } from "../errors/errores.js";
 
 // Obtiene todas las salas.
@@ -22,11 +22,7 @@ const actualizar = async (id, cambios) => {
 
   // Impide inactivar una sala que tiene eventos próximos activos.
   if (cambios.estado === ESTADOS_SALA.INACTIVA && sala.estado === ESTADOS_SALA.ACTIVA) {
-    const hayEventosProximos = await Evento.exists({
-      salaId: sala._id,
-      estado: ESTADOS_EVENTO.ACTIVO,
-      fechaInicio: { $gte: new Date() },
-    });
+    const hayEventosProximos = await Evento.existeProximoActivoPorSala(sala._id);
 
     if (hayEventosProximos) {
       throw new ConflictError(
@@ -35,10 +31,7 @@ const actualizar = async (id, cambios) => {
     }
   }
 
-  const salaActualizada = await Sala.actualizar(id, cambios);
-  if (!salaActualizada) throw new NotFoundError("Sala no encontrada");
-
-  return salaActualizada;
+  return Sala.actualizar(sala, cambios);
 };
 
 export { obtenerTodas, obtenerPorId, crear, actualizar };
