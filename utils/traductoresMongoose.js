@@ -9,7 +9,7 @@ const tiposMongoose = {
   objectId: mongoose.Schema.Types.ObjectId,
 };
 
-// Devuelve el tipo correspondiente de Mongoose.
+// Traduce un tipo declarativo al tipo correspondiente de Mongoose.
 export const obtenerTipoMongoose = (tipo) => {
   const tipoMongoose = tiposMongoose[tipo];
 
@@ -18,4 +18,9 @@ export const obtenerTipoMongoose = (tipo) => {
   }
 
   return tipoMongoose;
+};
+
+// Traduce la restricción de número entero a un validador de Mongoose.
+export const obtenerValidadorMongoose = (entero) => {
+  return entero ? Number.isInteger : undefined;
 };
