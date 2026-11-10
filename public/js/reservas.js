@@ -3,27 +3,11 @@
 
 import { apiFetch } from "./apiClient.js";
 import { renderTable } from "./tabla.js";
+import { textoOGuion, formatearPrecio, formatearFecha } from "./utils/formato.js";
 
 const reservasApi = {
   listar: () => apiFetch("/reservas"),
 };
-
-const formatearPrecio = (valor) =>
-  valor === undefined || valor === null
-    ? "—"
-    : `$ ${Number(valor).toLocaleString("es-AR", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })}`;
-
-const formatearFecha = (fecha) => {
-  if (!fecha) return "—";
-  const d = new Date(fecha);
-  return Number.isNaN(d.getTime()) ? "—" : d.toLocaleDateString("es-AR");
-};
-
-const textoOGuion = (valor) =>
-  valor === undefined || valor === null || valor === "" ? "—" : String(valor);
 
 const COLUMNAS = [
   {

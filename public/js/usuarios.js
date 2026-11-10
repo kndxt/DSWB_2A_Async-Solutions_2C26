@@ -1,14 +1,8 @@
 // Vista de Usuarios: listado, detalle, alta, edición y cambio de estado sobre la API /usuarios.
 // Módulo ES: usa apiFetch desde apiClient.js, igual que salas.js y eventos.js.
-import { apiFetch } from "./apiClient.js";
+import { apiFetch, enviarJson } from "./apiClient.js";
 import { renderTable } from "./tabla.js";
-
-// apiFetch pasa las options tal cual a fetch, así que armamos el JSON acá.
-const enviarJson = (metodo, datos) => ({
-  method: metodo,
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(datos),
-});
+import { textoOGuion } from "./utils/formato.js";
 
 const usuariosApi = {
   listar: () => apiFetch("/usuarios"),
@@ -20,9 +14,6 @@ const usuariosApi = {
 };
 
 const ESTADOS_USUARIO = ["activo", "inactivo"];
-
-const textoOGuion = (valor) =>
-  valor === undefined || valor === null || valor === "" ? "—" : String(valor);
 
 // Columnas de la tabla (formato que espera renderTable). "Acciones" se rellena después.
 const COLUMNAS = [
@@ -95,13 +86,18 @@ const decorarFilas = (usuarios) => {
     if (usuario.estado === "inactivo") fila.className = "usuario-inactivo";
 
     const etiqueta = document.createElement("span");
-    etiqueta.className = `estado ${ESTADOS_USUARIO.includes(usuario.estado) ? `estado-${usuario.estado}` : ""}`.trim();
+    etiqueta.className =
+      `estado ${ESTADOS_USUARIO.includes(usuario.estado) ? `estado-${usuario.estado}` : ""}`.trim();
     etiqueta.textContent = textoOGuion(usuario.estado);
     fila.cells[COL_ESTADO].replaceChildren(etiqueta);
 
     // Botón de estado: alterna entre activo e inactivo. No elimina nunca.
     const esActivo = usuario.estado === "activo";
-    const botonEstado = crearBoton(esActivo ? "Desactivar" : "Activar", esActivo ? "desactivar" : "activar", usuario.id);
+    const botonEstado = crearBoton(
+      esActivo ? "Desactivar" : "Activar",
+      esActivo ? "desactivar" : "activar",
+      usuario.id,
+    );
     botonEstado.dataset.nombre = `${usuario.nombre} ${usuario.apellido}`;
 
     fila.cells[COL_ACCIONES].append(
@@ -263,7 +259,10 @@ const cambiarEstado = async (id, nombre, nuevoEstado) => {
 
   try {
     await usuariosApi.cambiarEstado(id, nuevoEstado);
-    mostrarMensaje("exito", `Usuario ${nuevoEstado === "activo" ? "activado" : "desactivado"} correctamente`);
+    mostrarMensaje(
+      "exito",
+      `Usuario ${nuevoEstado === "activo" ? "activado" : "desactivado"} correctamente`,
+    );
     await cargarUsuarios();
   } catch (error) {
     mostrarMensaje("error", error.message);

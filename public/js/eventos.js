@@ -1,13 +1,7 @@
 // Vista de Eventos: listado, próximos, alta, edición y cancelación sobre la API /eventos.
 // Módulo ES: usa apiFetch desde apiClient.js, igual que salas.js.
-import { apiFetch } from "./apiClient.js";
-
-// apiFetch pasa las options tal cual a fetch, así que armamos el JSON acá.
-const enviarJson = (metodo, datos) => ({
-  method: metodo,
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(datos),
-});
+import { apiFetch, enviarJson } from "./apiClient.js";
+import { textoOGuion, formatearPrecio, formatearFechaHora } from "./utils/formato.js";
 
 const eventosApi = {
   listar: () => apiFetch("/eventos"),
@@ -16,7 +10,7 @@ const eventosApi = {
   crear: (datos) => apiFetch("/eventos", enviarJson("POST", datos)),
   actualizar: (id, datos) => apiFetch(`/eventos/${id}`, enviarJson("PUT", datos)),
   salas: () => apiFetch("/salas"),
-  usuarios: () => apiFetch("/usuarios"),   // ← nuevo
+  usuarios: () => apiFetch("/usuarios"), // ← nuevo
 };
 
 const CAMPOS_FECHA = ["fechaInicio", "fechaFin", "fechaInicioVenta", "fechaFinVenta"];
@@ -28,23 +22,8 @@ let salasPorId = new Map();
 
 // ---- Formato ----
 
-const textoOGuion = (valor) =>
-  valor === undefined || valor === null || valor === "" ? "—" : String(valor);
-
-const formatearPrecio = (valor) =>
-  `$ ${Number(valor).toLocaleString("es-AR", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
-
-const formatearFecha = (iso) => {
-  const fecha = new Date(iso);
-  if (Number.isNaN(fecha.getTime())) return "—";
-  return fecha.toLocaleString("es-AR", { dateStyle: "short", timeStyle: "short" });
-};
-
 const formatearRango = (desde, hasta) =>
-  `${formatearFecha(desde)} - ${formatearFecha(hasta)}`;
+  `${formatearFechaHora(desde)} - ${formatearFechaHora(hasta)}`;
 
 const nombreDeSala = (salaId) => {
   const sala = salasPorId.get(salaId);
@@ -122,9 +101,7 @@ const filaMensaje = (texto, columnas) => {
 };
 
 const claseDeFila = (evento) =>
-  evento.estado === "cancelado" || evento.estado === "finalizado"
-    ? `evento-${evento.estado}`
-    : "";
+  evento.estado === "cancelado" || evento.estado === "finalizado" ? `evento-${evento.estado}` : "";
 
 const crearFilaEvento = (evento) => {
   const fila = document.createElement("tr");
@@ -157,7 +134,7 @@ const crearFilaProximo = (evento) => {
   fila.append(
     crearCelda(evento.nombre),
     crearCelda(nombreDeSala(evento.salaId)),
-    crearCelda(formatearFecha(evento.fechaInicio)),
+    crearCelda(formatearFechaHora(evento.fechaInicio)),
     crearCelda(formatearPrecio(evento.precioEntrada)),
     crearEstado(evento.estado),
   );
@@ -169,9 +146,7 @@ const crearFilaProximo = (evento) => {
 const cargarSalas = async () => {
   try {
     const salas = await eventosApi.salas();
-    salasPorId = new Map(
-      (Array.isArray(salas) ? salas : []).map((sala) => [sala.id, sala]),
-    );
+    salasPorId = new Map((Array.isArray(salas) ? salas : []).map((sala) => [sala.id, sala]));
   } catch (error) {
     // Sin nombres de sala se muestran los ids; los listados siguen funcionando.
     salasPorId = new Map();
@@ -201,9 +176,7 @@ let usuariosPorId = new Map();
 const cargarUsuarios = async () => {
   try {
     const usuarios = await eventosApi.usuarios();
-    usuariosPorId = new Map(
-      (Array.isArray(usuarios) ? usuarios : []).map((u) => [u.id, u]),
-    );
+    usuariosPorId = new Map((Array.isArray(usuarios) ? usuarios : []).map((u) => [u.id, u]));
   } catch (error) {
     usuariosPorId = new Map();
     mostrarMensaje("error", `No se pudieron cargar los usuarios: ${error.message}`);
@@ -253,16 +226,14 @@ const cargarProximos = async () => {
     }
     cuerpo.replaceChildren(...eventos.map(crearFilaProximo));
   } catch (error) {
-    cuerpo.replaceChildren(
-      filaMensaje("No se pudieron cargar los eventos próximos.", 5),
-    );
+    cuerpo.replaceChildren(filaMensaje("No se pudieron cargar los eventos próximos.", 5));
     mostrarMensaje("error", error.message);
   }
 };
 
 // Las salas se cargan primero para poder mostrar sus nombres en ambas tablas.
 const cargarTodo = async () => {
-  await Promise.all([cargarSalas(), cargarUsuarios()]);   // ← cargarUsuarios acá
+  await Promise.all([cargarSalas(), cargarUsuarios()]); // ← cargarUsuarios acá
   await Promise.all([cargarListado(), cargarProximos()]);
 };
 
@@ -316,8 +287,7 @@ const abrirEdicion = async (id) => {
 
 // Un campo numérico vacío se envía sin valor (alta) o como null (edición), para que
 // sea el backend quien responda con su mensaje de dato obligatorio o inválido.
-const leerNumero = (texto, valorVacio) =>
-  texto.trim() === "" ? valorVacio : Number(texto);
+const leerNumero = (texto, valorVacio) => (texto.trim() === "" ? valorVacio : Number(texto));
 
 const leerFormulario = (esEdicion) => {
   const campos = formulario().elements;

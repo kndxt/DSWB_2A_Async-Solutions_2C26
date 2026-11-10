@@ -1,6 +1,5 @@
-
 export async function apiFetch(url, options = {}) {
-  // C la petición si supera los 15 segundos.
+  // Cancela la petición si supera los 15 segundos.
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 15000);
 
@@ -35,7 +34,10 @@ export async function apiFetch(url, options = {}) {
     if (!response.ok) {
       const message =
         typeof data === "string"
-          ? data.replace(/<[^>]*>/g, "").trim().slice(0, 300)
+          ? data
+              .replace(/<[^>]*>/g, "")
+              .trim()
+              .slice(0, 300)
           : data?.error || data?.message;
 
       throw new Error(message || `Error HTTP ${response.status}`);
@@ -62,3 +64,10 @@ export async function apiFetch(url, options = {}) {
     clearTimeout(timeout);
   }
 }
+
+// Arma las opciones de fetch para enviar un cuerpo JSON.
+export const enviarJson = (metodo, datos) => ({
+  method: metodo,
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(datos),
+});

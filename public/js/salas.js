@@ -1,15 +1,9 @@
 // Vista de Salas: listado, detalle, alta y edición sobre la API /salas.
 // Usa apiFetch (apiClient.js) para consumir la API y renderTable (tabla.js) para la tabla.
 // Es un módulo ES: se carga con <script type="module"> y sus nombres no se mezclan con otros scripts.
-import { apiFetch } from "./apiClient.js";
+import { apiFetch, enviarJson } from "./apiClient.js";
 import { renderTable } from "./tabla.js";
-
-// apiFetch pasa las opciones tal cual a fetch, así que el JSON se arma acá.
-const enviarJson = (metodo, datos) => ({
-  method: metodo,
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(datos),
-});
+import { formatearPrecio, textoOGuion } from "./utils/formato.js";
 
 const salasApi = {
   listar: () => apiFetch("/salas"),
@@ -19,11 +13,6 @@ const salasApi = {
 };
 
 const ESTADOS_SALA = ["activa", "inactiva"];
-
-const formatearPrecio = (valor) =>
-  `$ ${Number(valor).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-
-const textoOGuion = (valor) => (valor === undefined || valor === null || valor === "" ? "—" : String(valor));
 
 // Columnas de la tabla (formato que espera renderTable). "Acciones" se rellena después con botones.
 const COLUMNAS = [
@@ -99,11 +88,16 @@ const decorarFilas = (salas) => {
     if (sala.estado === "inactiva") fila.className = "sala-inactiva";
 
     const etiqueta = document.createElement("span");
-    etiqueta.className = `estado ${ESTADOS_SALA.includes(sala.estado) ? `estado-${sala.estado}` : ""}`.trim();
+    etiqueta.className =
+      `estado ${ESTADOS_SALA.includes(sala.estado) ? `estado-${sala.estado}` : ""}`.trim();
     etiqueta.textContent = textoOGuion(sala.estado);
     fila.cells[COL_ESTADO].replaceChildren(etiqueta);
 
-    fila.cells[COL_ACCIONES].append(crearBoton("Ver", "ver", sala.id), " ", crearBoton("Editar", "editar", sala.id));
+    fila.cells[COL_ACCIONES].append(
+      crearBoton("Ver", "ver", sala.id),
+      " ",
+      crearBoton("Editar", "editar", sala.id),
+    );
   });
 };
 
@@ -148,7 +142,11 @@ const mostrarDetalle = async (id) => {
     agregarDato(contenedor, "Dirección", textoOGuion(sala.direccion));
     agregarDato(contenedor, "Precio de reserva", formatearPrecio(sala.precioReserva));
     agregarDato(contenedor, "Estado", textoOGuion(sala.estado));
-    agregarDato(contenedor, "Responsable", `${textoOGuion(responsable.nombre)} ${responsable.apellido ?? ""}`.trim());
+    agregarDato(
+      contenedor,
+      "Responsable",
+      `${textoOGuion(responsable.nombre)} ${responsable.apellido ?? ""}`.trim(),
+    );
     agregarDato(contenedor, "Teléfono del responsable", textoOGuion(responsable.telefono));
     agregarDato(contenedor, "Email del responsable", textoOGuion(responsable.email));
     document.getElementById("detalle-sala").hidden = false;
