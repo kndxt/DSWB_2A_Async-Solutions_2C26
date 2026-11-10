@@ -5,8 +5,8 @@ import { generarEntradas } from "./entradas.js";
 
 // Genera el conjunto completo de datos de prueba, sin conectarse a ninguna base.
 // Las fechas se calculan respecto de `ahora`.
-export const generarDatos = (ahora = new Date()) => {
-  const usuarios = generarUsuarios();
+export const generarDatos = async (ahora = new Date()) => {
+  const usuarios = await generarUsuarios();
   const salas = generarSalas();
   const eventos = generarEventos(usuarios, salas, ahora);
   const entradas = generarEntradas(usuarios, eventos, salas, ahora);
