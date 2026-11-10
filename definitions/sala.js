@@ -74,13 +74,7 @@ export const salaDefinicion = {
 
     crear: {
       body: {
-        requeridos: [
-          "nombre",
-          "capacidad",
-          "direccion",
-          "precioReserva",
-          "responsable",
-        ],
+        requeridos: ["nombre", "capacidad", "direccion", "precioReserva", "responsable"],
         opcionales: [],
       },
     },
@@ -92,14 +86,7 @@ export const salaDefinicion = {
       },
       body: {
         requeridos: [],
-        opcionales: [
-          "nombre",
-          "capacidad",
-          "direccion",
-          "precioReserva",
-          "responsable",
-          "estado",
-        ],
+        opcionales: ["nombre", "capacidad", "direccion", "precioReserva", "responsable", "estado"],
       },
     },
   },

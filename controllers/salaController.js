@@ -25,9 +25,4 @@ const actualizarSala = async (req, res) => {
   res.status(200).json(salaActualizada);
 };
 
-export {
-  obtenerSalas,
-  obtenerSalaPorId,
-  crearSala,
-  actualizarSala,
-};
+export { obtenerSalas, obtenerSalaPorId, crearSala, actualizarSala };

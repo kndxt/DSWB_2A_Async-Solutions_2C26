@@ -8,10 +8,7 @@ const router = express.Router();
 
 const validarSala = validarDatos(salaDefinicion);
 
-router.get(
-  "/",
-  asyncHandler(salaController.obtenerSalas),
-);
+router.get("/", asyncHandler(salaController.obtenerSalas));
 
 router.get(
   "/:id",

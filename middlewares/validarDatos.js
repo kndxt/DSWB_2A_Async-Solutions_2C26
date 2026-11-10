@@ -1,4 +1,3 @@
-
 import mongoose from "mongoose";
 import { ValidationError } from "../errors/errores.js";
 
@@ -45,21 +44,15 @@ const validarRestricciones = (valor, validaciones, nombreCampo) => {
   const { min, max, entero } = validaciones ?? {};
 
   if (entero && !Number.isInteger(valor)) {
-    throw new ValidationError(
-      `El campo '${nombreCampo}' debe ser un número entero`,
-    );
+    throw new ValidationError(`El campo '${nombreCampo}' debe ser un número entero`);
   }
 
   if (min !== undefined && valor < min) {
-    throw new ValidationError(
-      `El campo '${nombreCampo}' debe ser mayor o igual a ${min}`,
-    );
+    throw new ValidationError(`El campo '${nombreCampo}' debe ser mayor o igual a ${min}`);
   }
 
   if (max !== undefined && valor > max) {
-    throw new ValidationError(
-      `El campo '${nombreCampo}' debe ser menor o igual a ${max}`,
-    );
+    throw new ValidationError(`El campo '${nombreCampo}' debe ser menor o igual a ${max}`);
   }
 };
 
@@ -108,8 +101,7 @@ const validarOrigen = (datos, configuracion, definicion) => {
     const requerido = requeridos.includes(campo);
 
     // El identificador de ruta no forma parte de los atributos de la entidad.
-    const atributo =
-      campo === "id" ? { tipo: "objectId" } : definicion.atributos[campo];
+    const atributo = campo === "id" ? { tipo: "objectId" } : definicion.atributos[campo];
 
     if (!atributo) {
       throw new Error(`No se definió un tipo para el campo '${campo}'`);

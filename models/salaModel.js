@@ -1,9 +1,6 @@
 import mongoose from "mongoose";
 import { salaDefinicion } from "../definitions/sala.js";
-import {
-  obtenerTipoMongoose,
-  obtenerValidadorMongoose,
-} from "../utils/traductoresMongoose.js";
+import { obtenerTipoMongoose, obtenerValidadorMongoose } from "../utils/traductoresMongoose.js";
 
 // Atributos y estados definidos centralmente.
 const atributos = salaDefinicion.atributos;
@@ -50,9 +47,7 @@ const salaSchema = new mongoose.Schema(
       required: atributos.capacidad.requerido,
       min: atributos.capacidad.validaciones.min,
       validate: {
-        validator: obtenerValidadorMongoose(
-          atributos.capacidad.validaciones.entero,
-        ),
+        validator: obtenerValidadorMongoose(atributos.capacidad.validaciones.entero),
       },
     },
     direccion: {

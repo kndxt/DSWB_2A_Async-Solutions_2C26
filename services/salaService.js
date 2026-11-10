@@ -21,10 +21,7 @@ const actualizar = async (id, cambios) => {
   if (!sala) throw new NotFoundError("Sala no encontrada");
 
   // Impide inactivar una sala que tiene eventos próximos activos.
-  if (
-    cambios.estado === ESTADOS_SALA.INACTIVA &&
-    sala.estado === ESTADOS_SALA.ACTIVA
-  ) {
+  if (cambios.estado === ESTADOS_SALA.INACTIVA && sala.estado === ESTADOS_SALA.ACTIVA) {
     const hayEventosProximos = await Evento.exists({
       salaId: sala._id,
       estado: ESTADOS_EVENTO.ACTIVO,

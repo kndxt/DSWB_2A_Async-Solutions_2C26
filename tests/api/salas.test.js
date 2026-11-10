@@ -1,4 +1,3 @@
-
 import test, { before, after } from "node:test";
 import assert from "node:assert/strict";
 import {
@@ -40,10 +39,7 @@ test("GET /salas devuelve un array y GET /salas/:id devuelve la sala", async () 
 
 test("GET /salas/:id distingue ID inválido y sala inexistente", async () => {
   assert.equal((await peticion("/salas/invalido")).status, 400);
-  assert.equal(
-    (await peticion("/salas/000000000000000000000001")).status,
-    404,
-  );
+  assert.equal((await peticion("/salas/000000000000000000000001")).status, 404);
 });
 
 test("POST /salas crea una sala válida y permite precioReserva igual a cero", async () => {
@@ -206,10 +202,12 @@ test("PATCH /salas/:id rechaza atributos del responsable con tipos incorrectos",
 
 test("PATCH /salas/:id distingue ID inválido y sala inexistente", async () => {
   assert.equal(
-    (await peticion("/salas/nope", {
-      method: "PATCH",
-      body: {},
-    })).status,
+    (
+      await peticion("/salas/nope", {
+        method: "PATCH",
+        body: {},
+      })
+    ).status,
     400,
   );
 
