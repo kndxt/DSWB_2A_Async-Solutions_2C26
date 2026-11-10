@@ -1,67 +1,145 @@
 import mongoose from "mongoose";
+import { salaDefinicion } from "../definitions/sala.js";
+import {
+  obtenerTipoMongoose,
+  obtenerValidadorMongoose,
+} from "../utils/traductoresMongoose.js";
 
-
-const ESTADOS_SALA = {
-  ACTIVA: "activa",
-  INACTIVA: "inactiva",
-};
-
-const ESTADOS_VALIDOS = Object.values(ESTADOS_SALA);
+// Atributos y estados definidos centralmente.
+const atributos = salaDefinicion.atributos;
+export const ESTADOS_SALA = atributos.estado.valores;
 
 // Subdocumento embebido con los datos de contacto del responsable.
 // No necesita _id propio porque siempre vive dentro de una sala.
 const responsableSchema = new mongoose.Schema(
   {
-    nombre: { type: String, required: [true, "El nombre del responsable es obligatorio"], trim: true },
-    apellido: { type: String, required: [true, "El apellido del responsable es obligatorio"], trim: true },
-    telefono: { type: String, required: [true, "El teléfono del responsable es obligatorio"], trim: true },
-    email: { type: String, required: [true, "El email del responsable es obligatorio"], trim: true },
+    nombre: {
+      type: obtenerTipoMongoose(atributos.responsable.atributos.nombre.tipo),
+      required: atributos.responsable.atributos.nombre.requerido,
+      trim: true,
+    },
+    apellido: {
+      type: obtenerTipoMongoose(atributos.responsable.atributos.apellido.tipo),
+      required: atributos.responsable.atributos.apellido.requerido,
+      trim: true,
+    },
+    telefono: {
+      type: obtenerTipoMongoose(atributos.responsable.atributos.telefono.tipo),
+      required: atributos.responsable.atributos.telefono.requerido,
+      trim: true,
+    },
+    email: {
+      type: obtenerTipoMongoose(atributos.responsable.atributos.email.tipo),
+      required: atributos.responsable.atributos.email.requerido,
+      trim: true,
+    },
   },
   { _id: false },
 );
 
+// Esquema de persistencia de Sala.
 const salaSchema = new mongoose.Schema(
   {
-    nombre: { type: String, required: [true, "El nombre es obligatorio"], trim: true },
+    nombre: {
+      type: obtenerTipoMongoose(atributos.nombre.tipo),
+      required: atributos.nombre.requerido,
+      trim: true,
+    },
     capacidad: {
-      type: Number,
-      required: [true, "La capacidad es obligatoria"],
+      type: obtenerTipoMongoose(atributos.capacidad.tipo),
+      required: atributos.capacidad.requerido,
+      min: atributos.capacidad.validaciones.min,
       validate: {
-        validator: (valor) => valor > 0,
-        message: "La capacidad debe ser un número mayor a cero",
+        validator: obtenerValidadorMongoose(
+          atributos.capacidad.validaciones.entero,
+        ),
       },
     },
-    direccion: { type: String, required: [true, "La dirección es obligatoria"], trim: true },
-    precioReserva: {
-      type: Number,
-      required: [true, "El precio de reserva es obligatorio"],
-      min: [0, "El precio de reserva debe ser un número mayor o igual a cero"],
+    direccion: {
+      type: obtenerTipoMongoose(atributos.direccion.tipo),
+      required: atributos.direccion.requerido,
+      trim: true,
     },
-    responsable: { type: responsableSchema, required: [true, "El responsable es obligatorio"] 
+    precioReserva: {
+      type: obtenerTipoMongoose(atributos.precioReserva.tipo),
+      required: atributos.precioReserva.requerido,
+      min: atributos.precioReserva.validaciones.min,
+    },
+    responsable: {
+      type: responsableSchema,
+      required: atributos.responsable.requerido,
     },
     estado: {
-      type: String,
-      enum: {
-        values: ESTADOS_VALIDOS,
-        message: `Estado inválido. Valores permitidos: ${ESTADOS_VALIDOS.join(", ")}`,
-      },
-      default: ESTADOS_SALA.ACTIVA,
+      type: obtenerTipoMongoose(atributos.estado.tipo),
+      enum: Object.values(ESTADOS_SALA),
+      default: atributos.estado.default,
     },
   },
   {
     versionKey: false,
     toJSON: {
       // Mantiene el contrato de la API: se responde `id` (string) en lugar de `_id`.
-      transform: (doc, { _id, ...resto }) => ({ id: _id.toString(), ...resto }),
+      transform: (_doc, { _id, ...resto }) => ({
+        id: _id.toString(),
+        ...resto,
+      }),
     },
   },
 );
+
+/**
+ * Prepara los cambios para una actualización parcial.
+ * Convierte los campos anidados indicados a rutas con dot notation,
+ * evitando reemplazar subdocumentos completos.
+ */
+const prepararCambios = (cambios, camposAnidados = []) => {
+  const resultado = {};
+
+  for (const [campo, valor] of Object.entries(cambios)) {
+    if (
+      camposAnidados.includes(campo) &&
+      valor !== null &&
+      typeof valor === "object" &&
+      !Array.isArray(valor) &&
+      !(valor instanceof Date)
+    ) {
+      for (const [atributo, dato] of Object.entries(valor)) {
+        resultado[`${campo}.${atributo}`] = dato;
+      }
+    } else {
+      resultado[campo] = valor;
+    }
+  }
+
+  return resultado;
+};
+
+// Operaciones de persistencia.
+salaSchema.statics.obtenerTodos = function () {
+  return this.find().sort({ _id: 1 });
+};
 
 salaSchema.statics.obtenerPorId = function (id) {
   return this.findById(id);
 };
 
-const Sala = mongoose.model("Sala", salaSchema);
+salaSchema.statics.crear = function (datos) {
+  return this.create(datos);
+};
 
-export { ESTADOS_SALA };
+salaSchema.statics.actualizar = function (id, cambios) {
+  return this.findByIdAndUpdate(
+    id,
+    {
+      $set: prepararCambios(cambios, ["responsable"]),
+    },
+    {
+      returnDocument: "after",
+      runValidators: true,
+    },
+  );
+};
+
+export const Sala = mongoose.models.Sala || mongoose.model("Sala", salaSchema, "salas");
+
 export default Sala;

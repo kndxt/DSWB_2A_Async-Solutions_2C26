@@ -21,7 +21,7 @@ export const entradaSchema = new mongoose.Schema(
     },
     estado: {
       type: obtenerTipoMongoose(atributos.estado.tipo),
-      enum: Object.values(atributos.estado.valores),
+      enum: Object.values(ESTADOS_ENTRADA),
       default: atributos.estado.default,
       required: atributos.estado.requerido,
     },

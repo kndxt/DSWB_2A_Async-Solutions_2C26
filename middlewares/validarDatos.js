@@ -1,8 +1,9 @@
+
 import mongoose from "mongoose";
 import { ValidationError } from "../errors/errores.js";
 
 /**
- * Comprueba si un valor tiene el formato esperado por la API.
+ * Comprueba si un valor tiene el tipo de dato esperado.
  */
 const validarTipo = (valor, tipo) => {
   switch (tipo) {
@@ -24,8 +25,97 @@ const validarTipo = (valor, tipo) => {
         !Number.isNaN(new Date(valor).getTime())
       );
 
+    case "object":
+      return (
+        typeof valor === "object" &&
+        valor !== null &&
+        !Array.isArray(valor) &&
+        !(valor instanceof Date)
+      );
+
     default:
       throw new Error(`Tipo de dato no soportado: ${tipo}`);
+  }
+};
+
+/**
+ * Comprueba las restricciones declaradas para un atributo.
+ */
+const validarRestricciones = (valor, validaciones, nombreCampo) => {
+  const { min, max, entero } = validaciones ?? {};
+
+  if (entero && !Number.isInteger(valor)) {
+    throw new ValidationError(
+      `El campo '${nombreCampo}' debe ser un número entero`,
+    );
+  }
+
+  if (min !== undefined && valor < min) {
+    throw new ValidationError(
+      `El campo '${nombreCampo}' debe ser mayor o igual a ${min}`,
+    );
+  }
+
+  if (max !== undefined && valor > max) {
+    throw new ValidationError(
+      `El campo '${nombreCampo}' debe ser menor o igual a ${max}`,
+    );
+  }
+};
+
+/**
+ * Comprueba la presencia, el tipo y las restricciones de un atributo.
+ * Si es un objeto, también valida sus atributos internos.
+ */
+const validarAtributo = (valor, atributo, nombreCampo, requerido = false) => {
+  if (valor === undefined || valor === null || valor === "") {
+    if (requerido) {
+      throw new ValidationError(`El campo '${nombreCampo}' es obligatorio`);
+    }
+
+    return;
+  }
+
+  if (!validarTipo(valor, atributo.tipo)) {
+    throw new ValidationError(
+      atributo.tipo === "objectId"
+        ? `El identificador '${nombreCampo}' no tiene un formato válido`
+        : `El campo '${nombreCampo}' no tiene un tipo de dato válido`,
+    );
+  }
+
+  validarRestricciones(valor, atributo.validaciones, nombreCampo);
+
+  if (atributo.tipo === "object") {
+    for (const [nombre, definicion] of Object.entries(atributo.atributos)) {
+      validarAtributo(
+        valor[nombre],
+        definicion,
+        `${nombreCampo}.${nombre}`,
+        requerido && definicion.requerido,
+      );
+    }
+  }
+};
+
+/**
+ * Valida los campos de un origen de la solicitud según la operación.
+ */
+const validarOrigen = (datos, configuracion, definicion) => {
+  const { requeridos = [], opcionales = [] } = configuracion;
+
+  for (const campo of [...requeridos, ...opcionales]) {
+    const requerido = requeridos.includes(campo);
+
+    // El identificador de ruta no forma parte de los atributos de la entidad.
+    const atributo =
+      campo === "id" ? { tipo: "objectId" } : definicion.atributos[campo];
+
+    if (!atributo) {
+      throw new Error(`No se definió un tipo para el campo '${campo}'`);
+    }
+
+    validarAtributo(datos[campo], atributo, campo, requerido);
   }
 };
 
@@ -37,44 +127,7 @@ const validarDatos = (definicion) => {
   return (operacion) => {
     return (req, res, next) => {
       for (const [origen, configuracion] of Object.entries(operacion)) {
-        const datos = req[origen] ?? {};
-        const { requeridos = [], opcionales = [] } = configuracion;
-
-        const campos = [...requeridos, ...opcionales];
-
-        // Comprueba que estén presentes los campos obligatorios.
-        for (const campo of requeridos) {
-          const valor = datos[campo];
-
-          if (valor === undefined || valor === null || valor === "") {
-            throw new ValidationError(`El campo '${campo}' es obligatorio`);
-          }
-        }
-
-        // Valida únicamente los campos contemplados por la operación.
-        for (const campo of campos) {
-          const valor = datos[campo];
-
-          // Los campos opcionales pueden omitirse.
-          if (valor === undefined || valor === null || valor === "") {
-            continue;
-          }
-
-          // El identificador de ruta no figura entre los atributos.
-          const tipo = campo === "id" ? "objectId" : definicion.atributos[campo]?.tipo;
-
-          if (!tipo) {
-            throw new Error(`No se definió un tipo para el campo '${campo}'`);
-          }
-
-          if (!validarTipo(valor, tipo)) {
-            throw new ValidationError(
-              tipo === "objectId"
-                ? `El identificador '${campo}' no tiene un formato válido`
-                : `El campo '${campo}' no tiene un tipo de dato válido`,
-            );
-          }
-        }
+        validarOrigen(req[origen] ?? {}, configuracion, definicion);
       }
 
       next();

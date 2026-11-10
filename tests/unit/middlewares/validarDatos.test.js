@@ -1,12 +1,15 @@
+
 import test from "node:test";
 import assert from "node:assert/strict";
 
 import validarDatos from "../../../middlewares/validarDatos.js";
 import { ValidationError } from "../../../errors/errores.js";
 import { entradaDefinicion } from "../../../definitions/entrada.js";
+import { salaDefinicion } from "../../../definitions/sala.js";
 
-// Configura el middleware con la definición de Entrada.
+// Configura los middlewares con las definiciones de cada entidad.
 const validarEntrada = validarDatos(entradaDefinicion);
+const validarSala = validarDatos(salaDefinicion);
 
 // Ejecuta el middleware y permite comprobar si llamó a next().
 const ejecutarMiddleware = (middleware, req) => {
@@ -168,4 +171,100 @@ test("permite continuar cuando la operación no tiene campos definidos", () => {
   });
 
   assert.equal(nextLlamado, true);
+});
+
+// Comprueba la validación recursiva de objetos anidados en Sala.
+test("rechaza un objeto requerido ausente", () => {
+  const middleware = validarSala(salaDefinicion.operaciones.crear);
+
+  assert.throws(
+    () =>
+      ejecutarMiddleware(middleware, {
+        body: {
+          nombre: "Sala",
+          capacidad: 40,
+          direccion: "Calle 123",
+          precioReserva: 1000,
+        },
+      }),
+    ValidationError,
+  );
+});
+
+test("rechaza atributos requeridos ausentes en un objeto anidado", () => {
+  const middleware = validarSala(salaDefinicion.operaciones.crear);
+
+  assert.throws(
+    () =>
+      ejecutarMiddleware(middleware, {
+        body: {
+          nombre: "Sala",
+          capacidad: 40,
+          direccion: "Calle 123",
+          precioReserva: 1000,
+          responsable: {
+            nombre: "Laura",
+            telefono: "123456",
+          },
+        },
+      }),
+    ValidationError,
+  );
+});
+
+test("acepta un objeto anidado completo", () => {
+  const middleware = validarSala(salaDefinicion.operaciones.crear);
+
+  const nextLlamado = ejecutarMiddleware(middleware, {
+    body: {
+      nombre: "Sala",
+      capacidad: 40,
+      direccion: "Calle 123",
+      precioReserva: 1000,
+      responsable: {
+        nombre: "Laura",
+        apellido: "Pérez",
+        telefono: "123456",
+        email: "laura@example.test",
+      },
+    },
+  });
+
+  assert.equal(nextLlamado, true);
+});
+
+test("permite actualizar parcialmente un objeto anidado", () => {
+  const middleware = validarSala(salaDefinicion.operaciones.actualizar);
+
+  const nextLlamado = ejecutarMiddleware(middleware, {
+    params: {
+      id: idValido,
+    },
+    body: {
+      responsable: {
+        telefono: "99999999",
+      },
+    },
+  });
+
+  assert.equal(nextLlamado, true);
+});
+
+test("rechaza tipos incorrectos en atributos de un objeto anidado opcional", () => {
+  const middleware = validarSala(salaDefinicion.operaciones.actualizar);
+
+  assert.throws(
+    () =>
+      ejecutarMiddleware(middleware, {
+        params: {
+          id: idValido,
+        },
+        body: {
+          responsable: {
+            nombre: 123,
+          },
+        },
+      }),
+    ValidationError,
+  );
 });
