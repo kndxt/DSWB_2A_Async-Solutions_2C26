@@ -61,6 +61,13 @@ export const salaDefinicion = {
     },
   },
 
+  // Parámetros utilizados por las operaciones de Sala.
+  parametros: {
+    id: {
+      tipo: "objectId",
+    },
+  },
+
   // Datos que recibe cada operación.
   operaciones: {
     obtenerTodos: {},

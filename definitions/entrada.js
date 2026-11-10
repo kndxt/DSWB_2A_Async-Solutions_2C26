@@ -32,6 +32,17 @@ export const entradaDefinicion = {
     },
   },
 
+  // Parámetros utilizados por las operaciones de Entrada.
+  parametros: {
+    id: {
+      tipo: "objectId",
+    },
+    eventoId: {
+      tipo: "objectId",
+      referencia: "Evento",
+    },
+  },
+
   // Datos que cada operación espera recibir del cliente.
   operaciones: {
     obtenerTodos: {},

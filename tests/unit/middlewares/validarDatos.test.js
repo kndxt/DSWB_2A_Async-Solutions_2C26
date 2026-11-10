@@ -5,10 +5,12 @@ import validarDatos from "../../../middlewares/validarDatos.js";
 import { ValidationError } from "../../../errors/errores.js";
 import { entradaDefinicion } from "../../../definitions/entrada.js";
 import { salaDefinicion } from "../../../definitions/sala.js";
+import { eventoDefinicion } from "../../../definitions/evento.js";
 
 // Configura los middlewares con las definiciones de cada entidad.
 const validarEntrada = validarDatos(entradaDefinicion);
 const validarSala = validarDatos(salaDefinicion);
+const validarEvento = validarDatos(eventoDefinicion);
 
 // Ejecuta el middleware y permite comprobar si llamó a next().
 const ejecutarMiddleware = (middleware, req) => {
@@ -22,6 +24,7 @@ const ejecutarMiddleware = (middleware, req) => {
 };
 
 const idValido = "507f1f77bcf86cd799439011";
+const usuarioIdValido = "507f1f77bcf86cd799439012";
 
 // Comprueba la validación de parámetros de ruta.
 test("acepta un ObjectId válido en params", () => {
@@ -41,6 +44,29 @@ test("rechaza un ObjectId inválido en params", () => {
     () =>
       ejecutarMiddleware(middleware, {
         params: { id: "123" },
+      }),
+    ValidationError,
+  );
+});
+
+// Comprueba parámetros de ruta que no se llaman id.
+test("acepta un ObjectId válido en un parámetro distinto de id", () => {
+  const middleware = validarEntrada(entradaDefinicion.operaciones.obtenerVendidasPorEvento);
+
+  const nextLlamado = ejecutarMiddleware(middleware, {
+    params: { eventoId: idValido },
+  });
+
+  assert.equal(nextLlamado, true);
+});
+
+test("rechaza un ObjectId inválido en un parámetro distinto de id", () => {
+  const middleware = validarEntrada(entradaDefinicion.operaciones.obtenerVendidasPorEvento);
+
+  assert.throws(
+    () =>
+      ejecutarMiddleware(middleware, {
+        params: { eventoId: "123" },
       }),
     ValidationError,
   );
@@ -265,5 +291,292 @@ test("rechaza tipos incorrectos en atributos de un objeto anidado opcional", () 
         },
       }),
     ValidationError,
+  );
+});
+
+// Definición auxiliar para probar relaciones entre distintos tipos.
+const definicionComparaciones = {
+  atributos: {
+    cantidad: { tipo: "number" },
+    limite: { tipo: "number" },
+    disponible: { tipo: "boolean" },
+    habilitado: { tipo: "boolean" },
+    usuarioId: { tipo: "objectId" },
+    responsableId: { tipo: "objectId" },
+  },
+  validaciones: {
+    entreAtributos: [],
+  },
+};
+
+// Crea un middleware con una relación configurable.
+const crearMiddlewareComparacion = (relacion) => {
+  const definicion = {
+    ...definicionComparaciones,
+    validaciones: {
+      entreAtributos: [relacion],
+    },
+  };
+
+  const validar = validarDatos(definicion);
+
+  return validar({
+    body: {
+      requeridos: [],
+      opcionales: Object.keys(definicion.atributos),
+    },
+  });
+};
+
+// Comprueba las relaciones entre fechas de Evento.
+test("acepta fechas que cumplen las relaciones declaradas", () => {
+  const middleware = validarEvento(eventoDefinicion.operaciones.crear);
+
+  const nextLlamado = ejecutarMiddleware(middleware, {
+    body: {
+      nombre: "Concierto",
+      tipo: "Música",
+      fechaInicio: "2026-12-10T20:00:00.000Z",
+      fechaFin: "2026-12-10T23:00:00.000Z",
+      fechaInicioVenta: "2026-11-01T00:00:00.000Z",
+      fechaFinVenta: "2026-12-10T19:00:00.000Z",
+      precioEntrada: 0,
+      salaId: idValido,
+      usuarioId: usuarioIdValido,
+    },
+  });
+
+  assert.equal(nextLlamado, true);
+});
+
+test("rechaza una fecha de fin anterior a la fecha de inicio", () => {
+  const middleware = validarEvento(eventoDefinicion.operaciones.crear);
+
+  assert.throws(
+    () =>
+      ejecutarMiddleware(middleware, {
+        body: {
+          nombre: "Concierto",
+          tipo: "Música",
+          fechaInicio: "2026-12-10T20:00:00.000Z",
+          fechaFin: "2026-12-10T19:00:00.000Z",
+          fechaInicioVenta: "2026-11-01T00:00:00.000Z",
+          fechaFinVenta: "2026-12-10T19:00:00.000Z",
+          precioEntrada: 0,
+          salaId: idValido,
+          usuarioId: usuarioIdValido,
+        },
+      }),
+    ValidationError,
+  );
+});
+
+test("rechaza una fecha de fin de venta anterior a la fecha de inicio de venta", () => {
+  const middleware = validarEvento(eventoDefinicion.operaciones.crear);
+
+  assert.throws(
+    () =>
+      ejecutarMiddleware(middleware, {
+        body: {
+          nombre: "Concierto",
+          tipo: "Música",
+          fechaInicio: "2026-12-10T20:00:00.000Z",
+          fechaFin: "2026-12-10T23:00:00.000Z",
+          fechaInicioVenta: "2026-11-01T00:00:00.000Z",
+          fechaFinVenta: "2026-10-31T00:00:00.000Z",
+          precioEntrada: 0,
+          salaId: idValido,
+          usuarioId: usuarioIdValido,
+        },
+      }),
+    ValidationError,
+  );
+});
+
+test("rechaza una fecha de fin de venta posterior al inicio del evento", () => {
+  const middleware = validarEvento(eventoDefinicion.operaciones.crear);
+
+  assert.throws(
+    () =>
+      ejecutarMiddleware(middleware, {
+        body: {
+          nombre: "Concierto",
+          tipo: "Música",
+          fechaInicio: "2026-12-10T20:00:00.000Z",
+          fechaFin: "2026-12-10T23:00:00.000Z",
+          fechaInicioVenta: "2026-11-01T00:00:00.000Z",
+          fechaFinVenta: "2026-12-10T21:00:00.000Z",
+          precioEntrada: 0,
+          salaId: idValido,
+          usuarioId: usuarioIdValido,
+        },
+      }),
+    ValidationError,
+  );
+});
+
+test("permite actualizar una fecha sin enviar su campo de comparación", () => {
+  const middleware = validarEvento(eventoDefinicion.operaciones.actualizar);
+
+  const nextLlamado = ejecutarMiddleware(middleware, {
+    params: {
+      id: idValido,
+    },
+    body: {
+      fechaInicio: "2026-12-10T20:00:00.000Z",
+    },
+  });
+
+  assert.equal(nextLlamado, true);
+});
+
+// Comprueba las comparaciones numéricas.
+test("acepta una relación numérica que se cumple", () => {
+  const middleware = crearMiddlewareComparacion({
+    campo: "cantidad",
+    operador: "<=",
+    referencia: "limite",
+  });
+
+  const nextLlamado = ejecutarMiddleware(middleware, {
+    body: {
+      cantidad: 5,
+      limite: 10,
+    },
+  });
+
+  assert.equal(nextLlamado, true);
+});
+
+test("rechaza una relación numérica que no se cumple", () => {
+  const middleware = crearMiddlewareComparacion({
+    campo: "cantidad",
+    operador: "<=",
+    referencia: "limite",
+  });
+
+  assert.throws(
+    () =>
+      ejecutarMiddleware(middleware, {
+        body: {
+          cantidad: 15,
+          limite: 10,
+        },
+      }),
+    ValidationError,
+  );
+});
+
+// Comprueba las comparaciones de igualdad entre booleanos.
+test("acepta una comparación de igualdad entre booleanos", () => {
+  const middleware = crearMiddlewareComparacion({
+    campo: "disponible",
+    operador: "===",
+    referencia: "habilitado",
+  });
+
+  const nextLlamado = ejecutarMiddleware(middleware, {
+    body: {
+      disponible: false,
+      habilitado: false,
+    },
+  });
+
+  assert.equal(nextLlamado, true);
+});
+
+test("rechaza una comparación de igualdad entre booleanos que no se cumple", () => {
+  const middleware = crearMiddlewareComparacion({
+    campo: "disponible",
+    operador: "===",
+    referencia: "habilitado",
+  });
+
+  assert.throws(
+    () =>
+      ejecutarMiddleware(middleware, {
+        body: {
+          disponible: true,
+          habilitado: false,
+        },
+      }),
+    ValidationError,
+  );
+});
+
+// Comprueba las comparaciones de igualdad entre ObjectIds.
+test("acepta una comparación de igualdad entre ObjectIds", () => {
+  const middleware = crearMiddlewareComparacion({
+    campo: "usuarioId",
+    operador: "===",
+    referencia: "responsableId",
+  });
+
+  const nextLlamado = ejecutarMiddleware(middleware, {
+    body: {
+      usuarioId: idValido,
+      responsableId: idValido,
+    },
+  });
+
+  assert.equal(nextLlamado, true);
+});
+
+test("rechaza una comparación de igualdad entre ObjectIds que no se cumple", () => {
+  const middleware = crearMiddlewareComparacion({
+    campo: "usuarioId",
+    operador: "===",
+    referencia: "responsableId",
+  });
+
+  assert.throws(
+    () =>
+      ejecutarMiddleware(middleware, {
+        body: {
+          usuarioId: idValido,
+          responsableId: "507f191e810c19729de860ea",
+        },
+      }),
+    ValidationError,
+  );
+});
+
+// Comprueba que no se permitan operadores incompatibles con el tipo.
+test("rechaza operadores de orden para atributos booleanos", () => {
+  const middleware = crearMiddlewareComparacion({
+    campo: "disponible",
+    operador: ">",
+    referencia: "habilitado",
+  });
+
+  assert.throws(
+    () =>
+      ejecutarMiddleware(middleware, {
+        body: {
+          disponible: true,
+          habilitado: false,
+        },
+      }),
+    /no es válido para atributos de tipo 'boolean'/,
+  );
+});
+
+// Comprueba que no se puedan comparar atributos de tipos diferentes.
+test("rechaza relaciones entre atributos de tipos diferentes", () => {
+  const middleware = crearMiddlewareComparacion({
+    campo: "cantidad",
+    operador: "===",
+    referencia: "disponible",
+  });
+
+  assert.throws(
+    () =>
+      ejecutarMiddleware(middleware, {
+        body: {
+          cantidad: 10,
+          disponible: true,
+        },
+      }),
+    /atributos de tipos diferentes/,
   );
 });

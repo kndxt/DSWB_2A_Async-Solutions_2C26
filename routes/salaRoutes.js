@@ -6,25 +6,22 @@ import { salaDefinicion } from "../definitions/sala.js";
 
 const router = express.Router();
 
+const { operaciones } = salaDefinicion;
 const validarSala = validarDatos(salaDefinicion);
 
 router.get("/", asyncHandler(salaController.obtenerSalas));
 
 router.get(
   "/:id",
-  validarSala(salaDefinicion.operaciones.obtenerPorId),
+  validarSala(operaciones.obtenerPorId),
   asyncHandler(salaController.obtenerSalaPorId),
 );
 
-router.post(
-  "/",
-  validarSala(salaDefinicion.operaciones.crear),
-  asyncHandler(salaController.crearSala),
-);
+router.post("/", validarSala(operaciones.crear), asyncHandler(salaController.crearSala));
 
 router.patch(
   "/:id",
-  validarSala(salaDefinicion.operaciones.actualizar),
+  validarSala(operaciones.actualizar),
   asyncHandler(salaController.actualizarSala),
 );
 
