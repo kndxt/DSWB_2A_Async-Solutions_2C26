@@ -3,24 +3,37 @@ import * as salaController from "../controllers/salaController.js";
 import asyncHandler from "../middlewares/asyncHandler.js";
 import validarDatos from "../middlewares/validarDatos.js";
 import { salaDefinicion } from "../definitions/sala.js";
+import { autenticar, autorizar } from "../middlewares/auth.js";
+import { ROLES_USUARIO } from "../models/usuarioModel.js";
 
 const router = express.Router();
 
 const { operaciones } = salaDefinicion;
 const validarSala = validarDatos(salaDefinicion);
 
-router.get("/", asyncHandler(salaController.obtenerSalas));
+// Lectura: cualquier usuario autenticado
+router.get("/", autenticar, asyncHandler(salaController.obtenerSalas));
 
 router.get(
   "/:id",
+  autenticar,
   validarSala(operaciones.obtenerPorId),
   asyncHandler(salaController.obtenerSalaPorId),
 );
 
-router.post("/", validarSala(operaciones.crear), asyncHandler(salaController.crearSala));
+// Escritura: solo admin
+router.post(
+  "/",
+  autenticar,
+  autorizar(ROLES_USUARIO.ADMIN),
+  validarSala(operaciones.crear),
+  asyncHandler(salaController.crearSala),
+);
 
 router.patch(
   "/:id",
+  autenticar,
+  autorizar(ROLES_USUARIO.ADMIN),
   validarSala(operaciones.actualizar),
   asyncHandler(salaController.actualizarSala),
 );

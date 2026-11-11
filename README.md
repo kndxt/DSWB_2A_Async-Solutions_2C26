@@ -298,6 +298,35 @@ La integración y validación completa de los flujos desde el navegador queda su
 
 ---
 
+### 7.7 Autorización basada en roles
+
+La API incorpora un sistema de autenticación basado en JWT almacenado en una cookie `httpOnly`, y un sistema de autorización basado en roles.
+
+Se definieron dos roles:
+
+- **`admin`**: puede gestionar usuarios, salas, eventos y consultar toda la información.
+- **`cliente`**: puede consultar salas, eventos, entradas y reservas, y comprar o cancelar entradas.
+
+La protección se aplica con dos middlewares:
+
+- **`autenticar`**: verifica que haya un token válido en la cookie, que el usuario exista en MongoDB y que esté activo. Si todo está bien, deja el usuario en `req.usuario`.
+- **`autorizar(...roles)`**: verifica que `req.usuario.rol` esté entre los roles permitidos.
+
+**Reglas de acceso:**
+
+| Módulo | Lectura (GET) | Escritura (POST/PUT/PATCH) |
+|--------|---------------|----------------------------|
+| Usuarios | Solo `admin` | Solo `admin` |
+| Salas | Autenticado (cualquier rol) | Solo `admin` |
+| Eventos | Autenticado (cualquier rol) | Solo `admin` |
+| Entradas | Autenticado (cualquier rol) | Autenticado (cualquier rol) |
+| Reservas | Autenticado (cualquier rol) | — (no tiene escritura) |
+| Vistas | Público | — |
+
+**Justificación:** solo un administrador debe poder ver y modificar la información de usuarios (datos sensibles), gestionar el catálogo de salas y eventos, y supervisar el sistema. Los clientes solo necesitan consultar la cartelera y operar con sus compras.
+
+---
+
 ## 8. Endpoints
 
 La aplicación expone una API REST para gestionar usuarios, salas, eventos, reservas y entradas. Las rutas de la API se encuentran en `routes/` y se vinculan con sus respectivos controllers.
