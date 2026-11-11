@@ -4,6 +4,7 @@
 import { apiFetch } from "./apiClient.js";
 import { renderTable } from "./tabla.js";
 import { textoOGuion, formatearPrecio, formatearFecha } from "./utils/formato.js";
+import { mostrarMensaje, limpiarMensajes } from "./mensajes.js";
 
 const reservasApi = {
   listar: () => apiFetch("/reservas"),
@@ -26,29 +27,6 @@ const COLUMNAS = [
 
 const tabla = document.getElementById("tabla-reservas");
 const cuerpoTabla = tabla.querySelector("tbody");
-
-// ---- Mensajes ----
-const mostrarMensaje = (tipo, texto) => {
-  let contenedor = document.getElementById("mensajes");
-  if (!contenedor) {
-    contenedor = document.createElement("div");
-    contenedor.id = "mensajes";
-    const principal = document.querySelector("main");
-    if (principal) principal.prepend(contenedor);
-    else document.body.prepend(contenedor);
-  }
-  const esExito = tipo === "exito";
-  const aviso = document.createElement("p");
-  aviso.className = `mensaje ${esExito ? "mensaje-exito" : "mensaje-error"}`;
-  aviso.setAttribute("role", esExito ? "status" : "alert");
-  aviso.textContent = texto;
-  contenedor.replaceChildren(aviso);
-};
-
-const limpiarMensajes = () => {
-  const contenedor = document.getElementById("mensajes");
-  if (contenedor) contenedor.replaceChildren();
-};
 
 // ---- Tabla ----
 const mostrarEnTabla = (texto) => {

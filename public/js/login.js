@@ -1,20 +1,10 @@
-import { apiFetch } from "./apiClient.js";
+import { apiFetch, enviarJson } from "./apiClient.js";
+import { mostrarMensaje as mostrar } from "./mensajes.js";
 
 const formulario = document.querySelector("#form-login");
 const contenedorMensaje = document.querySelector("#mensaje-login");
 const botonLogin = document.querySelector("#btn-login");
-
-const mostrarMensaje = (tipo, texto) => {
-  const mensaje = document.createElement("p");
-
-  mensaje.className =
-    tipo === "error" ? "mensaje mensaje-error" : "mensaje mensaje-exito";
-
-  mensaje.setAttribute("role", tipo === "error" ? "alert" : "status");
-  mensaje.textContent = texto;
-
-  contenedorMensaje.replaceChildren(mensaje);
-};
+const mostrarMensaje = (tipo, texto) => mostrar(tipo, texto, contenedorMensaje);
 
 formulario.addEventListener("submit", async (evento) => {
   evento.preventDefault();
@@ -26,13 +16,7 @@ formulario.addEventListener("submit", async (evento) => {
   mostrarMensaje("exito", "Validando credenciales...");
 
   try {
-    const respuesta = await apiFetch("/usuarios/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ email, password }),
-    });
+    const respuesta = await apiFetch("/usuarios/login", enviarJson("POST", { email, password }));
 
     mostrarMensaje("exito", respuesta.mensaje || "Inicio de sesión exitoso.");
 
@@ -45,10 +29,7 @@ formulario.addEventListener("submit", async (evento) => {
 
     contenedorMensaje.append(botonContinuar);
   } catch (error) {
-    mostrarMensaje(
-      "error",
-      error.message || "No se pudo iniciar sesión. Intentá nuevamente.",
-    );
+    mostrarMensaje("error", error.message || "No se pudo iniciar sesión. Intentá nuevamente.");
   } finally {
     botonLogin.disabled = false;
   }

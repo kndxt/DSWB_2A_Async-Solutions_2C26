@@ -1,41 +1,27 @@
+// Mensajes de éxito y error compartidos por todas las vistas.
+// Si no se indica un contenedor, se usa (o se crea) #mensajes al comienzo de <main>.
 
-/**
- * Oculta y limpia los mensajes de éxito y error.
- */
-export function limpiarMensajes(mensajeExito, mensajeError) {
-  mensajeExito.hidden = true;
-  mensajeError.hidden = true;
+const obtenerContenedor = () => {
+  let contenedor = document.getElementById("mensajes");
+  if (!contenedor) {
+    contenedor = document.createElement("div");
+    contenedor.id = "mensajes";
+    const principal = document.querySelector("main");
+    if (principal) principal.prepend(contenedor);
+    else document.body.prepend(contenedor);
+  }
+  return contenedor;
+};
 
-  mensajeExito.querySelector(".texto-mensaje").textContent = "";
-  mensajeError.querySelector(".texto-mensaje").textContent = "";
-}
+export const mostrarMensaje = (tipo, texto, contenedor = obtenerContenedor()) => {
+  const esExito = tipo === "exito";
+  const aviso = document.createElement("p");
+  aviso.className = `mensaje ${esExito ? "mensaje-exito" : "mensaje-error"}`;
+  aviso.setAttribute("role", esExito ? "status" : "alert");
+  aviso.textContent = texto;
+  contenedor.replaceChildren(aviso);
+};
 
-/**
- * Muestra un mensaje de éxito.
- */
-export function mostrarExito(elemento, mensaje) {
-  elemento.querySelector(".texto-mensaje").textContent = mensaje;
-  elemento.hidden = false;
-}
-
-/**
- * Muestra un mensaje de error.
- */
-export function mostrarError(elemento, mensaje) {
-  elemento.querySelector(".texto-mensaje").textContent = mensaje;
-  elemento.hidden = false;
-}
-
-/**
- * Permite cerrar los mensajes manualmente.
- */
-export function configurarCierreMensajes() {
-  document.querySelectorAll(".cerrar-mensaje").forEach((boton) => {
-    boton.addEventListener("click", () => {
-      const mensaje = boton.closest(".mensaje");
-
-      mensaje.hidden = true;
-      mensaje.querySelector(".texto-mensaje").textContent = "";
-    });
-  });
-}
+export const limpiarMensajes = (contenedor = document.getElementById("mensajes")) => {
+  if (contenedor) contenedor.replaceChildren();
+};

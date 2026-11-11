@@ -4,6 +4,7 @@
 import { apiFetch, enviarJson } from "./apiClient.js";
 import { renderTable } from "./tabla.js";
 import { formatearPrecio, textoOGuion } from "./utils/formato.js";
+import { mostrarMensaje, limpiarMensajes } from "./mensajes.js";
 
 const salasApi = {
   listar: () => apiFetch("/salas"),
@@ -32,31 +33,6 @@ let salaEnEdicion = null;
 const tabla = document.getElementById("tabla-salas");
 const cuerpoTabla = tabla.querySelector("tbody");
 const formulario = () => document.getElementById("form-sala");
-
-// ---- Mensajes ----
-// Mismo marcado que includes/mensajes.pug.
-
-const mostrarMensaje = (tipo, texto) => {
-  let contenedor = document.getElementById("mensajes");
-  if (!contenedor) {
-    contenedor = document.createElement("div");
-    contenedor.id = "mensajes";
-    const principal = document.querySelector("main");
-    if (principal) principal.prepend(contenedor);
-    else document.body.prepend(contenedor);
-  }
-  const esExito = tipo === "exito";
-  const aviso = document.createElement("p");
-  aviso.className = `mensaje ${esExito ? "mensaje-exito" : "mensaje-error"}`;
-  aviso.setAttribute("role", esExito ? "status" : "alert");
-  aviso.textContent = texto;
-  contenedor.replaceChildren(aviso);
-};
-
-const limpiarMensajes = () => {
-  const contenedor = document.getElementById("mensajes");
-  if (contenedor) contenedor.replaceChildren();
-};
 
 // ---- Listado ----
 

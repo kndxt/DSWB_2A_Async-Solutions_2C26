@@ -3,6 +3,7 @@
 import { apiFetch, enviarJson } from "./apiClient.js";
 import { renderTable } from "./tabla.js";
 import { textoOGuion } from "./utils/formato.js";
+import { mostrarMensaje, limpiarMensajes } from "./mensajes.js";
 
 const usuariosApi = {
   listar: () => apiFetch("/usuarios"),
@@ -32,30 +33,6 @@ let usuarioEnEdicion = null;
 const tabla = document.getElementById("tabla-usuarios");
 const cuerpoTabla = tabla.querySelector("tbody");
 const formulario = () => document.getElementById("form-usuario");
-
-// ---- Mensajes ----
-
-const mostrarMensaje = (tipo, texto) => {
-  let contenedor = document.getElementById("mensajes");
-  if (!contenedor) {
-    contenedor = document.createElement("div");
-    contenedor.id = "mensajes";
-    const principal = document.querySelector("main");
-    if (principal) principal.prepend(contenedor);
-    else document.body.prepend(contenedor);
-  }
-  const esExito = tipo === "exito";
-  const aviso = document.createElement("p");
-  aviso.className = `mensaje ${esExito ? "mensaje-exito" : "mensaje-error"}`;
-  aviso.setAttribute("role", esExito ? "status" : "alert");
-  aviso.textContent = texto;
-  contenedor.replaceChildren(aviso);
-};
-
-const limpiarMensajes = () => {
-  const contenedor = document.getElementById("mensajes");
-  if (contenedor) contenedor.replaceChildren();
-};
 
 // ---- Listado ----
 

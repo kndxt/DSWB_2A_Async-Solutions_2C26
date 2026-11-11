@@ -2,6 +2,7 @@
 // Módulo ES: usa apiFetch desde apiClient.js, igual que salas.js.
 import { apiFetch, enviarJson } from "./apiClient.js";
 import { textoOGuion, formatearPrecio, formatearFechaHora } from "./utils/formato.js";
+import { mostrarMensaje, limpiarMensajes } from "./mensajes.js";
 
 const eventosApi = {
   listar: () => apiFetch("/eventos"),
@@ -39,30 +40,6 @@ const aInputLocal = (iso) => {
   return `${fecha.getFullYear()}-${pad(fecha.getMonth() + 1)}-${pad(fecha.getDate())}T${pad(fecha.getHours())}:${pad(fecha.getMinutes())}`;
 };
 const deInputLocal = (texto) => (texto === "" ? "" : new Date(texto).toISOString());
-
-// ---- Mensajes ----
-
-const mostrarMensaje = (tipo, texto) => {
-  let contenedor = document.getElementById("mensajes");
-  if (!contenedor) {
-    contenedor = document.createElement("div");
-    contenedor.id = "mensajes";
-    const principal = document.querySelector("main");
-    if (principal) principal.prepend(contenedor);
-    else document.body.prepend(contenedor);
-  }
-  const esExito = tipo === "exito";
-  const aviso = document.createElement("p");
-  aviso.className = `mensaje ${esExito ? "mensaje-exito" : "mensaje-error"}`;
-  aviso.setAttribute("role", esExito ? "status" : "alert");
-  aviso.textContent = texto;
-  contenedor.replaceChildren(aviso);
-};
-
-const limpiarMensajes = () => {
-  const contenedor = document.getElementById("mensajes");
-  if (contenedor) contenedor.replaceChildren();
-};
 
 // ---- Tablas ----
 

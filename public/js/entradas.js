@@ -1,12 +1,6 @@
-
 import { apiFetch } from "./apiClient.js";
 import { renderTable } from "./tabla.js";
-import {
-  limpiarMensajes,
-  mostrarExito,
-  mostrarError,
-  configurarCierreMensajes,
-} from "./mensajes.js";
+import { limpiarMensajes, mostrarMensaje } from "./mensajes.js";
 
 // ========================================
 // Elementos del DOM
@@ -19,8 +13,6 @@ const botonVender = document.querySelector("#boton-vender");
 
 const tabla = document.querySelector("#tabla-entradas");
 const estado = document.querySelector("#estado");
-const mensajeExito = document.querySelector("#mensaje-exito");
-const mensajeError = document.querySelector("#mensaje-error");
 
 // ========================================
 // Estado de la vista
@@ -81,9 +73,7 @@ const columnas = [
     label: "Entrada",
     render: (celda, entrada) => {
       const id = obtenerId(entrada);
-      const indice = entradas.findIndex(
-        (item) => String(obtenerId(item)) === String(id)
-      );
+      const indice = entradas.findIndex((item) => String(obtenerId(item)) === String(id));
 
       renderizarNombreEId(celda, `Entrada ${indice + 1}`, id);
     },
@@ -93,11 +83,7 @@ const columnas = [
     render: (celda, entrada) => {
       const evento = entrada.eventoId;
 
-      renderizarNombreEId(
-        celda,
-        evento?.nombre,
-        obtenerId(evento)
-      );
+      renderizarNombreEId(celda, evento?.nombre, obtenerId(evento));
     },
   },
   {
@@ -109,11 +95,7 @@ const columnas = [
         ? `${usuario.nombre ?? ""} ${usuario.apellido ?? ""}`.trim()
         : "";
 
-      renderizarNombreEId(
-        celda,
-        nombreCompleto,
-        obtenerId(usuario)
-      );
+      renderizarNombreEId(celda, nombreCompleto, obtenerId(usuario));
     },
   },
   {
@@ -123,9 +105,7 @@ const columnas = [
   {
     label: "Fecha de venta",
     value: (entrada) =>
-      entrada.fechaVenta
-        ? new Date(entrada.fechaVenta).toLocaleString("es-AR")
-        : "",
+      entrada.fechaVenta ? new Date(entrada.fechaVenta).toLocaleString("es-AR") : "",
   },
   {
     label: "Acciones",
@@ -177,7 +157,7 @@ async function cargarEntradas() {
     return true;
   } catch (error) {
     estado.textContent = "No se pudieron cargar las entradas.";
-    mostrarError(mensajeError, error.message);
+    mostrarMensaje("error", error.message);
 
     return false;
   }
@@ -189,7 +169,7 @@ async function cargarEntradas() {
 
 async function venderEntrada(event) {
   event.preventDefault();
-  limpiarMensajes(mensajeExito, mensajeError);
+  limpiarMensajes();
 
   const eventoId = campoEventoId.value.trim();
   const usuarioId = campoUsuarioId.value.trim();
@@ -204,25 +184,23 @@ async function venderEntrada(event) {
     const cargaCorrecta = await cargarEntradas();
 
     if (cargaCorrecta) {
-      mostrarExito(mensajeExito, "La entrada se vendió correctamente.");
+      mostrarMensaje("exito", "La entrada se vendió correctamente.");
     }
   } catch (error) {
-    mostrarError(mensajeError, error.message);
+    mostrarMensaje("error", error.message);
   } finally {
     botonVender.disabled = false;
   }
 }
 
 async function cancelarEntrada(id) {
-  const confirmar = window.confirm(
-    "¿Estás segura de que querés cancelar esta entrada?"
-  );
+  const confirmar = window.confirm("¿Estás segura de que querés cancelar esta entrada?");
 
   if (!confirmar) {
     return;
   }
 
-  limpiarMensajes(mensajeExito, mensajeError);
+  limpiarMensajes();
 
   try {
     const entradaCancelada = await entradasApi.cancelar(id);
@@ -230,13 +208,13 @@ async function cancelarEntrada(id) {
     entradas = entradas.map((entrada) =>
       String(obtenerId(entrada)) === String(id)
         ? { ...entrada, estado: entradaCancelada.estado }
-        : entrada
+        : entrada,
     );
 
     renderizarEntradas();
-    mostrarExito(mensajeExito, "La entrada se canceló correctamente.");
+    mostrarMensaje("exito", "La entrada se canceló correctamente.");
   } catch (error) {
-    mostrarError(mensajeError, error.message);
+    mostrarMensaje("error", error.message);
   }
 }
 
@@ -246,5 +224,4 @@ async function cancelarEntrada(id) {
 
 formVenta.addEventListener("submit", venderEntrada);
 
-configurarCierreMensajes();
 cargarEntradas();
