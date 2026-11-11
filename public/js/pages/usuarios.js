@@ -1,9 +1,9 @@
 // Vista de Usuarios: listado, detalle, alta, edición y cambio de estado sobre la API /usuarios.
 // Módulo ES: usa apiFetch desde apiClient.js, igual que salas.js y eventos.js.
-import { apiFetch, enviarJson } from "./apiClient.js";
-import { renderTable } from "./tabla.js";
-import { textoOGuion } from "./utils/formato.js";
-import { mostrarMensaje, limpiarMensajes } from "./mensajes.js";
+import { apiFetch, enviarJson } from "../core/apiClient.js";
+import { renderTable } from "../utils/tabla.js";
+import { textoOGuion } from "../utils/formato.js";
+import { mostrarMensaje, limpiarMensajes } from "../core/mensajes.js";
 
 const usuariosApi = {
   listar: () => apiFetch("/usuarios"),

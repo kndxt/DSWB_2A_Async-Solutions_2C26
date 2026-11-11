@@ -1,10 +1,10 @@
 // Vista de Salas: listado, detalle, alta y edición sobre la API /salas.
 // Usa apiFetch (apiClient.js) para consumir la API y renderTable (tabla.js) para la tabla.
 // Es un módulo ES: se carga con <script type="module"> y sus nombres no se mezclan con otros scripts.
-import { apiFetch, enviarJson } from "./apiClient.js";
-import { renderTable } from "./tabla.js";
-import { formatearPrecio, textoOGuion } from "./utils/formato.js";
-import { mostrarMensaje, limpiarMensajes } from "./mensajes.js";
+import { apiFetch, enviarJson } from "../core/apiClient.js";
+import { renderTable } from "../utils/tabla.js";
+import { formatearPrecio, textoOGuion } from "../utils/formato.js";
+import { mostrarMensaje, limpiarMensajes } from "../core/mensajes.js";
 
 const salasApi = {
   listar: () => apiFetch("/salas"),

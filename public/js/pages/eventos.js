@@ -1,8 +1,8 @@
 // Vista de Eventos: listado, próximos, alta, edición y cancelación sobre la API /eventos.
 // Módulo ES: usa apiFetch desde apiClient.js, igual que salas.js.
-import { apiFetch, enviarJson } from "./apiClient.js";
-import { textoOGuion, formatearPrecio, formatearFechaHora } from "./utils/formato.js";
-import { mostrarMensaje, limpiarMensajes } from "./mensajes.js";
+import { apiFetch, enviarJson } from "../core/apiClient.js";
+import { textoOGuion, formatearPrecio, formatearFechaHora } from "../utils/formato.js";
+import { mostrarMensaje, limpiarMensajes } from "../core/mensajes.js";
 
 const eventosApi = {
   listar: () => apiFetch("/eventos"),

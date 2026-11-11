@@ -1,5 +1,5 @@
-import { apiFetch, enviarJson } from "./apiClient.js";
-import { mostrarMensaje as mostrar } from "./mensajes.js";
+import { apiFetch, enviarJson } from "../core/apiClient.js";
+import { mostrarMensaje as mostrar } from "../core/mensajes.js";
 
 const formulario = document.querySelector("#form-login");
 const contenedorMensaje = document.querySelector("#mensaje-login");

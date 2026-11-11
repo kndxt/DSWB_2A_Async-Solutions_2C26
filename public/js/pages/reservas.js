@@ -1,10 +1,10 @@
 // Vista de Reservas: solo consulta sobre la API /reservas.
 // Usa apiFetch (apiClient.js) y renderTable (tabla.js) compartidos de F5.1.
 
-import { apiFetch } from "./apiClient.js";
-import { renderTable } from "./tabla.js";
-import { textoOGuion, formatearPrecio, formatearFecha } from "./utils/formato.js";
-import { mostrarMensaje, limpiarMensajes } from "./mensajes.js";
+import { apiFetch } from "../core/apiClient.js";
+import { renderTable } from "../utils/tabla.js";
+import { textoOGuion, formatearPrecio, formatearFecha } from "../utils/formato.js";
+import { mostrarMensaje, limpiarMensajes } from "../core/mensajes.js";
 
 const reservasApi = {
   listar: () => apiFetch("/reservas"),

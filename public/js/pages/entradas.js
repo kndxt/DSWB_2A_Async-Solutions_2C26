@@ -1,6 +1,6 @@
-import { apiFetch } from "./apiClient.js";
-import { renderTable } from "./tabla.js";
-import { limpiarMensajes, mostrarMensaje } from "./mensajes.js";
+import { apiFetch } from "../core/apiClient.js";
+import { renderTable } from "../utils/tabla.js";
+import { limpiarMensajes, mostrarMensaje } from "../core/mensajes.js";
 
 // ========================================
 // Elementos del DOM
