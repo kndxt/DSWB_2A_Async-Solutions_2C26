@@ -1,7 +1,16 @@
 import { Server } from "socket.io";
+import { registrarEco } from "./ecoSocket.js";
 
 // Instancia única de Socket.IO, compartida por todos los módulos.
 let io = null;
+
+// Módulos que registran sus eventos sobre la instancia de Socket.IO.
+// Cada módulo exporta una función que recibe `io` y registra lo suyo:
+// middlewares de handshake con io.use() y manejadores con io.on("connection").
+// El orden importa: los middlewares de handshake deben registrarse antes que los manejadores de conexión.
+const MODULOS = [
+  registrarEco, // Temporal (F10.1): se elimina en F10.3, cuando lo reemplaza el chat.
+];
 
 // Inicializa Socket.IO sobre el servidor HTTP que también usa Express.
 // Se llama una sola vez, desde server.js.
@@ -13,12 +22,14 @@ export function inicializarSockets(httpServer) {
   io.on("connection", (socket) => {
     console.log(`Cliente conectado: ${socket.id}`);
 
-    // F10 registrará acá los manejadores del chat (mensajes, Gemini).
-
     socket.on("disconnect", (motivo) => {
       console.log(`Cliente desconectado: ${socket.id} (${motivo})`);
     });
   });
+
+  for (const registrar of MODULOS) {
+    registrar(io);
+  }
 
   return io;
 }
@@ -29,4 +40,17 @@ export function obtenerIO() {
     throw new Error("Socket.IO no fue inicializado.");
   }
   return io;
+}
+
+// Cierra las conexiones, libera la instancia y cierra el servidor HTTP asociado.
+// Se usa al apagar el servidor y en las pruebas; es seguro llamarla más de una vez.
+export function cerrarSockets() {
+  if (!io) return Promise.resolve();
+
+  const instancia = io;
+  io = null;
+
+  return new Promise((resolve) => {
+    instancia.close(() => resolve());
+  });
 }
