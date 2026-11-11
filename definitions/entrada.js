@@ -9,10 +9,12 @@ export const entradaDefinicion = {
     eventoId: {
       tipo: "objectId",
       requerido: true,
+      referencia: "Evento",
     },
     usuarioId: {
       tipo: "objectId",
       requerido: true,
+      referencia: "Usuario",
     },
     estado: {
       tipo: "string",
@@ -21,10 +23,23 @@ export const entradaDefinicion = {
         VENDIDA: "vendida",
         CANCELADA: "cancelada",
       },
+      default: "vendida",
     },
     fechaVenta: {
       tipo: "date",
       requerido: true,
+      default: Date.now,
+    },
+  },
+
+  // Parámetros utilizados por las operaciones de Entrada.
+  parametros: {
+    id: {
+      tipo: "objectId",
+    },
+    eventoId: {
+      tipo: "objectId",
+      referencia: "Evento",
     },
   },
 
