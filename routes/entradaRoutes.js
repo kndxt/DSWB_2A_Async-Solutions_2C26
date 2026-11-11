@@ -2,6 +2,7 @@ import express from "express";
 import asyncHandler from "../middlewares/asyncHandler.js";
 import validarDatos from "../middlewares/validarDatos.js";
 import { entradaDefinicion } from "../definitions/entrada.js";
+import { autenticar } from "../middlewares/auth.js";
 
 import {
   obtenerEntradas,
@@ -17,24 +18,42 @@ const router = express.Router();
 const { operaciones } = entradaDefinicion;
 const validarEntrada = validarDatos(entradaDefinicion);
 
-router.get("/", asyncHandler(obtenerEntradas));
+// Todas las rutas requieren sesión iniciada (cliente o admin)
+router.get("/", autenticar, asyncHandler(obtenerEntradas));
 
 router.get(
   "/vendidas/:eventoId",
+  autenticar,
   validarEntrada(operaciones.obtenerVendidasPorEvento),
   asyncHandler(obtenerVendidasPorEvento),
 );
 
 router.get(
   "/disponibles/:eventoId",
+  autenticar,
   validarEntrada(operaciones.obtenerDisponiblesPorEvento),
   asyncHandler(obtenerDisponiblesPorEvento),
 );
 
-router.get("/:id", validarEntrada(operaciones.obtenerPorId), asyncHandler(obtenerEntradaPorId));
+router.get(
+  "/:id",
+  autenticar,
+  validarEntrada(operaciones.obtenerPorId),
+  asyncHandler(obtenerEntradaPorId),
+);
 
-router.post("/", validarEntrada(operaciones.vender), asyncHandler(venderEntrada));
+router.post(
+  "/",
+  autenticar,
+  validarEntrada(operaciones.vender),
+  asyncHandler(venderEntrada),
+);
 
-router.patch("/:id/cancelar", validarEntrada(operaciones.cancelar), asyncHandler(cancelarEntrada));
+router.patch(
+  "/:id/cancelar",
+  autenticar,
+  validarEntrada(operaciones.cancelar),
+  asyncHandler(cancelarEntrada),
+);
 
 export default router;

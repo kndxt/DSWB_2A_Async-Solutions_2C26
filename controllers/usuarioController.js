@@ -176,8 +176,7 @@ const login = async (req, res) => {
   res.status(200).json({
     mensaje: "Inicio de sesión exitoso",
     usuario,
-    token,
-  });
+    });
 };
 
 // POST /usuarios/logout
