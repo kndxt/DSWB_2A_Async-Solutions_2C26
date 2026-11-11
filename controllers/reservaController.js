@@ -1,47 +1,18 @@
-import { Evento } from "../models/eventoModel.js";
+import {
+  obtenerReservas as listarReservas,
+  obtenerReservaPorEvento as buscarReservaPorEvento,
+} from "../services/eventoService.js";
 
-// Proyección y populate comunes a las dos consultas.
-const proyeccionEvento = "nombre fechaInicio estado reserva";
-const populateUsuario = {
-  path: "reserva.usuarioId",
-  select: "nombre apellido email",
-};
-
-// Aplana la respuesta: datos de la reserva + contexto del evento.
-const formatearReserva = (evento) => ({
-  usuario: evento.reserva.usuarioId,
-  fechaReserva: evento.reserva.fechaReserva,
-  precioFinal: evento.reserva.precioFinal,
-  evento: {
-    id: evento.id,
-    nombre: evento.nombre,
-    fecha: evento.fechaInicio,
-    estado: evento.estado,
-  },
-});
-
+// Obtiene las reservas permitidas para el usuario autenticado.
 const obtenerReservas = async (req, res) => {
-  const eventos = await Evento.find({ reserva: { $exists: true } })
-    .select(proyeccionEvento)
-    .populate(populateUsuario);
-
-  const reservas = eventos.map(formatearReserva);
-
+  const reservas = await listarReservas(req.usuario, req.query.usuarioId);
   res.status(200).json(reservas);
 };
 
+// Obtiene la reserva asociada a un evento.
 const obtenerReservaPorEvento = async (req, res) => {
-  const { eventoId } = req.params;
-
-  const evento = await Evento.findById(eventoId)
-    .select(proyeccionEvento)
-    .populate(populateUsuario);
-
-  if (!evento || !evento.reserva) {
-    return res.status(404).json({ error: "Reserva no encontrada" });
-  }
-
-  res.status(200).json(formatearReserva(evento));
+  const reserva = await buscarReservaPorEvento(req.params.eventoId, req.usuario);
+  res.status(200).json(reserva);
 };
 
 export { obtenerReservas, obtenerReservaPorEvento };

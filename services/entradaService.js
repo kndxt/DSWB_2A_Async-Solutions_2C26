@@ -1,7 +1,6 @@
 import { Entrada } from "../models/entradaModel.js";
 import { obtenerPorId as obtenerEventoPorId, puedeVenderEntradas } from "./eventoService.js";
 import { obtenerPorId as obtenerSalaPorId } from "./salaService.js";
-import Usuario, { ESTADOS_USUARIO } from "../models/usuarioModel.js";
 import { NotFoundError, ConflictError } from "../errors/errores.js";
 
 // Obtiene todas las entradas con sus detalles.
@@ -24,16 +23,6 @@ const vender = async ({ eventoId, usuarioId }) => {
 
   if (!puedeVenderEntradas(evento)) {
     throw new ConflictError("El evento no permite nuevas ventas");
-  }
-
-  const usuario = await Usuario.obtenerPorId(usuarioId);
-
-  if (!usuario) {
-    throw new NotFoundError("Cliente no encontrado");
-  }
-
-  if (usuario.estado !== ESTADOS_USUARIO.ACTIVO) {
-    throw new ConflictError("El cliente está inactivo");
   }
 
   const sala = await obtenerSalaPorId(evento.salaId);

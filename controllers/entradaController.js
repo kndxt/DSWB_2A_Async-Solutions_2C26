@@ -18,7 +18,10 @@ const obtenerEntradaPorId = async (req, res) => {
 };
 
 const venderEntrada = async (req, res) => {
-  const nuevaEntrada = await venderEntradaService(req.body);
+  const { eventoId } = req.body;
+  const usuarioId = req.usuario.id ?? req.usuario._id;
+
+  const nuevaEntrada = await venderEntradaService({ eventoId, usuarioId });
   res.status(201).json(nuevaEntrada);
 };
 
