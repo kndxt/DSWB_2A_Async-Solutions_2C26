@@ -1,8 +1,10 @@
 import "dotenv/config";
 import http from "node:http";
 import mongoose from "mongoose";
+import { io as clienteSocketIO } from "socket.io-client";
 import app from "../../app.js";
 import { conectarDB } from "../../config/db.js";
+import { inicializarSockets, cerrarSockets } from "../../sockets/index.js";
 import Usuario from "../../models/usuarioModel.js";
 import Sala from "../../models/salaModel.js";
 import { Evento } from "../../models/eventoModel.js";
@@ -10,17 +12,22 @@ import Entrada from "../../models/entradaModel.js";
 
 const modelos = [Entrada, Evento, Sala, Usuario];
 const registrosCreados = new Map(modelos.map((modelo) => [modelo, new Set()]));
+const clientesSocket = new Set();
 let server;
 let baseURL;
 let secuencia = 0;
 
-export async function iniciarEntorno() {
+// Con { sockets: true } se inicializa Socket.IO sobre el servidor temporal.
+// Las pruebas de la API no lo necesitan, por eso es opcional.
+export async function iniciarEntorno({ sockets = false } = {}) {
   await conectarDB();
 
   // Las pruebas usan la base local configurada en MONGODB_URI. Nunca se vacía.
   console.log(`\n[tests] MongoDB: ${mongoose.connection.name} (${mongoose.connection.host})`);
 
   server = http.createServer(app);
+  if (sockets) inicializarSockets(server);
+
   await new Promise((resolve, reject) => {
     server.once("error", reject);
     server.listen(0, "127.0.0.1", resolve);
@@ -31,7 +38,12 @@ export async function iniciarEntorno() {
 }
 
 export async function cerrarEntorno() {
+  cerrarClientes();
   await limpiarRegistros();
+
+  // Si hay sockets, cerrar Socket.IO también cierra el servidor HTTP.
+  await cerrarSockets();
+
   if (server?.listening) {
     await new Promise((resolve, reject) =>
       server.close((error) => (error ? reject(error) : resolve())),
@@ -73,6 +85,77 @@ export async function peticion(
 export async function respuestaJSON(response) {
   return response.json();
 }
+
+// ---------------------------------------------------------------
+// Clientes de Socket.IO
+// ---------------------------------------------------------------
+
+// Crea un cliente sin conectarlo. Sin reconexión automática, para que las
+// pruebas controlen cuándo se conecta y se desconecta. Las opciones recibidas
+// se combinan con las de por defecto (por ejemplo, extraHeaders con una cookie).
+export function crearClienteSocket(opciones = {}) {
+  const cliente = clienteSocketIO(baseURL, {
+    autoConnect: false,
+    reconnection: false,
+    transports: ["websocket"],
+    ...opciones,
+  });
+  clientesSocket.add(cliente);
+  return cliente;
+}
+
+// Crea un cliente y espera a que se conecte. Si el servidor rechaza la
+// conexión (connect_error), la promesa se rechaza con ese error.
+export async function conectarCliente(opciones = {}) {
+  const cliente = crearClienteSocket(opciones);
+
+  await new Promise((resolve, reject) => {
+    cliente.once("connect", resolve);
+    cliente.once("connect_error", reject);
+    cliente.connect();
+  });
+
+  return cliente;
+}
+
+// Desconecta todos los clientes creados por los helpers.
+export function cerrarClientes() {
+  for (const cliente of clientesSocket) {
+    cliente.disconnect();
+  }
+  clientesSocket.clear();
+}
+
+// Espera el próximo evento de un socket y devuelve su primer argumento.
+export function esperarEvento(socket, evento, tiempoMaximo = 2000) {
+  return new Promise((resolve, reject) => {
+    const temporizador = setTimeout(
+      () => reject(new Error(`Se agotó el tiempo esperando el evento "${evento}"`)),
+      tiempoMaximo,
+    );
+
+    socket.once(evento, (datos) => {
+      clearTimeout(temporizador);
+      resolve(datos);
+    });
+  });
+}
+
+// Reintenta una condición hasta que se cumple o se agota el tiempo.
+export async function esperarHasta(condicion, tiempoMaximo = 2000, intervalo = 20) {
+  const limite = Date.now() + tiempoMaximo;
+
+  while (Date.now() < limite) {
+    if (await condicion()) return;
+    await new Promise((resolve) => setTimeout(resolve, intervalo));
+  }
+
+  throw new Error("Se agotó el tiempo esperando que se cumpla la condición");
+}
+
+// ---------------------------------------------------------------
+// Fixtures de la API
+// ---------------------------------------------------------------
 
 export async function crearUsuario(overrides = {}) {
   const sufijo = siguienteSufijo();
