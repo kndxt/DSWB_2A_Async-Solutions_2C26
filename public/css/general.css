@@ -102,18 +102,13 @@ th {
   transition: opacity 0.2s ease;
 }
 
-.navbar-links a:hover,
-.cerrar-mensaje:hover {
+.navbar-links a:hover {
   opacity: 0.65;
 }
 
-.navbar a:focus-visible,
-.cerrar-mensaje:focus-visible {
+.navbar a:focus-visible {
   outline: 2px solid currentColor;
   outline-offset: 2px;
-}
-
-.navbar a:focus-visible {
   border-radius: 2px;
 }
 
@@ -146,7 +141,8 @@ th {
   font-weight: 600;
 }
 
-#form-venta input {
+#form-venta input,
+#form-venta select {
   width: 100%;
   padding: 10px 12px;
   font: inherit;
@@ -154,7 +150,8 @@ th {
   border-radius: 5px;
 }
 
-#form-venta input:focus-visible {
+#form-venta input:focus-visible,
+#form-venta select:focus-visible {
   outline: 2px solid #7777aa;
   outline-offset: 2px;
 }
@@ -234,9 +231,6 @@ th {
 #mensajes .mensaje {
   padding: 10px 12px;
   border-radius: 5px;
-}
-
-#mensajes .mensaje {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -255,18 +249,6 @@ th {
 #mensajes .mensaje-error {
   color: #8b2525;
   background-color: #fbeeee;
-}
-
-/* Botón para cerrar un mensaje */
-
-.cerrar-mensaje {
-  padding: 0 4px;
-  color: inherit;
-  background: transparent;
-  border: none;
-  font-size: 1.25rem;
-  line-height: 1;
-  cursor: pointer;
 }
 
 /* ========================================
@@ -301,7 +283,9 @@ th {
   font-weight: 600;
 }
 
-.campo input {
+.campo input,
+.campo select,
+.campo textarea {
   width: 100%;
   max-width: 420px;
   padding: 10px 12px;
@@ -312,7 +296,9 @@ th {
   border-radius: 4px;
 }
 
-.campo input:focus-visible {
+.campo input:focus-visible,
+.campo select:focus-visible,
+.campo textarea:focus-visible {
   outline: 2px solid #555;
   outline-offset: 2px;
 }
