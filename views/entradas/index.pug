@@ -14,22 +14,14 @@ block content
 
     form#form-venta
       div
-        label(for="eventoId") ID del evento
-        input#eventoId(
-          type="text"
-          name="eventoId"
-          required
-          placeholder="Ingresá el ID del evento"
-        )
+        label(for="eventoId") Evento
+        select#eventoId(name="eventoId" required)
+          option(value="") Cargando eventos...
 
       div
-        label(for="usuarioId") ID del usuario
-        input#usuarioId(
-          type="text"
-          name="usuarioId"
-          required
-          placeholder="Ingresá el ID del usuario"
-        )
+        label(for="usuarioId") Cliente (titular de la entrada)
+        select#usuarioId(name="usuarioId" required)
+          option(value="") Cargando clientes...
 
       button#boton-vender(type="submit") Vender entrada
 

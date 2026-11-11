@@ -1,6 +1,7 @@
 import { apiFetch } from "../core/apiClient.js";
 import { renderTable } from "../utils/tabla.js";
 import { limpiarMensajes, mostrarMensaje } from "../core/mensajes.js";
+import { formatearFechaHora } from "../utils/formato.js";
 
 // ========================================
 // Elementos del DOM
@@ -26,6 +27,8 @@ let entradas = [];
 
 const entradasApi = {
   listar: () => apiFetch("/entradas"),
+  eventos: () => apiFetch("/eventos"),
+  usuarios: () => apiFetch("/usuarios"),
 
   vender: (datos) =>
     apiFetch("/entradas", {
@@ -163,6 +166,43 @@ async function cargarEntradas() {
   }
 }
 
+function llenarSelect(select, textoInicial, items, etiqueta) {
+  const inicial = document.createElement("option");
+  inicial.value = "";
+  inicial.textContent = textoInicial;
+
+  const opciones = items.map((item) => {
+    const opcion = document.createElement("option");
+    opcion.value = item.id;
+    opcion.textContent = etiqueta(item);
+    return opcion;
+  });
+
+  select.replaceChildren(inicial, ...opciones);
+}
+
+async function cargarOpciones() {
+  try {
+    const [eventos, usuarios] = await Promise.all([entradasApi.eventos(), entradasApi.usuarios()]);
+
+    llenarSelect(
+      campoEventoId,
+      "Seleccioná un evento...",
+      eventos.filter((evento) => evento.estado === "activo"),
+      (evento) => `${evento.nombre} (${formatearFechaHora(evento.fechaInicio)})`,
+    );
+
+    llenarSelect(
+      campoUsuarioId,
+      "Seleccioná un cliente...",
+      usuarios.filter((usuario) => usuario.estado === "activo"),
+      (usuario) => `${usuario.nombre} ${usuario.apellido} — ${usuario.email}`,
+    );
+  } catch (error) {
+    mostrarMensaje("error", `No se pudieron cargar las listas: ${error.message}`);
+  }
+}
+
 // ========================================
 // Operaciones de entradas
 // ========================================
@@ -224,4 +264,5 @@ async function cancelarEntrada(id) {
 
 formVenta.addEventListener("submit", venderEntrada);
 
+cargarOpciones();
 cargarEntradas();
