@@ -502,6 +502,13 @@ Los principales objetivos se organizaron en los siguientes issues:
 
 Cada issue agrupa las tareas específicas asociadas a su objetivo. Los cambios se desarrollaron en ramas de trabajo y se integraron mediante pull requests, sujetos a revisión antes de incorporarse a la rama principal.
 
+## 12. Testing
+
+El proyecto incluye pruebas automatizadas para la API. La documentación completa (requisitos, comandos, organización y comportamientos de línea base) está en [`tests/README.md`](tests/README.md).
+
+```bash
+npm test
+
 ### Colaboradores
 
 - [@federicosd06-dev](https://github.com/federicosd06-dev)

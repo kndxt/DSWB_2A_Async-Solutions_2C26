@@ -1,5 +1,6 @@
 import test, { before, after } from "node:test";
 import assert from "node:assert/strict";
+import bcrypt from "bcryptjs"; 
 import {
   iniciarEntorno,
   cerrarEntorno,
@@ -102,14 +103,24 @@ test("PUT /usuarios/:id rechaza email duplicado, contraseña vacía e ID inexist
   assert.equal(inexistente.status, 404);
 });
 
-test("PUT /usuarios/:id permite actualmente cambiar la contraseña por un valor no vacío", async () => {
+test("PUT /usuarios/:id hashea la contraseña al actualizarla", async () => {
   const usuario = await crearUsuario();
   const response = await peticion(`/usuarios/${usuario.id}`, {
     method: "PUT",
     body: { password: "nueva-clave" },
   });
   assert.equal(response.status, 200);
-  assert.equal((await Usuario.findById(usuario.id)).password, "nueva-clave");
+
+  const guardado = await Usuario.findById(usuario.id);
+
+  // La contraseña no se guarda en claro.
+  assert.notEqual(guardado.password, "nueva-clave");
+
+  // Se guarda como hash bcrypt ($2a$, $2b$ o $2y$).
+  assert.match(guardado.password, /^\$2[aby]\$\d{2}\$/);
+
+  // El hash corresponde al string original.
+  assert.equal(await bcrypt.compare("nueva-clave", guardado.password), true);
 });
 
 test("PATCH /usuarios/:id/estado cambia estado y rechaza valores inválidos", async () => {
