@@ -1,14 +1,14 @@
-import { Entrada } from "../models/entradaModel.js";
 import {
-  obtenerEntradaPorId as obtenerEntradaPorIdService,
-  venderEntrada as venderEntradaService,
-  cancelarEntrada as cancelarEntradaService,
+  obtenerTodas as obtenerEntradasService,
+  obtenerPorId as obtenerEntradaPorIdService,
+  vender as venderEntradaService,
+  cancelar as cancelarEntradaService,
   obtenerVendidasPorEvento as obtenerVendidasPorEventoService,
   obtenerDisponiblesPorEvento as obtenerDisponiblesPorEventoService,
 } from "../services/entradaService.js";
 
 const obtenerEntradas = async (req, res) => {
-  const entradas = await Entrada.obtenerTodos({ detalles: true });
+  const entradas = await obtenerEntradasService();
   res.status(200).json(entradas);
 };
 
@@ -34,7 +34,6 @@ const obtenerVendidasPorEvento = async (req, res) => {
 
 const obtenerDisponiblesPorEvento = async (req, res) => {
   const resultado = await obtenerDisponiblesPorEventoService(req.params.eventoId);
-
   res.status(200).json(resultado);
 };
 

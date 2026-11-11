@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import { entradaDefinicion } from "../definitions/entrada.js";
-import { obtenerTipoMongoose } from "../utils/tiposMongoose.js";
+import { obtenerTipoMongoose } from "../utils/traductoresMongoose.js";
 
 // Atributos y estados definidos centralmente.
 const atributos = entradaDefinicion.atributos;
@@ -11,23 +11,23 @@ export const entradaSchema = new mongoose.Schema(
   {
     eventoId: {
       type: obtenerTipoMongoose(atributos.eventoId.tipo),
-      ref: "Evento",
+      ref: atributos.eventoId.referencia,
       required: atributos.eventoId.requerido,
     },
     usuarioId: {
       type: obtenerTipoMongoose(atributos.usuarioId.tipo),
-      ref: "Usuario",
+      ref: atributos.usuarioId.referencia,
       required: atributos.usuarioId.requerido,
     },
     estado: {
       type: obtenerTipoMongoose(atributos.estado.tipo),
-      enum: Object.values(atributos.estado.valores),
-      default: ESTADOS_ENTRADA.VENDIDA,
+      enum: Object.values(ESTADOS_ENTRADA),
+      default: atributos.estado.default,
       required: atributos.estado.requerido,
     },
     fechaVenta: {
       type: obtenerTipoMongoose(atributos.fechaVenta.tipo),
-      default: Date.now,
+      default: atributos.fechaVenta.default,
       required: atributos.fechaVenta.requerido,
     },
   },
