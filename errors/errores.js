@@ -33,3 +33,17 @@ export class ConflictError extends AppError {
     super(message, 409);
   }
 }
+
+// Error de autenticación: no se pudo identificar al usuario.
+export class UnauthorizedError extends AppError {
+  constructor(message) {
+    super(message, 401);
+  }
+}
+
+// Error por falta de permisos para realizar una operación.
+export class ForbiddenError extends AppError {
+  constructor(message) {
+    super(message, 403);
+  }
+}

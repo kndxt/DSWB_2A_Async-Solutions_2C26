@@ -29,7 +29,12 @@ export const reservaDefinicion = {
   },
 
   operaciones: {
-    obtenerTodos: {},
+    obtenerTodos: {
+      query: {
+        requeridos: [],
+        opcionales: ["usuarioId"],
+      },
+    },
     obtenerPorEvento: {
       params: {
         requeridos: ["eventoId"],

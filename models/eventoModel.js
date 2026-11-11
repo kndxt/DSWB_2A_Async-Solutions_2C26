@@ -146,6 +146,42 @@ eventoSchema.statics.existeProximoActivoPorSala = function (salaId) {
   });
 };
 
+// Obtiene los eventos que tienen una reserva asociada.
+// Si se recibe un usuarioId, limita los resultados a las reservas
+// de ese titular. Sin filtro, devuelve todas las reservas.
+eventoSchema.statics.obtenerReservas = function (usuarioId) {
+  const filtro = {
+    reserva: { $exists: true },
+  };
+
+  if (usuarioId) {
+    filtro["reserva.usuarioId"] = usuarioId;
+  }
+
+  return this.find(filtro).select("nombre fechaInicio estado reserva").populate({
+    path: "reserva.usuarioId",
+    select: "nombre apellido email",
+  });
+};
+
+// Busca la reserva asociada a un evento.
+// El usuarioId opcional permite restringir la consulta al titular,
+// evitando recuperar reservas que el usuario no está autorizado a consultar.
+eventoSchema.statics.obtenerReservaPorEvento = function (eventoId, usuarioId) {
+  if (!mongoose.isObjectIdOrHexString(eventoId)) return null;
+
+  const filtro = { _id: eventoId };
+
+  if (usuarioId) {
+    filtro["reserva.usuarioId"] = usuarioId;
+  }
+
+  return this.findOne(filtro).select("nombre fechaInicio estado reserva").populate({
+    path: "reserva.usuarioId",
+    select: "nombre apellido email",
+  });
+};
+
 export const Evento = mongoose.models.Evento || mongoose.model("Evento", eventoSchema, "eventos");
 
 export default Evento;
