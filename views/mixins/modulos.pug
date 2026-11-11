@@ -1,0 +1,14 @@
+//- Módulos del sistema. Se usa en la barra de navegación y en el menú de inicio,
+//- para definir los enlaces en un solo lugar.
+mixin enlacesModulos()
+  -
+    const modulos = [
+      { texto: "Usuarios", href: "/vistas/usuarios" },
+      { texto: "Salas", href: "/vistas/salas" },
+      { texto: "Eventos", href: "/vistas/eventos" },
+      { texto: "Reservas", href: "/vistas/reservas" },
+      { texto: "Entradas", href: "/vistas/entradas" },
+    ]
+  each modulo in modulos
+    li
+      a(href=modulo.href)= modulo.texto

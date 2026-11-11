@@ -1,3 +1,5 @@
+include ../mixins/modulos.pug
+
 nav.navbar(aria-label="Navegación principal")
   a.navbar-brand(href="/vistas/inicio") Urbana Cult
 
@@ -6,14 +8,4 @@ nav.navbar(aria-label="Navegación principal")
       a(href="/vistas/inicio") Inicio
     li
       a(href="/vistas/login") Iniciar sesión
-    li
-      a(href="/vistas/usuarios") Usuarios
-    li
-      a(href="/vistas/salas") Salas
-    li
-      a(href="/vistas/eventos") Eventos
-    li
-      a(href="/vistas/reservas") Reservas   
-    li
-      a(href="/vistas/entradas") Entradas
-    
+    +enlacesModulos()

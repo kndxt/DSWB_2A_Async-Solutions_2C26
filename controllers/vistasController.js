@@ -22,12 +22,9 @@ const renderizarEntradasPorEvento = async (req, res) => {
   }
 
   const vendidas = await Entrada.obtenerVendidasPorEvento(eventoId);
-  const disponibles = await Entrada.obtenerDisponiblesPorEvento(
-    eventoId,
-    sala.capacidad,
-  );
+  const disponibles = await Entrada.obtenerDisponiblesPorEvento(eventoId, sala.capacidad);
 
-  res.render("entradas", {
+  res.render("entradas/evento", {
     eventoId,
     evento,
     sala,
@@ -35,7 +32,6 @@ const renderizarEntradasPorEvento = async (req, res) => {
     disponibles,
   });
 };
-
 
 const renderizarEntradas = (req, res) => {
   res.render("entradas/index");
