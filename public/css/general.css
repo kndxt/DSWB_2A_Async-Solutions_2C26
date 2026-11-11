@@ -1,4 +1,3 @@
-
 /* ========================================
    Urbana Cult — Estilos compartidos
    ======================================== */
@@ -200,7 +199,7 @@ th {
 }
 
 #tabla-entradas tbody tr:hover {
-  background-color: #eeeeF7;
+  background-color: #eeeef7;
 }
 
 #tabla-entradas button {
@@ -490,4 +489,56 @@ button:focus-visible,
 
 [hidden] {
   display: none !important;
+}
+
+/* ========================================
+   Estados de usuarios, salas y eventos
+   ======================================== */
+
+/* Etiqueta de estado dentro de las tablas */
+.estado {
+  display: inline-block;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+/* Activo (usuarios y eventos: activo; salas: activa) */
+.estado-activo,
+.estado-activa {
+  background: #dcfce7;
+  color: #166534;
+}
+
+/* Inactivo o finalizado */
+.estado-inactivo,
+.estado-inactiva,
+.estado-finalizado {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.estado-cancelado {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* Filas atenuadas según el estado */
+.usuario-inactivo td,
+.sala-inactiva td,
+.evento-finalizado td {
+  color: #6b7280;
+  background: #f3f4f6;
+}
+
+.evento-cancelado td {
+  color: #991b1b;
+  background: #fef2f2;
+  text-decoration: line-through;
+}
+
+.evento-cancelado td:last-child,
+.evento-cancelado td.celda-estado {
+  text-decoration: none;
 }
