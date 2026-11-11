@@ -190,7 +190,7 @@ test("POST /entradas rechaza eventos cuya sala asociada no existe", async () => 
     },
   });
 
-  await assertError(response, 404, "La sala asociada al evento no existe");
+  await assertError(response, 404, "Sala no encontrada");
 });
 
 // ============================================================
@@ -295,5 +295,5 @@ test("GET /entradas/disponibles/:eventoId rechaza eventos cuya sala no existe", 
 
   const response = await peticion(`/entradas/disponibles/${evento.id}`);
 
-  await assertError(response, 404, "La sala asociada al evento no existe");
+  await assertError(response, 404, "Sala no encontrada");
 });

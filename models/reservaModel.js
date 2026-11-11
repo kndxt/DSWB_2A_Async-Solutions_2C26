@@ -1,23 +1,27 @@
 import mongoose from "mongoose";
+import { reservaDefinicion } from "../definitions/reserva.js";
+import { obtenerTipoMongoose } from "../utils/traductoresMongoose.js";
+
+const { atributos } = reservaDefinicion;
 
 // Subdocumento embebido en Evento.
 // Registro histórico: guarda el usuario que reservó, cuándo y a qué precio.
 const reservaSchema = new mongoose.Schema(
   {
     usuarioId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Usuario",
-      required: [true, "El usuario de la reserva es obligatorio"],
+      type: obtenerTipoMongoose(atributos.usuarioId.tipo),
+      ref: atributos.usuarioId.referencia,
+      required: atributos.usuarioId.requerido,
     },
     fechaReserva: {
-      type: Date,
-      default: Date.now,
-      required: true,
+      type: obtenerTipoMongoose(atributos.fechaReserva.tipo),
+      default: atributos.fechaReserva.default,
+      required: atributos.fechaReserva.requerido,
     },
     precioFinal: {
-      type: Number,
-      required: [true, "El precio final es obligatorio"],
-      min: [0, "El precio final debe ser mayor o igual a cero"],
+      type: obtenerTipoMongoose(atributos.precioFinal.tipo),
+      required: atributos.precioFinal.requerido,
+      min: atributos.precioFinal.validaciones.min,
     },
   },
   { _id: false },
