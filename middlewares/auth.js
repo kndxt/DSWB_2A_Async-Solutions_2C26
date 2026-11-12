@@ -1,6 +1,7 @@
+
 import { leerCookieToken } from "../utils/cookies.js";
 import { obtenerUsuarioDesdeToken } from "../services/authService.js";
-import { AppError, UnauthorizedError, ForbiddenError } from "../errors/errores.js";
+import { UnauthorizedError, ForbiddenError } from "../errors/errores.js";
 import asyncHandler from "./asyncHandler.js";
 
 /**
@@ -9,23 +10,10 @@ import asyncHandler from "./asyncHandler.js";
  */
 export const autenticar = asyncHandler(async (req, res, next) => {
   const token = leerCookieToken(req);
+  const { usuario } = await obtenerUsuarioDesdeToken(token);
 
-  try {
-    const { usuario } = await obtenerUsuarioDesdeToken(token);
-    req.usuario = usuario;
-    next();
-  } catch (error) {
-    // Se preserva el contrato HTTP actual: errores de auth responden JSON
-    // directo, no pasan por errorHandler (los tests dependen de esto).
-    if (error instanceof UnauthorizedError) {
-      return res.status(401).json({ error: error.message });
-    }
-    if (error instanceof ForbiddenError) {
-      return res.status(403).json({ error: error.message });
-    }
-    // Cualquier otro error (DB, timeout) se propaga a errorHandler.
-    throw error;
-  }
+  req.usuario = usuario;
+  next();
 });
 
 /**
@@ -35,13 +23,11 @@ export const autenticar = asyncHandler(async (req, res, next) => {
 export const autorizar = (...rolesPermitidos) => {
   return (req, res, next) => {
     if (!req.usuario) {
-      return res.status(401).json({ error: "No hay sesión iniciada" });
+      throw new UnauthorizedError("No hay sesión iniciada");
     }
 
     if (!rolesPermitidos.includes(req.usuario.rol)) {
-      return res
-        .status(403)
-        .json({ error: "No tenés permiso para realizar esta acción" });
+      throw new ForbiddenError("No tenés permiso para realizar esta acción");
     }
 
     next();
@@ -58,12 +44,16 @@ export const autenticarOpcional = asyncHandler(async (req, res, next) => {
 
   try {
     const { usuario } = await obtenerUsuarioDesdeToken(token);
+
     req.usuario = usuario;
     res.locals.usuario = usuario;
   } catch (error) {
-    // Solo se silencian los errores controlados de auth. Un error de DB
-    // debe llegar al errorHandler para no ocultar fallos reales.
-    if (!(error instanceof AppError)) throw error;
+    // Solo se silencian errores controlados de autenticación.
+    // Los errores de infraestructura deben llegar al errorHandler.
+    if (!(error instanceof UnauthorizedError || error instanceof ForbiddenError)) {
+      throw error;
+    }
+
     res.locals.usuario = null;
   }
 

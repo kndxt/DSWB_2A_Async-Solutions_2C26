@@ -1,7 +1,8 @@
 import { Evento, ESTADOS_EVENTO } from "../models/eventoModel.js";
 import { ESTADOS_SALA } from "../models/salaModel.js";
 import { obtenerPorId as obtenerSalaPorId } from "./salaService.js";
-import Usuario, { ESTADOS_USUARIO, ROLES_USUARIO } from "../models/usuarioModel.js";
+import { obtenerPorId as obtenerUsuarioPorId } from "./usuarioService.js";
+import { ESTADOS_USUARIO, ROLES_USUARIO } from "../definitions/usuario.js";
 import {
   ValidationError,
   NotFoundError,
@@ -89,11 +90,7 @@ const crear = async ({ usuarioId, ...datosEvento }) => {
     throw new ConflictError("No se puede crear un evento en una sala inactiva");
   }
 
-  const usuario = await Usuario.obtenerPorId(usuarioId);
-
-  if (!usuario) {
-    throw new NotFoundError("El usuario indicado no existe");
-  }
+  const usuario = await obtenerUsuarioPorId(usuarioId);
 
   if (usuario.estado !== ESTADOS_USUARIO.ACTIVO) {
     throw new ConflictError("El usuario indicado está inactivo");

@@ -63,10 +63,13 @@ entradaSchema.statics.crear = function (data) {
   return this.create(data);
 };
 
+// Obtiene todas las entradas o las filtra por titular si se recibe un usuarioId.
 entradaSchema.statics.obtenerTodos = function (opciones = {}) {
-  const { detalles = false } = opciones;
+  const { detalles = false, usuarioId } = opciones;
 
-  return incluirDetalles(this.find(), detalles);
+  const filtro = usuarioId ? { usuarioId } : {};
+
+  return incluirDetalles(this.find(filtro), detalles);
 };
 
 entradaSchema.statics.obtenerPorId = function (id, opciones = {}) {

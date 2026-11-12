@@ -4,7 +4,7 @@ import asyncHandler from "../middlewares/asyncHandler.js";
 import validarDatos from "../middlewares/validarDatos.js";
 import { eventoDefinicion } from "../definitions/evento.js";
 import { autenticar, autorizar } from "../middlewares/auth.js";
-import { ROLES_USUARIO } from "../models/usuarioModel.js";
+import { ROLES_USUARIO } from "../definitions/usuario.js";
 
 const router = express.Router();
 
@@ -12,17 +12,12 @@ const { operaciones } = eventoDefinicion;
 const validarEvento = validarDatos(eventoDefinicion);
 
 // Lectura: cualquier usuario autenticado
-router.get("/", autenticar, asyncHandler(eventoController.obtenerEventos));
+router.get("/", asyncHandler(eventoController.obtenerEventos));
 
-router.get(
-  "/proximos",
-  autenticar,
-  asyncHandler(eventoController.obtenerEventosProximos),
-);
+router.get("/proximos", asyncHandler(eventoController.obtenerEventosProximos));
 
 router.get(
   "/:id",
-  autenticar,
   validarEvento(operaciones.obtenerPorId),
   asyncHandler(eventoController.obtenerEventoPorId),
 );

@@ -10,17 +10,14 @@ const router = express.Router();
 const { operaciones } = reservaDefinicion;
 const validarReserva = validarDatos(reservaDefinicion);
 
-// Todas las rutas requieren sesión iniciada
-router.get(
-  "/",
-  autenticar,
-  validarReserva(operaciones.obtenerTodos),
-  asyncHandler(obtenerReservas),
-);
+// Todas las consultas de reservas requieren una sesión iniciada.
+// Los permisos de consulta dependen del rol y la titularidad.
+router.use(autenticar);
+
+router.get("/", validarReserva(operaciones.obtenerTodos), asyncHandler(obtenerReservas));
 
 router.get(
   "/:eventoId",
-  autenticar,
   validarReserva(operaciones.obtenerPorEvento),
   asyncHandler(obtenerReservaPorEvento),
 );

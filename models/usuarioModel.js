@@ -1,67 +1,52 @@
 import mongoose from "mongoose";
+import { usuarioDefinicion, ROLES_VALIDOS, ESTADOS_VALIDOS } from "../definitions/usuario.js";
+import { obtenerTipoMongoose } from "../utils/traductoresMongoose.js";
 
-export const ESTADOS_USUARIO = {
-  ACTIVO: "activo",
-  INACTIVO: "inactivo",
-};
-
-export const ESTADOS_VALIDOS = Object.values(ESTADOS_USUARIO);
-
-export const ROLES_USUARIO = {
-  ADMIN: "admin",
-  CLIENTE: "cliente",
-};
-
-export const ROLES_VALIDOS = Object.values(ROLES_USUARIO);
-
+const { atributos } = usuarioDefinicion;
 
 const usuarioSchema = new mongoose.Schema(
   {
     nombre: {
-      type: String,
-      required: [true, "El nombre es obligatorio"],
+      type: obtenerTipoMongoose(atributos.nombre.tipo),
+      required: atributos.nombre.requerido,
       trim: true,
     },
     apellido: {
-      type: String,
-      required: [true, "El apellido es obligatorio"],
+      type: obtenerTipoMongoose(atributos.apellido.tipo),
+      required: atributos.apellido.requerido,
       trim: true,
     },
     email: {
-      type: String,
-      required: [true, "El email es obligatorio"],
+      type: obtenerTipoMongoose(atributos.email.tipo),
+      required: atributos.email.requerido,
       unique: true,
       lowercase: true,
       trim: true,
     },
-    telefono: { type: String, trim: true },
-    // Sin encriptar por ahora: la encriptación queda para la entrega final.
+    telefono: {
+      type: obtenerTipoMongoose(atributos.telefono.tipo),
+      trim: true,
+    },
     password: {
-      type: String,
-      required: [true, "La contraseña es obligatoria"],
+      type: obtenerTipoMongoose(atributos.password.tipo),
+      required: atributos.password.requerido,
     },
     estado: {
-      type: String,
-      enum: {
-        values: ESTADOS_VALIDOS,
-        message: `Estado inválido. Valores permitidos: ${ESTADOS_VALIDOS.join(", ")}`,
-      },
-      default: ESTADOS_USUARIO.ACTIVO,
+      type: obtenerTipoMongoose(atributos.estado.tipo),
+      enum: ESTADOS_VALIDOS,
+      default: atributos.estado.default,
     },
     rol: {
-      type: String,
-      enum: {
-        values: ROLES_VALIDOS,
-        message: `Rol inválido. Valores permitidos: ${ROLES_VALIDOS.join(", ")}`,
-      },
-      default: ROLES_USUARIO.CLIENTE,
+      type: obtenerTipoMongoose(atributos.rol.tipo),
+      enum: ROLES_VALIDOS,
+      default: atributos.rol.default,
     },
   },
   {
     versionKey: false,
     toJSON: {
-      // Se responde `id` en lugar de `_id`, y la password nunca se devuelve.
-      transform: (doc, { _id, password, ...resto }) => ({
+      // Se responde `id` en lugar de `_id`, y la contraseña nunca se devuelve.
+      transform: (_doc, { _id, password, ...resto }) => ({
         id: _id.toString(),
         ...resto,
       }),
@@ -81,18 +66,21 @@ usuarioSchema.statics.obtenerPorEmail = function (email) {
   return this.findOne({ email: String(email).trim().toLowerCase() });
 };
 
-usuarioSchema.statics.crear = function (data) {
-  return this.create(data);
+usuarioSchema.statics.crear = function (datos) {
+  return this.create(datos);
 };
 
 // Carga el usuario, aplica los cambios y guarda: así corren las validaciones del schema.
 usuarioSchema.statics.actualizar = async function (id, cambios) {
   const usuario = await this.findById(id);
+
   if (!usuario) return null;
+
   usuario.set(cambios);
+
   return usuario.save();
 };
 
-const Usuario = mongoose.model("Usuario", usuarioSchema);
+const Usuario = mongoose.models.Usuario || mongoose.model("Usuario", usuarioSchema);
 
 export default Usuario;
