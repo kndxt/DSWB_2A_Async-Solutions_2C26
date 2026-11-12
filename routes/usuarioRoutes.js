@@ -39,11 +39,11 @@ router.put(
 );
 
 router.patch(
-  "/:id/estado",
+  "/:id/rol",
   autenticar,
   autorizar(ROLES_USUARIO.ADMIN),
   validarIds("params", "id"),
-  asyncHandler(usuarioController.cambiarEstadoUsuario),
+  asyncHandler(usuarioController.cambiarRolUsuario),
 );
 
 export default router;

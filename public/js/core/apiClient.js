@@ -4,9 +4,10 @@ export async function apiFetch(url, options = {}) {
   const timeout = setTimeout(() => controller.abort(), 15000);
 
   try {
-    // Conservamos las opciones existentes y agregamos la señal de cancelación.
+    // Se envían las cookies de sesión y se agrega la señal de cancelación.
     const response = await fetch(url, {
       ...options,
+      credentials: "include",
       signal: controller.signal,
     });
 
@@ -32,6 +33,11 @@ export async function apiFetch(url, options = {}) {
     }
 
     if (!response.ok) {
+      // Sesión ausente o vencida: se vuelve al login (salvo que ya estemos en él).
+      if (response.status === 401 && !window.location.pathname.startsWith("/vistas/login")) {
+        window.location.href = "/vistas/login";
+      }
+
       const message =
         typeof data === "string"
           ? data

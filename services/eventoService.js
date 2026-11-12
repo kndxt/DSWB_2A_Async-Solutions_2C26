@@ -1,8 +1,13 @@
 import { Evento, ESTADOS_EVENTO } from "../models/eventoModel.js";
 import { ESTADOS_SALA } from "../models/salaModel.js";
 import { obtenerPorId as obtenerSalaPorId } from "./salaService.js";
-import Usuario, { ESTADOS_USUARIO } from "../models/usuarioModel.js";
-import { ValidationError, NotFoundError, ConflictError } from "../errors/errores.js";
+import Usuario, { ESTADOS_USUARIO, ROLES_USUARIO } from "../models/usuarioModel.js";
+import {
+  ValidationError,
+  NotFoundError,
+  ConflictError,
+  ForbiddenError,
+} from "../errors/errores.js";
 
 const MENSAJE_DUPLICADO = "Ya existe un evento con el mismo nombre, sala y fecha de inicio";
 
@@ -45,6 +50,19 @@ const validarFechas = ({ fechaInicio, fechaFin, fechaInicioVenta, fechaFinVenta 
     throw new ValidationError("La venta de entradas debe cerrar antes de que comience el evento");
   }
 };
+
+// Prepara la respuesta de una reserva con los datos de su evento.
+const formatearReserva = (evento) => ({
+  usuario: evento.reserva.usuarioId,
+  fechaReserva: evento.reserva.fechaReserva,
+  precioFinal: evento.reserva.precioFinal,
+  evento: {
+    id: evento.id,
+    nombre: evento.nombre,
+    fecha: evento.fechaInicio,
+    estado: evento.estado,
+  },
+});
 
 // Obtiene todos los eventos.
 const obtenerTodas = () => Evento.obtenerTodos();
@@ -204,4 +222,57 @@ const puedeVenderEntradas = (evento) => {
   return hoy >= inicioVenta && hoy <= finVenta;
 };
 
-export { obtenerTodas, obtenerPorId, obtenerProximos, crear, actualizar, puedeVenderEntradas };
+// Obtiene las reservas según el rol del usuario autenticado.
+// Los administradores pueden consultar todas o filtrar por titular.
+// Los clientes siempre quedan limitados a sus propias reservas,
+// independientemente del usuarioId enviado en la consulta.
+const obtenerReservas = async (usuario, usuarioIdSolicitado) => {
+  let usuarioId;
+
+  if (usuario.rol === ROLES_USUARIO.ADMIN) {
+    usuarioId = usuarioIdSolicitado;
+  } else if (usuario.rol === ROLES_USUARIO.CLIENTE) {
+    // El cliente solo puede consultar sus propias reservas.
+    // Se ignora cualquier usuarioId enviado en el query.
+    usuarioId = usuario.id;
+  } else {
+    throw new ForbiddenError("No tenés permiso para consultar reservas");
+  }
+
+  const eventos = await Evento.obtenerReservas(usuarioId);
+  return eventos.map(formatearReserva);
+};
+
+// Obtiene la reserva de un evento respetando la titularidad.
+// Los administradores pueden consultar cualquier reserva;
+// los clientes únicamente las asociadas a su propia cuenta.
+// Si el evento no existe o pertenece a otro usuario, se devuelve 404.
+const obtenerReservaPorEvento = async (eventoId, usuario) => {
+  let usuarioId;
+
+  if (usuario.rol === ROLES_USUARIO.CLIENTE) {
+    // La consulta queda limitada a las reservas del titular.
+    usuarioId = usuario.id;
+  } else if (usuario.rol !== ROLES_USUARIO.ADMIN) {
+    throw new ForbiddenError("No tenés permiso para consultar reservas");
+  }
+
+  const evento = await Evento.obtenerReservaPorEvento(eventoId, usuarioId);
+
+  if (!evento || !evento.reserva) {
+    throw new NotFoundError("Reserva no encontrada");
+  }
+
+  return formatearReserva(evento);
+};
+
+export {
+  obtenerTodas,
+  obtenerPorId,
+  obtenerProximos,
+  crear,
+  actualizar,
+  puedeVenderEntradas,
+  obtenerReservas,
+  obtenerReservaPorEvento,
+};

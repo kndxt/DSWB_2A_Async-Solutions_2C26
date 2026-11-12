@@ -43,7 +43,8 @@ export const entradaDefinicion = {
     },
   },
 
-  // Datos que cada operación espera recibir del cliente.
+  // Datos que cada operación recibe del cliente.
+  // Los datos derivados de la sesión autenticada se obtienen en el controlador.
   operaciones: {
     obtenerTodos: {},
 
@@ -56,7 +57,7 @@ export const entradaDefinicion = {
 
     vender: {
       body: {
-        requeridos: ["eventoId", "usuarioId"],
+        requeridos: ["eventoId"],
         opcionales: [],
       },
     },

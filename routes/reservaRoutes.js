@@ -11,7 +11,12 @@ const { operaciones } = reservaDefinicion;
 const validarReserva = validarDatos(reservaDefinicion);
 
 // Todas las rutas requieren sesión iniciada
-router.get("/", autenticar, asyncHandler(obtenerReservas));
+router.get(
+  "/",
+  autenticar,
+  validarReserva(operaciones.obtenerTodos),
+  asyncHandler(obtenerReservas),
+);
 
 router.get(
   "/:eventoId",

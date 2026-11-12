@@ -528,3 +528,27 @@ button:focus-visible,
 .evento-cancelado td.celda-estado {
   text-decoration: none;
 }
+
+/* Etiqueta de rol en la tabla de usuarios */
+.rol {
+  display: inline-block;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.rol-admin {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.rol-cliente {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.navbar-usuario {
+  font-size: 0.95rem;
+  font-weight: 600;
+}

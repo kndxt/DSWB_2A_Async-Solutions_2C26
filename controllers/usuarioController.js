@@ -2,6 +2,8 @@ import bcrypt from "bcryptjs";
 import Usuario, {
   ESTADOS_USUARIO,
   ESTADOS_VALIDOS,
+  ROLES_USUARIO,
+  ROLES_VALIDOS,
 } from "../models/usuarioModel.js";
 import { generarToken } from "../utils/jwt.js";
 import {
@@ -142,6 +144,24 @@ const cambiarEstadoUsuario = async (req, res) => {
   res.status(200).json(usuario);
 };
 
+// PATCH /usuarios/:id/rol
+const cambiarRolUsuario = async (req, res) => {
+  const { rol } = req.body;
+
+  if (!ROLES_VALIDOS.includes(rol)) {
+    return res.status(400).json({
+      error: `Rol inválido. Valores permitidos: ${ROLES_VALIDOS.join(", ")}`,
+    });
+  }
+
+  const usuario = await Usuario.actualizar(req.params.id, { rol });
+  if (!usuario) {
+    return res.status(404).json({ error: "Usuario no encontrado" });
+  }
+
+  res.status(200).json(usuario);
+};
+
 // POST /usuarios/login
 const login = async (req, res) => {
   const { email, password } = req.body;
@@ -191,6 +211,7 @@ export {
   crearUsuario,
   actualizarUsuario,
   cambiarEstadoUsuario,
+  cambiarRolUsuario,
   login,
   logout,
 };

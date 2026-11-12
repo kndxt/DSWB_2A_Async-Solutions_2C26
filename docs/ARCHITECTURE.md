@@ -150,42 +150,15 @@ Estas validaciones protegen la integridad de los documentos almacenados.
 
 ## 6. Manejo de errores
 
-El manejo de errores se centraliza mediante los componentes del directorio `errors/` y los middlewares correspondientes.
+El manejo de errores se centraliza mediante las clases definidas en `errors/errores.js` y los middlewares correspondientes.
 
-### 6.1. Errores de aplicación
+La aplicación utiliza errores de aplicación para representar situaciones como datos inválidos, falta de autenticación, permisos insuficientes, recursos inexistentes y conflictos con el estado del sistema.
 
-`errors/errores.js` define una clase base `AppError` y errores específicos:
+Los errores técnicos conocidos pueden traducirse a errores de aplicación mediante `errors/traducirError.js`.
 
-- `ValidationError`: datos que no cumplen las condiciones esperadas (400).
-- `NotFoundError`: recurso inexistente (404).
-- `ConflictError`: operación incompatible con el estado actual del sistema (409).
+`middlewares/asyncHandler.js` permite propagar los errores producidos por handlers asíncronos, mientras que `middlewares/errorHandler.js` centraliza su tratamiento y la construcción de las respuestas HTTP.
 
-Los servicios utilizan estos errores para comunicar situaciones que impiden completar un caso de uso.
-
-### 6.2. Traducción de errores técnicos
-
-`errors/traducirError.js` reconoce determinados errores de Mongoose y MongoDB y los convierte en errores de aplicación equivalentes.
-
-Por ejemplo, traduce errores de validación de Mongoose y conflictos por claves duplicadas.
-
-Los errores desconocidos se conservan para que puedan ser tratados como errores internos.
-
-### 6.3. Respuesta HTTP
-
-`middlewares/errorHandler.js` centraliza la respuesta ante errores recibidos mediante el mecanismo de manejo de errores de Express.
-
-Sus responsabilidades son:
-
-- Traducir errores técnicos conocidos.
-- Determinar el código de estado HTTP.
-- Evitar exponer información interna en respuestas de producción.
-- Proporcionar detalles adicionales durante el desarrollo.
-
-El formato de respuesta depende del tipo de solicitud: las solicitudes de la API reciben JSON.
-
-`middlewares/asyncHandler.js` permite derivar al manejador centralizado los errores producidos por handlers asíncronos.
-
-Por otra parte, `middlewares/notFound.js` responde cuando no existe una ruta que coincida con la solicitud. Esto es diferente de un `NotFoundError`, que representa la ausencia de un recurso dentro de una operación válida.
+Los criterios de selección, reutilización y propagación de errores se encuentran documentados en [Manejo de errores](ERRORES.md).
 
 ## 7. Comunicación entre servicios y modelos
 

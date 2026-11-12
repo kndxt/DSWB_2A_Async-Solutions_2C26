@@ -6,6 +6,15 @@ nav.navbar(aria-label="Navegación principal")
   ul.navbar-links
     li
       a(href="/vistas/inicio") Inicio
-    li
-      a(href="/vistas/login") Iniciar sesión
-    +enlacesModulos()
+    +enlacesModulos(usuario && usuario.rol)
+
+    if usuario
+      li
+        span.navbar-usuario Hola, #{usuario.nombre}
+      li
+        button#btn-logout(type="button") Cerrar sesión
+    else
+      li
+        a(href="/vistas/login") Iniciar sesión
+      li
+        a(href="/vistas/registro") Registrarse

@@ -11,7 +11,8 @@
     "format:check": "prettier . --check --ignore-unknown",
     "seed:verificar": "node scripts/verificar-seed.js",
     "seed": "node scripts/seed.js --destino=atlas",
-    "seed:local": "node scripts/seed.js --destino=local"
+    "seed:local": "node scripts/seed.js --destino=local",
+    "probar:gemini": "node scripts/probar-gemini.js"
   },
   "repository": {
     "type": "git",
@@ -26,6 +27,7 @@
   },
   "homepage": "https://github.com/kndxt/DSWB_2A_Async-Solutions_2C26#readme",
   "dependencies": {
+    "@google/genai": "^2.32.0",
     "bcryptjs": "^3.0.3",
     "cookie-parser": "^1.4.7",
     "dotenv": "^18.0.7",

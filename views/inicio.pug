@@ -13,4 +13,4 @@ block content
 
     nav.menu-principal(aria-label="Módulos del sistema")
       ul
-        +enlacesModulos()
+        +enlacesModulos(usuario && usuario.rol)
