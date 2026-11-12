@@ -26,19 +26,19 @@ block content
   section#listado-eventos
     h2 Todos los eventos
     table#tabla-eventos
-      thead
-        tr
-          th Nombre
-          th Tipo
-          th Sala
-          th Evento (inicio - fin)
-          th Venta (inicio - fin)
-          th Precio de entrada
-          th Estado
-          th Acciones
-      tbody#eventos-body
-        tr
-          td(colspan="8") Cargando eventos...
+        thead
+          tr
+            th Nombre
+            th Tipo
+            th Sala
+            th Evento (inicio - fin)
+            th Venta (inicio - fin)
+            th Precio de entrada
+            th Estado
+            th.solo-admin Acciones
+        tbody#eventos-body
+          tr
+            td(colspan="8") Cargando eventos...
 
   section#formulario-evento.solo-admin(hidden)
     h2#titulo-formulario Nuevo evento

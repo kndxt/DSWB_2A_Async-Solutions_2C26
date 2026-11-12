@@ -12,7 +12,7 @@ const eventosApi = {
   crear: (datos) => apiFetch("/eventos", enviarJson("POST", datos)),
   actualizar: (id, datos) => apiFetch(`/eventos/${id}`, enviarJson("PATCH", datos)),
   salas: () => apiFetch("/salas"),
-  usuarios: () => apiFetch("/usuarios"), // ← nuevo
+  usuarios: () => apiFetch("/usuarios"),
 };
 
 const CAMPOS_FECHA = ["fechaInicio", "fechaFin", "fechaInicioVenta", "fechaFinVenta"];
@@ -86,6 +86,7 @@ const crearFilaEvento = (evento) => {
   if (claseDeFila(evento)) fila.className = claseDeFila(evento);
 
   const acciones = document.createElement("td");
+  acciones.className = "solo-admin";
   if (esAdmin()) {
     acciones.append(crearBoton("Editar", "editar", evento.id));
     // Solo se puede cancelar un evento activo; el registro y su reserva se conservan.
