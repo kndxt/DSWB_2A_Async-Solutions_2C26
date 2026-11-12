@@ -180,6 +180,17 @@ test("registra el error en el servidor sin mostrar la clave", async () => {
   assert.doesNotMatch(registros[0], /clave-de-prueba/);
 });
 
+test("registra en el servidor los fallos propios del asistente", async () => {
+  const registros = [];
+  const servicio = crearServicioDePrueba(async () => ({ text: "" }), {
+    registrarError: (mensaje) => registros.push(mensaje),
+  });
+
+  await assertMotivo(servicio.consultarIA("hola"), "vacia");
+
+  assert.deepEqual(registros, ["[aiService] vacia"]);
+});
+
 test("vence el plazo cuando la API responde demasiado tarde", async () => {
   let senal;
   const servicio = crearServicioDePrueba(
