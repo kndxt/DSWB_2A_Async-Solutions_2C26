@@ -2,6 +2,7 @@ import Usuario, { ESTADOS_USUARIO } from "../models/usuarioModel.js";
 import { verificarToken } from "../utils/jwt.js";
 import { leerCookieToken } from "../utils/cookies.js";
 import asyncHandler from "./asyncHandler.js";
+import { UnauthorizedError, ForbiddenError } from "../errors/errores.js";
 
 /**
  * Verifica que haya un token válido en la cookie, que el usuario exista
@@ -11,21 +12,21 @@ export const autenticar = asyncHandler(async (req, res, next) => {
   const token = leerCookieToken(req);
 
   if (!token) {
-    return res.status(401).json({ error: "No hay sesión iniciada" });
+    throw new UnauthorizedError("No hay sesión iniciada");
   }
 
   const payload = verificarToken(token);
   if (!payload || !payload.id) {
-    return res.status(401).json({ error: "Token inválido o expirado" });
+    throw new UnauthorizedError("Token inválido o expirado");
   }
 
   const usuario = await Usuario.obtenerPorId(payload.id);
   if (!usuario) {
-    return res.status(401).json({ error: "Usuario no encontrado" });
+    throw new UnauthorizedError("Usuario no encontrado");
   }
 
   if (usuario.estado !== ESTADOS_USUARIO.ACTIVO) {
-    return res.status(403).json({ error: "El usuario se encuentra inactivo" });
+    throw new ForbiddenError("El usuario se encuentra inactivo");
   }
 
   req.usuario = usuario;
@@ -39,13 +40,11 @@ export const autenticar = asyncHandler(async (req, res, next) => {
 export const autorizar = (...rolesPermitidos) => {
   return (req, res, next) => {
     if (!req.usuario) {
-      return res.status(401).json({ error: "No hay sesión iniciada" });
+      throw new UnauthorizedError("No hay sesión iniciada");
     }
 
     if (!rolesPermitidos.includes(req.usuario.rol)) {
-      return res
-        .status(403)
-        .json({ error: "No tenés permiso para realizar esta acción" });
+      throw new ForbiddenError("No tenés permiso para realizar esta acción");
     }
 
     next();
