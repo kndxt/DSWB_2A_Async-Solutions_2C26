@@ -541,7 +541,102 @@ A diferencia de los endpoints anteriores, esta ruta renderiza una vista y no dev
 
 ### 3.5. Reservas
 
-> Pendiente de documentar.
+Las reservas se generan automáticamente al crear un evento y se almacenan como un registro histórico dentro de este. No se crean, modifican ni eliminan de manera independiente.
+
+**Prefijo:** `/reservas`
+
+Todas las operaciones requieren autenticación. Los permisos de consulta dependen del rol del usuario y de la titularidad de la reserva.
+
+#### GET `/reservas`
+
+Obtiene las reservas registradas.
+
+**Acceso:** usuarios autenticados con rol `ADMIN` o `CLIENTE`.
+
+**Query params:**
+
+| Parámetro   | Tipo     | Requerido | Descripción                                                                                   |
+| ----------- | -------- | --------- | --------------------------------------------------------------------------------------------- |
+| `usuarioId` | ObjectId | No        | Filtra las reservas por el identificador del titular. Solo tiene efecto para administradores. |
+
+**Comportamiento según el rol:**
+
+- **ADMIN:** puede consultar todas las reservas o filtrar los resultados mediante `usuarioId`.
+- **CLIENTE:** obtiene únicamente sus propias reservas. Si envía `usuarioId`, el parámetro se ignora y se utiliza el identificador de su cuenta autenticada.
+
+**Respuesta exitosa:** `200 OK`
+
+Devuelve un array de reservas con la siguiente estructura:
+
+| Campo          | Tipo   | Descripción                                                    |
+| -------------- | ------ | -------------------------------------------------------------- |
+| `usuario`      | Object | Datos del titular: `id`, `nombre`, `apellido` y `email`.       |
+| `fechaReserva` | Date   | Fecha en la que se generó la reserva.                          |
+| `precioFinal`  | Number | Precio registrado al momento de reservar.                      |
+| `evento`       | Object | Datos del evento asociado: `id`, `nombre`, `fecha` y `estado`. |
+
+Si no existen reservas para el usuario o filtro solicitado, devuelve un array vacío.
+
+**Errores posibles:**
+
+- `400 Bad Request`: formato inválido de `usuarioId`.
+- `401 Unauthorized`: no existe una sesión autenticada.
+- `403 Forbidden`: el rol del usuario no tiene permiso para consultar reservas.
+
+#### GET `/reservas/:eventoId`
+
+Obtiene la reserva asociada a un evento determinado.
+
+**Acceso:** usuarios autenticados con rol `ADMIN` o `CLIENTE`.
+
+**Parámetros de ruta:**
+
+| Parámetro  | Tipo     | Requerido | Descripción                                               |
+| ---------- | -------- | --------- | --------------------------------------------------------- |
+| `eventoId` | ObjectId | Sí        | Identificador del evento cuya reserva se desea consultar. |
+
+**Comportamiento según el rol:**
+
+- **ADMIN:** puede consultar la reserva asociada a cualquier evento.
+- **CLIENTE:** únicamente puede consultar la reserva asociada a su propia cuenta.
+
+Si el evento no existe, no tiene una reserva asociada o la reserva pertenece a otro usuario, se responde como recurso no encontrado.
+
+**Respuesta exitosa:** `200 OK`
+
+Devuelve un objeto con la misma estructura que cada elemento del listado de reservas:
+
+| Campo          | Tipo   | Descripción                                                    |
+| -------------- | ------ | -------------------------------------------------------------- |
+| `usuario`      | Object | Datos del titular: `id`, `nombre`, `apellido` y `email`.       |
+| `fechaReserva` | Date   | Fecha en la que se generó la reserva.                          |
+| `precioFinal`  | Number | Precio registrado al momento de reservar.                      |
+| `evento`       | Object | Datos del evento asociado: `id`, `nombre`, `fecha` y `estado`. |
+
+**Errores posibles:**
+
+- `400 Bad Request`: identificador de evento inválido.
+- `401 Unauthorized`: no existe una sesión autenticada.
+- `403 Forbidden`: el rol del usuario no tiene permiso para consultar reservas.
+- `404 Not Found`: el evento no existe, no tiene una reserva asociada o la reserva no pertenece al cliente autenticado.
+
+#### Autenticación y autorización
+
+| Situación                                            | Respuesta          |
+| ---------------------------------------------------- | ------------------ |
+| Usuario sin sesión autenticada                       | `401 Unauthorized` |
+| Cliente consulta sus propias reservas                | Permitido          |
+| Cliente intenta consultar reservas de otro usuario   | `404 Not Found`    |
+| Administrador consulta reservas de cualquier titular | Permitido          |
+| Usuario con un rol no autorizado                     | `403 Forbidden`    |
+
+**Consideraciones:**
+
+- Las reservas se generan automáticamente al crear un evento.
+- El precio final y la fecha de reserva se conservan como datos históricos.
+- Los clientes no pueden consultar reservas ajenas ni modificar el titular mediante parámetros de consulta.
+- Los administradores pueden consultar todas las reservas o limitar los resultados a un titular específico.
+- La API no expone directamente el subdocumento de reserva dentro de las respuestas generales de eventos; para consultar estos registros se utilizan los endpoints específicos de reservas.
 
 ### 3.6. Vistas
 
