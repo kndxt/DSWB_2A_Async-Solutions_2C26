@@ -25,30 +25,19 @@ formulario.addEventListener("submit", async (evento) => {
   botonLogin.disabled = true;
   mostrarMensaje("exito", "Validando credenciales...");
 
-  try {
-    const respuesta = await apiFetch("/usuarios/login", {
+    try {
+    await apiFetch("/usuarios/login", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
     });
 
-    mostrarMensaje("exito", respuesta.mensaje || "Inicio de sesión exitoso.");
-
-    formulario.reset();
-
-    const botonContinuar = document.createElement("a");
-    botonContinuar.href = "/vistas/inicio";
-    botonContinuar.className = "boton";
-    botonContinuar.textContent = "Continuar al inicio";
-
-    contenedorMensaje.append(botonContinuar);
+    mostrarMensaje("exito", "Inicio de sesión exitoso. Redirigiendo...");
+    setTimeout(() => {
+      window.location.href = "/vistas/inicio";
+    }, 1000);
   } catch (error) {
-    mostrarMensaje(
-      "error",
-      error.message || "No se pudo iniciar sesión. Intentá nuevamente.",
-    );
+    mostrarMensaje("error", error.message || "No se pudo iniciar sesión.");
   } finally {
     botonLogin.disabled = false;
   }

@@ -28,12 +28,15 @@ Aun así, las pruebas escriben datos en la base indicada por `MONGODB_URI`. Ante
 
 ## Organización
 
-- `helpers/environment.js`: conexión, servidor HTTP temporal, peticiones y fixtures.
+- `helpers/environment.js`: conexión, servidor HTTP temporal, clientes de Socket.IO, peticiones y fixtures.
 - `api/usuarios.test.js`: endpoints de usuarios.
 - `api/salas.test.js`: endpoints de salas.
 - `api/eventos.test.js`: endpoints y reglas de eventos.
 - `api/entradas.test.js`: venta, cancelación y consultas de entradas.
 - `middleware/validarIds.test.js`: comportamiento observable del middleware de IDs.
+- `sockets/conexion.test.js`: conexión de clientes, eco, difusión, detección de desconexión y emisión del servidor a todos.
+- `unit/sockets/index.test.js`: ciclo de vida de la instancia (inicializarSockets, obtenerIO, cerrarSockets).
+- `unit/services/aiService.test.js`: servicio de consultas a Gemini con cliente simulado. Cubre respuesta correcta, timeout, cuota agotada, credenciales inválidas, modelo inválido, respuesta vacía, contenido bloqueado, error desconocido y clave ausente.
 
 ## Alcance y criterios
 

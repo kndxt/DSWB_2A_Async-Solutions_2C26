@@ -1,0 +1,43 @@
+extends layout
+
+block title
+  | Registrarse | Urbana Cult
+
+block content
+  h1 Crear cuenta
+
+  section#formulario-registro
+    p Completá tus datos para registrarte.
+
+    div#mensaje-registro(aria-live="polite")
+      include includes/mensajes
+
+    form#form-registro
+      div.campo
+        label(for="nombre") Nombre
+        input#nombre(type="text" name="nombre" autocomplete="given-name" required)
+
+      div.campo
+        label(for="apellido") Apellido
+        input#apellido(type="text" name="apellido" autocomplete="family-name" required)
+
+      div.campo
+        label(for="email") Email
+        input#email(type="email" name="email" autocomplete="email" required)
+
+      div.campo
+        label(for="telefono") Teléfono (opcional)
+        input#telefono(type="tel" name="telefono" autocomplete="tel")
+
+      div.campo
+        label(for="password") Contraseña
+        input#password(type="password" name="password" autocomplete="new-password" required)
+
+      div.botones
+        button#btn-registro(type="submit") Registrarme
+
+      p
+        a(href="/vistas/login") ¿Ya tenés cuenta? Iniciá sesión
+
+block scripts
+  script(type="module" src="/js/registro.js")

@@ -1,4 +1,4 @@
-// Vista de Usuarios: listado, detalle, alta, edición y cambio de estado sobre la API /usuarios.
+// Vista de Usuarios: listado, detalle, alta, edición, cambio de estado y rol sobre la API /usuarios.
 // Módulo ES: usa apiFetch desde apiClient.js, igual que salas.js y eventos.js.
 import { apiFetch } from "./apiClient.js";
 import { renderTable } from "./tabla.js";
@@ -17,6 +17,8 @@ const usuariosApi = {
   actualizar: (id, datos) => apiFetch(`/usuarios/${id}`, enviarJson("PUT", datos)),
   cambiarEstado: (id, estado) =>
     apiFetch(`/usuarios/${id}/estado`, enviarJson("PATCH", { estado })),
+  cambiarRol: (id, rol) =>
+    apiFetch(`/usuarios/${id}/rol`, enviarJson("PATCH", { rol })),
 };
 
 const ESTADOS_USUARIO = ["activo", "inactivo"];
@@ -30,9 +32,11 @@ const COLUMNAS = [
   { label: "Email", value: (u) => u.email },
   { label: "Teléfono", value: (u) => textoOGuion(u.telefono) },
   { label: "Estado", value: (u) => u.estado },
+  { label: "Rol", value: (u) => u.rol },
   { label: "Acciones", value: () => "" },
 ];
 const COL_ESTADO = COLUMNAS.findIndex((c) => c.label === "Estado");
+const COL_ROL = COLUMNAS.findIndex((c) => c.label === "Rol");
 const COL_ACCIONES = COLUMNAS.findIndex((c) => c.label === "Acciones");
 
 // Usuario que se está editando (para saber si hubo cambios en el estado).
@@ -88,21 +92,31 @@ const crearBoton = (texto, accion, id) => {
   return boton;
 };
 
-// renderTable solo escribe texto: acá se agregan la clase de fila, la etiqueta de estado y los botones.
+// renderTable solo escribe texto: acá se agregan la clase de fila, la etiqueta de estado, la de rol y los botones.
 const decorarFilas = (usuarios) => {
   usuarios.forEach((usuario, i) => {
     const fila = cuerpoTabla.rows[i];
     if (usuario.estado === "inactivo") fila.className = "usuario-inactivo";
 
-    const etiqueta = document.createElement("span");
-    etiqueta.className = `estado ${ESTADOS_USUARIO.includes(usuario.estado) ? `estado-${usuario.estado}` : ""}`.trim();
-    etiqueta.textContent = textoOGuion(usuario.estado);
-    fila.cells[COL_ESTADO].replaceChildren(etiqueta);
+    const etiquetaEstado = document.createElement("span");
+    etiquetaEstado.className = `estado ${ESTADOS_USUARIO.includes(usuario.estado) ? `estado-${usuario.estado}` : ""}`.trim();
+    etiquetaEstado.textContent = textoOGuion(usuario.estado);
+    fila.cells[COL_ESTADO].replaceChildren(etiquetaEstado);
+
+    const etiquetaRol = document.createElement("span");
+    etiquetaRol.className = `rol rol-${usuario.rol || "cliente"}`;
+    etiquetaRol.textContent = textoOGuion(usuario.rol);
+    fila.cells[COL_ROL].replaceChildren(etiquetaRol);
 
     // Botón de estado: alterna entre activo e inactivo. No elimina nunca.
     const esActivo = usuario.estado === "activo";
     const botonEstado = crearBoton(esActivo ? "Desactivar" : "Activar", esActivo ? "desactivar" : "activar", usuario.id);
     botonEstado.dataset.nombre = `${usuario.nombre} ${usuario.apellido}`;
+
+    // Botón de rol: alterna entre admin y cliente.
+    const esAdmin = usuario.rol === "admin";
+    const botonRol = crearBoton(esAdmin ? "Hacer cliente" : "Hacer admin", esAdmin ? "hacer-cliente" : "hacer-admin", usuario.id);
+    botonRol.dataset.nombre = `${usuario.nombre} ${usuario.apellido}`;
 
     fila.cells[COL_ACCIONES].append(
       crearBoton("Ver", "ver", usuario.id),
@@ -110,6 +124,8 @@ const decorarFilas = (usuarios) => {
       crearBoton("Editar", "editar", usuario.id),
       " ",
       botonEstado,
+      " ",
+      botonRol,
     );
   });
 };
@@ -154,6 +170,7 @@ const mostrarDetalle = async (id) => {
     agregarDato(contenedor, "Email", textoOGuion(usuario.email));
     agregarDato(contenedor, "Teléfono", textoOGuion(usuario.telefono));
     agregarDato(contenedor, "Estado", textoOGuion(usuario.estado));
+    agregarDato(contenedor, "Rol", textoOGuion(usuario.rol));
     document.getElementById("detalle-usuario").hidden = false;
   } catch (error) {
     mostrarMensaje("error", error.message);
@@ -270,16 +287,41 @@ const cambiarEstado = async (id, nombre, nuevoEstado) => {
   }
 };
 
+// ---- Cambio de rol ----
+
+const cambiarRol = async (id, nombre, nuevoRol) => {
+  limpiarMensajes();
+  const confirmado = window.confirm(
+    `¿Seguro que querés cambiar el rol de "${nombre}" a ${nuevoRol}?`,
+  );
+  if (!confirmado) return;
+
+  try {
+    await usuariosApi.cambiarRol(id, nuevoRol);
+    mostrarMensaje("exito", `Rol actualizado a ${nuevoRol} correctamente`);
+    await cargarUsuarios();
+  } catch (error) {
+    mostrarMensaje("error", error.message);
+  }
+};
+
 // ---- Inicio ----
 
 const iniciar = () => {
-  document.getElementById("btn-nuevo-usuario").addEventListener("click", abrirAlta);
+  const botonNuevo = document.getElementById("btn-nuevo-usuario");
+  if (botonNuevo) botonNuevo.addEventListener("click", abrirAlta);
+
   document.getElementById("btn-cerrar-detalle").addEventListener("click", cerrarDetalle);
-  document.getElementById("btn-cancelar").addEventListener("click", () => {
-    limpiarMensajes();
-    cerrarFormulario();
-  });
-  formulario().addEventListener("submit", guardarUsuario);
+
+  const botonCancelar = document.getElementById("btn-cancelar");
+  if (botonCancelar) {
+    botonCancelar.addEventListener("click", () => {
+      limpiarMensajes();
+      cerrarFormulario();
+    });
+  }
+
+  if (formulario()) formulario().addEventListener("submit", guardarUsuario);
 
   cuerpoTabla.addEventListener("click", (evento) => {
     const boton = evento.target.closest("button[data-accion]");
@@ -289,6 +331,8 @@ const iniciar = () => {
     if (accion === "editar") abrirEdicion(id);
     if (accion === "activar") cambiarEstado(id, boton.dataset.nombre, "activo");
     if (accion === "desactivar") cambiarEstado(id, boton.dataset.nombre, "inactivo");
+    if (accion === "hacer-admin") cambiarRol(id, boton.dataset.nombre, "admin");
+    if (accion === "hacer-cliente") cambiarRol(id, boton.dataset.nombre, "cliente");
   });
 
   mostrarEnTabla("Cargando usuarios...");

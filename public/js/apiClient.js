@@ -7,9 +7,10 @@ export async function apiFetch(url, options = {}) {
   try {
     // Conservamos las opciones existentes y agregamos la señal de cancelación.
     const response = await fetch(url, {
-      ...options,
-      signal: controller.signal,
-    });
+  ...options,
+  credentials: "include",
+  signal: controller.signal,
+  });
 
     const contentType = response.headers.get("content-type") || "";
 
