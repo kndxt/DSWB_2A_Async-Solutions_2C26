@@ -51,3 +51,33 @@ export const autorizar = (...rolesPermitidos) => {
     next();
   };
 };
+
+/**
+ * Versión opcional de `autenticar`: si no hay token o es inválido,
+ * continúa sin usuario. Se usa en rutas de vistas para que el navbar
+ * pueda mostrar "Iniciar sesión" o "Cerrar sesión" según el estado.
+ */
+export const autenticarOpcional = asyncHandler(async (req, res, next) => {
+  const token = leerCookieToken(req);
+
+  if (!token) {
+    res.locals.usuario = null;
+    return next();
+  }
+
+  const payload = verificarToken(token);
+  if (!payload || !payload.id) {
+    res.locals.usuario = null;
+    return next();
+  }
+
+  const usuario = await Usuario.obtenerPorId(payload.id);
+  if (!usuario || usuario.estado !== ESTADOS_USUARIO.ACTIVO) {
+    res.locals.usuario = null;
+    return next();
+  }
+
+  req.usuario = usuario;
+  res.locals.usuario = usuario;
+  next();
+});

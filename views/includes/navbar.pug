@@ -5,15 +5,23 @@ nav.navbar(aria-label="Navegación principal")
     li
       a(href="/vistas/inicio") Inicio
     li
-      a(href="/vistas/login") Iniciar sesión
-    li
       a(href="/vistas/usuarios") Usuarios
     li
       a(href="/vistas/salas") Salas
     li
       a(href="/vistas/eventos") Eventos
     li
-      a(href="/vistas/reservas") Reservas   
+      a(href="/vistas/reservas") Reservas
     li
       a(href="/vistas/entradas") Entradas
-    
+
+    if usuario
+      li
+        span Hola, #{usuario.nombre}
+      li
+        button#btn-logout(type="button") Cerrar sesión
+    else
+      li
+        a(href="/vistas/login") Iniciar sesión
+      li
+        a(href="/vistas/registro") Registrarse

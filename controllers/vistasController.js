@@ -45,6 +45,8 @@ const renderizarReservas = (req, res) => res.render("reservas");
 
 const renderizarLogin = (req, res) => res.render("login");
 
+const renderizarRegistro = (req, res) => res.render("registro");
+
 const renderizarInicio = (req, res) => res.render("inicio");
 
 export {
@@ -55,5 +57,6 @@ export {
   renderizarEntradas,
   renderizarReservas,
   renderizarLogin,
+  renderizarRegistro,
   renderizarInicio,
 };
