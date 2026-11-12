@@ -8,6 +8,8 @@ import {
   cerrarClientes,
   esperarEvento,
   esperarHasta,
+  crearUsuario,
+  crearSesion,
 } from "../helpers/environment.js";
 import { obtenerIO } from "../../sockets/index.js";
 import { EVENTOS_ECO } from "../../sockets/ecoSocket.js";
@@ -18,14 +20,20 @@ after(cerrarEntorno);
 // Cantidad de conexiones que el servidor tiene abiertas en este momento.
 const conexionesActivas = () => obtenerIO().sockets.sockets.size;
 
+// Desde F10.2 el handshake exige sesión: cada prueba conecta con la cookie
+// de un usuario real. Un mismo usuario puede abrir varias conexiones.
+const opcionesConSesion = async () => ({
+  extraHeaders: crearSesion(await crearUsuario()),
+});
+
 // Cada prueba parte sin conexiones abiertas, para que los conteos sean exactos.
 afterEach(async () => {
   cerrarClientes();
   await esperarHasta(() => conexionesActivas() === 0);
 });
 
-test("un cliente puede conectarse y recibe un identificador", async () => {
-  const cliente = await conectarCliente();
+test("un cliente autenticado puede conectarse y recibe un identificador", async () => {
+  const cliente = await conectarCliente(await opcionesConSesion());
 
   assert.equal(cliente.connected, true);
   assert.equal(typeof cliente.id, "string");
@@ -34,7 +42,12 @@ test("un cliente puede conectarse y recibe un identificador", async () => {
 });
 
 test("varios clientes pueden conectarse simultáneamente", async () => {
-  const clientes = await Promise.all([conectarCliente(), conectarCliente(), conectarCliente()]);
+  const opciones = await opcionesConSesion();
+  const clientes = await Promise.all([
+    conectarCliente(opciones),
+    conectarCliente(opciones),
+    conectarCliente(opciones),
+  ]);
 
   const identificadores = new Set(clientes.map((cliente) => cliente.id));
   assert.equal(identificadores.size, 3);
@@ -43,7 +56,11 @@ test("varios clientes pueden conectarse simultáneamente", async () => {
 });
 
 test("el servidor detecta la desconexión de un cliente", async () => {
-  const [primero, segundo] = await Promise.all([conectarCliente(), conectarCliente()]);
+  const opciones = await opcionesConSesion();
+  const [primero, segundo] = await Promise.all([
+    conectarCliente(opciones),
+    conectarCliente(opciones),
+  ]);
   await esperarHasta(() => conexionesActivas() === 2);
 
   primero.disconnect();
@@ -53,7 +70,8 @@ test("el servidor detecta la desconexión de un cliente", async () => {
 });
 
 test("el evento eco responde únicamente al cliente que lo envió", async () => {
-  const [emisor, otro] = await Promise.all([conectarCliente(), conectarCliente()]);
+  const opciones = await opcionesConSesion();
+  const [emisor, otro] = await Promise.all([conectarCliente(opciones), conectarCliente(opciones)]);
 
   let recibidosPorOtro = 0;
   otro.on(EVENTOS_ECO.ECO, () => {
@@ -71,7 +89,12 @@ test("el evento eco responde únicamente al cliente que lo envió", async () => 
 });
 
 test("el evento de difusión llega a todos los clientes conectados", async () => {
-  const clientes = await Promise.all([conectarCliente(), conectarCliente(), conectarCliente()]);
+  const opciones = await opcionesConSesion();
+  const clientes = await Promise.all([
+    conectarCliente(opciones),
+    conectarCliente(opciones),
+    conectarCliente(opciones),
+  ]);
 
   const recepciones = clientes.map((cliente) => esperarEvento(cliente, EVENTOS_ECO.DIFUSION));
   clientes[0].emit(EVENTOS_ECO.DIFUSION, { texto: "para todos" });
@@ -84,7 +107,8 @@ test("el evento de difusión llega a todos los clientes conectados", async () =>
 });
 
 test("el servidor puede emitir un evento a todos los clientes", async () => {
-  const clientes = await Promise.all([conectarCliente(), conectarCliente()]);
+  const opciones = await opcionesConSesion();
+  const clientes = await Promise.all([conectarCliente(opciones), conectarCliente(opciones)]);
 
   const recepciones = clientes.map((cliente) => esperarEvento(cliente, "prueba:servidor"));
   obtenerIO().emit("prueba:servidor", { numero: 1 });

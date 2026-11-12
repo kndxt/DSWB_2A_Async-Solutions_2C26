@@ -7,7 +7,6 @@ export const EVENTOS_ECO = {
 };
 
 export function registrarEco(io) {
-  // Estos eventos no exigen autenticación, así que no se exponen en producción.
   if (process.env.NODE_ENV === "production") return;
 
   io.on("connection", (socket) => {

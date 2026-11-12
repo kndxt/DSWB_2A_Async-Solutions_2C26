@@ -1,6 +1,6 @@
-import Usuario, { ESTADOS_USUARIO } from "../models/usuarioModel.js";
-import { verificarToken } from "../utils/jwt.js";
 import { leerCookieToken } from "../utils/cookies.js";
+import { obtenerUsuarioDesdeToken } from "../services/authService.js";
+import { AppError, UnauthorizedError, ForbiddenError } from "../errors/errores.js";
 import asyncHandler from "./asyncHandler.js";
 
 /**
@@ -10,26 +10,22 @@ import asyncHandler from "./asyncHandler.js";
 export const autenticar = asyncHandler(async (req, res, next) => {
   const token = leerCookieToken(req);
 
-  if (!token) {
-    return res.status(401).json({ error: "No hay sesión iniciada" });
+  try {
+    const { usuario } = await obtenerUsuarioDesdeToken(token);
+    req.usuario = usuario;
+    next();
+  } catch (error) {
+    // Se preserva el contrato HTTP actual: errores de auth responden JSON
+    // directo, no pasan por errorHandler (los tests dependen de esto).
+    if (error instanceof UnauthorizedError) {
+      return res.status(401).json({ error: error.message });
+    }
+    if (error instanceof ForbiddenError) {
+      return res.status(403).json({ error: error.message });
+    }
+    // Cualquier otro error (DB, timeout) se propaga a errorHandler.
+    throw error;
   }
-
-  const payload = verificarToken(token);
-  if (!payload || !payload.id) {
-    return res.status(401).json({ error: "Token inválido o expirado" });
-  }
-
-  const usuario = await Usuario.obtenerPorId(payload.id);
-  if (!usuario) {
-    return res.status(401).json({ error: "Usuario no encontrado" });
-  }
-
-  if (usuario.estado !== ESTADOS_USUARIO.ACTIVO) {
-    return res.status(403).json({ error: "El usuario se encuentra inactivo" });
-  }
-
-  req.usuario = usuario;
-  next();
 });
 
 /**
@@ -60,24 +56,16 @@ export const autorizar = (...rolesPermitidos) => {
 export const autenticarOpcional = asyncHandler(async (req, res, next) => {
   const token = leerCookieToken(req);
 
-  if (!token) {
+  try {
+    const { usuario } = await obtenerUsuarioDesdeToken(token);
+    req.usuario = usuario;
+    res.locals.usuario = usuario;
+  } catch (error) {
+    // Solo se silencian los errores controlados de auth. Un error de DB
+    // debe llegar al errorHandler para no ocultar fallos reales.
+    if (!(error instanceof AppError)) throw error;
     res.locals.usuario = null;
-    return next();
   }
 
-  const payload = verificarToken(token);
-  if (!payload || !payload.id) {
-    res.locals.usuario = null;
-    return next();
-  }
-
-  const usuario = await Usuario.obtenerPorId(payload.id);
-  if (!usuario || usuario.estado !== ESTADOS_USUARIO.ACTIVO) {
-    res.locals.usuario = null;
-    return next();
-  }
-
-  req.usuario = usuario;
-  res.locals.usuario = usuario;
   next();
 });
