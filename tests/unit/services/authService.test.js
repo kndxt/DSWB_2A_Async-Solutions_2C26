@@ -7,7 +7,7 @@ process.env.JWT_SECRET = JWT_SECRET_TEST;
 process.env.JWT_EXPIRES_IN = "1h";
 
 const { default: Usuario } = await import("../../../models/usuarioModel.js");
-const { ESTADOS_USUARIO, ROLES_USUARIO } = await import("../../../models/usuarioModel.js");
+const { ESTADOS_USUARIO, ROLES_USUARIO } = await import("../../../definitions/usuario.js");
 const { generarToken } = await import("../../../utils/jwt.js");
 const { obtenerUsuarioDesdeToken } = await import("../../../services/authService.js");
 const { UnauthorizedError, ForbiddenError } = await import("../../../errors/errores.js");
