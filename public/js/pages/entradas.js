@@ -9,7 +9,6 @@ import { formatearFechaHora } from "../utils/formato.js";
 
 const formVenta = document.querySelector("#form-venta");
 const campoEventoId = document.querySelector("#eventoId");
-const campoUsuarioId = document.querySelector("#usuarioId");
 const botonVender = document.querySelector("#boton-vender");
 
 const tabla = document.querySelector("#tabla-entradas");
@@ -28,7 +27,6 @@ let entradas = [];
 const entradasApi = {
   listar: () => apiFetch("/entradas"),
   eventos: () => apiFetch("/eventos"),
-  usuarios: () => apiFetch("/usuarios"),
 
   vender: (datos) =>
     apiFetch("/entradas", {
@@ -183,7 +181,7 @@ function llenarSelect(select, textoInicial, items, etiqueta) {
 
 async function cargarOpciones() {
   try {
-    const [eventos, usuarios] = await Promise.all([entradasApi.eventos(), entradasApi.usuarios()]);
+    const eventos = await entradasApi.eventos();
 
     llenarSelect(
       campoEventoId,
@@ -191,15 +189,8 @@ async function cargarOpciones() {
       eventos.filter((evento) => evento.estado === "activo"),
       (evento) => `${evento.nombre} (${formatearFechaHora(evento.fechaInicio)})`,
     );
-
-    llenarSelect(
-      campoUsuarioId,
-      "Seleccioná un cliente...",
-      usuarios.filter((usuario) => usuario.estado === "activo"),
-      (usuario) => `${usuario.nombre} ${usuario.apellido} — ${usuario.email}`,
-    );
   } catch (error) {
-    mostrarMensaje("error", `No se pudieron cargar las listas: ${error.message}`);
+    mostrarMensaje("error", `No se pudieron cargar los eventos: ${error.message}`);
   }
 }
 
@@ -212,12 +203,11 @@ async function venderEntrada(event) {
   limpiarMensajes();
 
   const eventoId = campoEventoId.value.trim();
-  const usuarioId = campoUsuarioId.value.trim();
 
   botonVender.disabled = true;
 
   try {
-    await entradasApi.vender({ eventoId, usuarioId });
+    await entradasApi.vender({ eventoId });
 
     formVenta.reset();
 

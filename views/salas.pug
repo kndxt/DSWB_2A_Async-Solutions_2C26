@@ -7,7 +7,7 @@ block content
   include includes/mensajes
 
   section.acciones
-    button#btn-nueva-sala(type="button") Nueva sala
+    button#btn-nueva-sala.solo-admin(type="button") Nueva sala
 
   section#listado-salas
     h2 Listado de salas
@@ -29,7 +29,7 @@ block content
     dl#detalle-datos
     button#btn-cerrar-detalle(type="button") Cerrar
 
-  section#formulario-sala(hidden)
+  section#formulario-sala.solo-admin(hidden)
     h2#titulo-formulario Nueva sala
     //- novalidate y sin min/max en los inputs: las validaciones de negocio
     //- las hace el backend y sus mensajes son los que se muestran.

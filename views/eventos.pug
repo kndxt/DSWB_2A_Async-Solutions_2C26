@@ -7,7 +7,7 @@ block content
   include includes/mensajes
 
   section.acciones
-    button#btn-nuevo-evento(type="button") Nuevo evento
+    button#btn-nuevo-evento.solo-admin(type="button") Nuevo evento
 
   section#eventos-proximos
     h2 Eventos próximos
@@ -40,7 +40,7 @@ block content
         tr
           td(colspan="8") Cargando eventos...
 
-  section#formulario-evento(hidden)
+  section#formulario-evento.solo-admin(hidden)
     h2#titulo-formulario Nuevo evento
     //- novalidate y sin min/max: las reglas de negocio las valida el backend
     //- y son sus mensajes los que se muestran.

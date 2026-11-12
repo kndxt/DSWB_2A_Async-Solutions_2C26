@@ -3,13 +3,14 @@
 import { apiFetch, enviarJson } from "../core/apiClient.js";
 import { textoOGuion, formatearPrecio, formatearFechaHora } from "../utils/formato.js";
 import { mostrarMensaje, limpiarMensajes } from "../core/mensajes.js";
+import { esAdmin } from "../core/rol.js";
 
 const eventosApi = {
   listar: () => apiFetch("/eventos"),
   proximos: () => apiFetch("/eventos/proximos"),
   obtener: (id) => apiFetch(`/eventos/${id}`),
   crear: (datos) => apiFetch("/eventos", enviarJson("POST", datos)),
-  actualizar: (id, datos) => apiFetch(`/eventos/${id}`, enviarJson("PUT", datos)),
+  actualizar: (id, datos) => apiFetch(`/eventos/${id}`, enviarJson("PATCH", datos)),
   salas: () => apiFetch("/salas"),
   usuarios: () => apiFetch("/usuarios"), // ← nuevo
 };
@@ -85,10 +86,12 @@ const crearFilaEvento = (evento) => {
   if (claseDeFila(evento)) fila.className = claseDeFila(evento);
 
   const acciones = document.createElement("td");
-  acciones.append(crearBoton("Editar", "editar", evento.id));
-  // Solo se puede cancelar un evento activo; el registro y su reserva se conservan.
-  if (evento.estado === "activo") {
-    acciones.append(" ", crearBoton("Cancelar", "cancelar", evento.id));
+  if (esAdmin()) {
+    acciones.append(crearBoton("Editar", "editar", evento.id));
+    // Solo se puede cancelar un evento activo; el registro y su reserva se conservan.
+    if (evento.estado === "activo") {
+      acciones.append(" ", crearBoton("Cancelar", "cancelar", evento.id));
+    }
   }
   acciones.dataset.nombre = evento.nombre;
 
@@ -210,7 +213,7 @@ const cargarProximos = async () => {
 
 // Las salas se cargan primero para poder mostrar sus nombres en ambas tablas.
 const cargarTodo = async () => {
-  await Promise.all([cargarSalas(), cargarUsuarios()]); // ← cargarUsuarios acá
+  await Promise.all([cargarSalas(), esAdmin() ? cargarUsuarios() : Promise.resolve()]);
   await Promise.all([cargarListado(), cargarProximos()]);
 };
 

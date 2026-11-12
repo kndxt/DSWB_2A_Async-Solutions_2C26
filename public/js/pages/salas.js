@@ -5,12 +5,13 @@ import { apiFetch, enviarJson } from "../core/apiClient.js";
 import { renderTable } from "../utils/tabla.js";
 import { formatearPrecio, textoOGuion } from "../utils/formato.js";
 import { mostrarMensaje, limpiarMensajes } from "../core/mensajes.js";
+import { esAdmin } from "../core/rol.js";
 
 const salasApi = {
   listar: () => apiFetch("/salas"),
   obtener: (id) => apiFetch(`/salas/${id}`),
   crear: (datos) => apiFetch("/salas", enviarJson("POST", datos)),
-  actualizar: (id, datos) => apiFetch(`/salas/${id}`, enviarJson("PUT", datos)),
+  actualizar: (id, datos) => apiFetch(`/salas/${id}`, enviarJson("PATCH", datos)),
 };
 
 const ESTADOS_SALA = ["activa", "inactiva"];
@@ -69,11 +70,10 @@ const decorarFilas = (salas) => {
     etiqueta.textContent = textoOGuion(sala.estado);
     fila.cells[COL_ESTADO].replaceChildren(etiqueta);
 
-    fila.cells[COL_ACCIONES].append(
-      crearBoton("Ver", "ver", sala.id),
-      " ",
-      crearBoton("Editar", "editar", sala.id),
-    );
+    fila.cells[COL_ACCIONES].append(crearBoton("Ver", "ver", sala.id));
+    if (esAdmin()) {
+      fila.cells[COL_ACCIONES].append(" ", crearBoton("Editar", "editar", sala.id));
+    }
   });
 };
 

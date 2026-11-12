@@ -552,3 +552,8 @@ button:focus-visible,
   font-size: 0.95rem;
   font-weight: 600;
 }
+
+/* Elementos solo para administradores (el permiso real lo verifica el backend) */
+body:not([data-rol="admin"]) .solo-admin {
+  display: none !important;
+}
