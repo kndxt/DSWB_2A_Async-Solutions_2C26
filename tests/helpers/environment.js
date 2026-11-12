@@ -2,7 +2,7 @@ import "dotenv/config";
 import http from "node:http";
 import mongoose from "mongoose";
 import { io as clienteSocketIO } from "socket.io-client";
-
+import bcrypt from "bcryptjs";
 import app from "../../app.js";
 import { conectarDB } from "../../config/db.js";
 import { inicializarSockets, cerrarSockets } from "../../sockets/index.js";
@@ -279,20 +279,20 @@ export async function esperarHasta(condicion, tiempoMaximo = 2000, intervalo = 2
  * Permite sobrescribir sus datos, por ejemplo, para crear
  * administradores o usuarios inactivos.
  */
-export async function crearUsuario(overrides = {}) {
-  const sufijo = siguienteSufijo();
+export const crearUsuario = async (overrides = {}) => {
+  const { password = "clave-prueba", ...datos } = overrides;
 
   const usuario = await Usuario.create({
     nombre: "Usuario",
     apellido: "Prueba",
-    email: `test_${sufijo}@example.test`,
-    telefono: "11111111",
-    password: "clave-prueba",
-    ...overrides,
+    email: `usuario-${Date.now()}-${Math.random()}@example.test`,
+    telefono: "1122334455",
+    ...datos,
+    password: await bcrypt.hash(password, 10),
   });
 
   return registrarCreado(Usuario, usuario);
-}
+};
 
 /**
  * Crea una sala de prueba con datos válidos.
