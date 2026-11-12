@@ -1,3 +1,4 @@
+
 import test, { before, after, describe } from "node:test";
 import assert from "node:assert/strict";
 
@@ -15,6 +16,7 @@ import {
   mongoose,
   Sala,
   Entrada,
+  ROLES_USUARIO,
 } from "../helpers/environment.js";
 
 before(iniciarEntorno);
@@ -35,6 +37,16 @@ async function assertError(response, status, mensaje) {
 // Crea un cliente y devuelve sus datos junto con su sesión autenticada.
 async function sesionCliente() {
   const usuario = await crearUsuario();
+
+  return {
+    usuario,
+    headers: crearSesion(usuario),
+  };
+}
+
+// Crea un administrador y devuelve sus datos junto con su sesión autenticada.
+async function sesionAdministrador() {
+  const usuario = await crearUsuario({ rol: ROLES_USUARIO.ADMIN });
 
   return {
     usuario,
@@ -385,6 +397,92 @@ describe("GET /entradas - validaciones", () => {
 });
 
 // ============================================================
+// GET /vistas/entradas/:eventoId - VISTA
+// ============================================================
+
+describe("GET /vistas/entradas/:eventoId - vista", () => {
+  test("permite al administrador consultar el resumen de entradas de un evento", async () => {
+    const sala = await crearSala({ capacidad: 3 });
+    const { usuario, headers } = await sesionAdministrador();
+    const evento = await crearEvento({ sala, usuario });
+
+    await crearEntrada({ evento, usuario });
+
+    const response = await peticion(`/vistas/entradas/${evento.id}`, {
+      headers,
+    });
+
+    const html = await response.text();
+
+    assert.equal(response.status, 200);
+    assert.ok(html.includes(evento.nombre));
+    assert.ok(html.includes(sala.nombre));
+  });
+
+  test("rechaza el acceso a la vista sin una sesión autenticada", async () => {
+    const response = await peticion(`/vistas/entradas/${ID_INEXISTENTE}`);
+
+    assert.equal(response.status, 401);
+  });
+
+  test("rechaza el acceso a la vista para un cliente autenticado", async () => {
+    const { headers } = await sesionCliente();
+
+    const response = await peticion(`/vistas/entradas/${ID_INEXISTENTE}`, {
+      headers,
+    });
+
+    assert.equal(response.status, 403);
+  });
+});
+
+// ============================================================
+// GET /vistas/entradas/:eventoId - VALIDACIONES
+// ============================================================
+
+describe("GET /vistas/entradas/:eventoId - validaciones", () => {
+  test("rechaza un ID de evento inválido", async () => {
+    const { headers } = await sesionAdministrador();
+
+    const response = await peticion(`/vistas/entradas/${ID_INVALIDO}`, {
+      headers,
+    });
+
+    assert.equal(response.status, 400);
+  });
+
+  test("rechaza la consulta de un evento inexistente", async () => {
+    const { headers } = await sesionAdministrador();
+
+    const response = await peticion(`/vistas/entradas/${ID_INEXISTENTE}`, {
+      headers,
+    });
+
+    const html = await response.text();
+
+    assert.equal(response.status, 404);
+    assert.ok(html.includes("Evento no encontrado"));
+  });
+
+  test("rechaza la consulta cuando la sala asociada al evento no existe", async () => {
+    const sala = await crearSala();
+    const { usuario, headers } = await sesionAdministrador();
+    const evento = await crearEvento({ sala, usuario });
+
+    await Sala.findByIdAndDelete(sala.id);
+
+    const response = await peticion(`/vistas/entradas/${evento.id}`, {
+      headers,
+    });
+
+    const html = await response.text();
+
+    assert.equal(response.status, 404);
+    assert.ok(html.includes("Sala no encontrada"));
+  });
+});
+
+// ============================================================
 // AUTENTICACIÓN DE ENTRADAS
 // ============================================================
 
@@ -407,7 +505,9 @@ describe("Autenticación de entradas", () => {
   });
 
   test("rechaza cancelar entradas sin una sesión autenticada", async () => {
-    const response = await peticion(`/entradas/${ID_INEXISTENTE}/cancelar`, { method: "PATCH" });
+    const response = await peticion(`/entradas/${ID_INEXISTENTE}/cancelar`, {
+      method: "PATCH",
+    });
 
     assert.equal(response.status, 401);
   });

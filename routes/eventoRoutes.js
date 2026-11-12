@@ -12,17 +12,15 @@ const { operaciones } = eventoDefinicion;
 const validarEvento = validarDatos(eventoDefinicion);
 
 // Lectura: cualquier usuario autenticado
-router.get("/", autenticar, asyncHandler(eventoController.obtenerEventos));
+router.get("/", asyncHandler(eventoController.obtenerEventos));
 
 router.get(
   "/proximos",
-  autenticar,
   asyncHandler(eventoController.obtenerEventosProximos),
 );
 
 router.get(
   "/:id",
-  autenticar,
   validarEvento(operaciones.obtenerPorId),
   asyncHandler(eventoController.obtenerEventoPorId),
 );

@@ -7,7 +7,7 @@ import app from "../../app.js";
 import { conectarDB } from "../../config/db.js";
 import { inicializarSockets, cerrarSockets } from "../../sockets/index.js";
 
-import Usuario from "../../models/usuarioModel.js";
+import Usuario, { ROLES_USUARIO } from "../../models/usuarioModel.js";
 import Sala from "../../models/salaModel.js";
 import { Evento } from "../../models/eventoModel.js";
 import Entrada from "../../models/entradaModel.js";
@@ -397,4 +397,4 @@ export async function crearEntrada({ evento, usuario, overrides = {} } = {}) {
 // Exportaciones para las pruebas
 // ---------------------------------------------------------------
 
-export { mongoose, Usuario, Sala, Evento, Entrada };
+export { mongoose, Usuario, Sala, Evento, Entrada, ROLES_USUARIO };

@@ -69,6 +69,24 @@ const obtenerDisponiblesPorEvento = async (eventoId) => {
   };
 };
 
+// Obtiene los datos necesarios para mostrar el resumen de las entradas de un evento.
+const obtenerResumenPorEvento = async (eventoId) => {
+  const evento = await obtenerEventoPorId(eventoId);
+  const sala = await obtenerSalaPorId(evento.salaId);
+
+  const [vendidas, disponibles] = await Promise.all([
+    Entrada.obtenerVendidasPorEvento(eventoId),
+    Entrada.obtenerDisponiblesPorEvento(eventoId, sala.capacidad),
+  ]);
+
+  return {
+    evento,
+    sala,
+    vendidas,
+    disponibles,
+  };
+};
+
 export {
   obtenerTodas,
   obtenerPorId,
@@ -76,4 +94,5 @@ export {
   cancelar,
   obtenerVendidasPorEvento,
   obtenerDisponiblesPorEvento,
+  obtenerResumenPorEvento,
 };

@@ -62,10 +62,12 @@ function bodyEvento({ salaId, usuarioId, overrides = {} }) {
 // ---------------------------------------------------------------
 
 describe("Autenticación y autorización de eventos", () => {
-  test("rechaza consultar eventos sin una sesión autenticada", async () => {
+  test("permite consultar eventos sin una sesión autenticada", async () => {
     const response = await peticion("/eventos");
+    const eventos = await respuestaJSON(response);
 
-    assert.equal(response.status, 401);
+    assert.equal(response.status, 200);
+    assert.ok(Array.isArray(eventos));
   });
 
   test("rechaza crear eventos sin una sesión autenticada", async () => {
@@ -114,12 +116,11 @@ describe("Autenticación y autorización de eventos", () => {
 
 describe("GET /eventos", () => {
   test("devuelve un array de eventos, un evento por ID y los próximos eventos", async () => {
-    const headers = await sesionCliente();
     const evento = await crearEvento();
 
-    const todas = await peticion("/eventos", { headers });
-    const una = await peticion(`/eventos/${evento.id}`, { headers });
-    const proximos = await peticion("/eventos/proximos", { headers });
+    const todas = await peticion("/eventos");
+    const una = await peticion(`/eventos/${evento.id}`);
+    const proximos = await peticion("/eventos/proximos");
 
     assert.equal(todas.status, 200);
     assert.ok(Array.isArray(await respuestaJSON(todas)));
@@ -164,7 +165,7 @@ describe("GET /eventos", () => {
     const creado = await Evento.findById(body.id);
     registrarCreado(Evento, creado);
 
-    const proximos = await peticion("/eventos/proximos", { headers });
+    const proximos = await peticion("/eventos/proximos");
     const eventos = await respuestaJSON(proximos);
 
     assert.equal(proximos.status, 200);

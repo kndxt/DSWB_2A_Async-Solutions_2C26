@@ -82,5 +82,12 @@ export const entradaDefinicion = {
         opcionales: [],
       },
     },
+
+    obtenerResumenPorEvento: {
+      params: {
+        requeridos: ["eventoId"],
+        opcionales: [],
+      },
+    },
   },
 };
