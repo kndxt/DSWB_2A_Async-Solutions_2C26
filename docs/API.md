@@ -640,7 +640,55 @@ Devuelve un objeto con la misma estructura que cada elemento del listado de rese
 
 ### 3.6. Vistas
 
-> Pendiente de documentar las demás rutas que renderizan páginas HTML.
+Estas rutas permiten acceder a las páginas HTML de la aplicación. A diferencia de los endpoints de la API, devuelven vistas renderizadas mediante el servidor.
+
+#### Autenticación
+
+Las rutas de vistas utilizan autenticación opcional, excepto el resumen de entradas por evento, que requiere autenticación y rol `ADMIN`.
+
+- **Con sesión:** se carga el usuario actual para mostrar la información correspondiente en las vistas.
+- **Sin sesión:** las vistas públicas pueden consultarse igualmente.
+- **Resumen de entradas:** requiere una sesión válida y permisos de administrador.
+
+#### Endpoints
+
+| Método | Endpoint                     | Descripción                                  | Acceso  |
+| ------ | ---------------------------- | -------------------------------------------- | ------- |
+| GET    | `/vistas/usuarios`           | Muestra la vista de usuarios.                | Público |
+| GET    | `/vistas/salas`              | Muestra la vista de salas.                   | Público |
+| GET    | `/vistas/eventos`            | Muestra la vista de eventos.                 | Público |
+| GET    | `/vistas/entradas`           | Muestra la vista general de entradas.        | Público |
+| GET    | `/vistas/reservas`           | Muestra la vista de reservas.                | Público |
+| GET    | `/vistas/login`              | Muestra el formulario de inicio de sesión.   | Público |
+| GET    | `/vistas/registro`           | Muestra el formulario de registro.           | Público |
+| GET    | `/vistas/inicio`             | Muestra la página de inicio.                 | Público |
+| GET    | `/vistas/entradas/:eventoId` | Muestra el resumen de entradas de un evento. | ADMIN   |
+
+#### Resumen de entradas por evento
+
+**GET** `/vistas/entradas/:eventoId`
+
+Permite consultar un resumen de las entradas de un evento, incluyendo la información del evento, su sala, las entradas vendidas y las disponibles según la capacidad de la sala.
+
+**Parámetros de ruta:**
+
+| Parámetro  | Tipo     | Descripción               |
+| ---------- | -------- | ------------------------- |
+| `eventoId` | ObjectId | Identificador del evento. |
+
+**Permisos:** requiere autenticación y rol `ADMIN`.
+
+**Respuestas y errores:**
+
+| Código | Descripción                                             |
+| ------ | ------------------------------------------------------- |
+| 200    | Vista renderizada correctamente.                        |
+| 400    | El identificador del evento no tiene un formato válido. |
+| 401    | No existe una sesión válida.                            |
+| 403    | El usuario no tiene permisos de administrador.          |
+| 404    | No se encontró el evento o su sala asociada.            |
+
+**Nota:** los endpoints de consulta y gestión de entradas se documentan en la sección [Entradas](#entradas). Esta ruta corresponde exclusivamente a la vista HTML del resumen.
 
 ---
 
