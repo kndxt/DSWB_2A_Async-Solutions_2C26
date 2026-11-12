@@ -1,18 +1,38 @@
 import { Entrada } from "../models/entradaModel.js";
 import { obtenerPorId as obtenerEventoPorId, puedeVenderEntradas } from "./eventoService.js";
 import { obtenerPorId as obtenerSalaPorId } from "./salaService.js";
-import { NotFoundError, ConflictError } from "../errors/errores.js";
+import { ROLES_USUARIO } from "../models/usuarioModel.js";
+import { NotFoundError, ConflictError, ForbiddenError } from "../errors/errores.js";
 
-// Obtiene todas las entradas con sus detalles.
-const obtenerTodas = () => Entrada.obtenerTodos({ detalles: true });
+// Obtiene las entradas según el rol del usuario autenticado.
+// Los administradores pueden consultar todas o filtrar por titular.
+// Los clientes solo pueden consultar sus propias entradas,
+// independientemente del usuarioId enviado en la consulta.
+const obtenerTodas = async (usuario, usuarioIdSolicitado) => {
+  let usuarioId;
+
+  if (usuario.rol === ROLES_USUARIO.ADMIN) {
+    usuarioId = usuarioIdSolicitado;
+  } else if (usuario.rol === ROLES_USUARIO.CLIENTE) {
+    // La identidad del cliente se obtiene de la sesión, no del query.
+    usuarioId = usuario.id ?? usuario._id;
+  } else {
+    throw new ForbiddenError("No tenés permiso para consultar entradas");
+  }
+
+  return Entrada.obtenerTodos({ detalles: true, usuarioId });
+};
 
 // Obtiene una entrada por su identificador.
-const obtenerPorId = async (id) => {
+// Los clientes solo pueden consultar entradas propias.
+const obtenerPorId = async (id, usuario) => {
   const entrada = await Entrada.obtenerPorId(id, { detalles: true });
 
   if (!entrada) {
     throw new NotFoundError("Entrada no encontrada");
   }
+
+  verificarTitularidad(entrada, usuario);
 
   return entrada;
 };
@@ -37,11 +57,19 @@ const vender = async ({ eventoId, usuarioId }) => {
 };
 
 // Cancela una entrada vendida.
-const cancelar = async (id) => {
+const cancelar = async (id, usuario) => {
+  const entrada = await Entrada.obtenerPorId(id);
+
+  if (!entrada) {
+    throw new NotFoundError("Entrada no encontrada");
+  }
+
+  verificarTitularidad(entrada, usuario);
+
   const entradaCancelada = await Entrada.cancelar(id, { detalles: true });
 
   if (!entradaCancelada) {
-    throw new ConflictError("Entrada no encontrada o ya está cancelada");
+    throw new ConflictError("La entrada ya está cancelada");
   }
 
   return entradaCancelada;
@@ -85,6 +113,22 @@ const obtenerResumenPorEvento = async (eventoId) => {
     vendidas,
     disponibles,
   };
+};
+
+// Comprueba si el usuario autenticado puede acceder a una entrada.
+// Los administradores pueden acceder a cualquier entrada.
+// Los clientes solo pueden acceder a las propias.
+const verificarTitularidad = (entrada, usuario) => {
+  if (usuario.rol === ROLES_USUARIO.ADMIN) {
+    return;
+  }
+
+  const titularId = entrada.usuarioId?._id ?? entrada.usuarioId;
+  const usuarioId = usuario.id ?? usuario._id;
+
+  if (titularId.toString() !== usuarioId.toString()) {
+    throw new NotFoundError("Entrada no encontrada");
+  }
 };
 
 export {

@@ -46,7 +46,12 @@ export const entradaDefinicion = {
   // Datos que cada operación recibe del cliente.
   // Los datos derivados de la sesión autenticada se obtienen en el controlador.
   operaciones: {
-    obtenerTodos: {},
+    obtenerTodos: {
+      query: {
+        requeridos: [],
+        opcionales: ["usuarioId"],
+      },
+    },
 
     obtenerPorId: {
       params: {
