@@ -1,9 +1,8 @@
-import Usuario from "../models/usuarioModel.js";
-import { ESTADOS_USUARIO } from "../definitions/usuario.js";
-import { verificarToken } from "../utils/jwt.js";
+
 import { leerCookieToken } from "../utils/cookies.js";
-import asyncHandler from "./asyncHandler.js";
+import { obtenerUsuarioDesdeToken } from "../services/authService.js";
 import { UnauthorizedError, ForbiddenError } from "../errors/errores.js";
+import asyncHandler from "./asyncHandler.js";
 
 /**
  * Verifica que haya un token válido en la cookie, que el usuario exista
@@ -11,24 +10,7 @@ import { UnauthorizedError, ForbiddenError } from "../errors/errores.js";
  */
 export const autenticar = asyncHandler(async (req, res, next) => {
   const token = leerCookieToken(req);
-
-  if (!token) {
-    throw new UnauthorizedError("No hay sesión iniciada");
-  }
-
-  const payload = verificarToken(token);
-  if (!payload || !payload.id) {
-    throw new UnauthorizedError("Token inválido o expirado");
-  }
-
-  const usuario = await Usuario.obtenerPorId(payload.id);
-  if (!usuario) {
-    throw new UnauthorizedError("Usuario no encontrado");
-  }
-
-  if (usuario.estado !== ESTADOS_USUARIO.ACTIVO) {
-    throw new ForbiddenError("El usuario se encuentra inactivo");
-  }
+  const { usuario } = await obtenerUsuarioDesdeToken(token);
 
   req.usuario = usuario;
   next();
@@ -60,24 +42,20 @@ export const autorizar = (...rolesPermitidos) => {
 export const autenticarOpcional = asyncHandler(async (req, res, next) => {
   const token = leerCookieToken(req);
 
-  if (!token) {
+  try {
+    const { usuario } = await obtenerUsuarioDesdeToken(token);
+
+    req.usuario = usuario;
+    res.locals.usuario = usuario;
+  } catch (error) {
+    // Solo se silencian errores controlados de autenticación.
+    // Los errores de infraestructura deben llegar al errorHandler.
+    if (!(error instanceof UnauthorizedError || error instanceof ForbiddenError)) {
+      throw error;
+    }
+
     res.locals.usuario = null;
-    return next();
   }
 
-  const payload = verificarToken(token);
-  if (!payload || !payload.id) {
-    res.locals.usuario = null;
-    return next();
-  }
-
-  const usuario = await Usuario.obtenerPorId(payload.id);
-  if (!usuario || usuario.estado !== ESTADOS_USUARIO.ACTIVO) {
-    res.locals.usuario = null;
-    return next();
-  }
-
-  req.usuario = usuario;
-  res.locals.usuario = usuario;
   next();
 });
