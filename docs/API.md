@@ -51,7 +51,104 @@ Los códigos HTTP y las clases de errores se documentan en [ERRORS.md](./ERRORS.
 
 ### 3.2. Salas
 
-> Pendiente de documentar.
+**Prefijo:** `/salas`
+
+Todas las operaciones del módulo requieren autenticación y rol de **administrador**. Los usuarios clientes no tienen acceso a las consultas ni a las operaciones de gestión de salas.
+
+#### GET `/salas`
+
+Obtiene todas las salas registradas.
+
+- **Acceso:** administrador.
+- **Respuesta exitosa:** `200 OK`.
+- **Contenido:** array de salas.
+
+#### GET `/salas/:id`
+
+Obtiene una sala por su identificador.
+
+- **Acceso:** administrador.
+- **Parámetros:**
+  - `id`: identificador de la sala.
+- **Respuesta exitosa:** `200 OK`.
+- **Errores:**
+  - `400 Bad Request`: identificador inválido.
+  - `404 Not Found`: sala inexistente.
+
+#### POST `/salas`
+
+Registra una nueva sala.
+
+- **Acceso:** administrador.
+- **Body:**
+
+| Campo           | Tipo   | Requerido | Restricciones                                      |
+| --------------- | ------ | --------- | -------------------------------------------------- |
+| `nombre`        | String | Sí        | No puede estar vacío.                              |
+| `capacidad`     | Number | Sí        | Entero mayor o igual a 1.                          |
+| `direccion`     | String | Sí        | No puede estar vacío.                              |
+| `precioReserva` | Number | Sí        | Mayor o igual a 0.                                 |
+| `responsable`   | Object | Sí        | Debe contener todos los atributos indicados abajo. |
+
+**Objeto `responsable`:**
+
+| Campo      | Tipo   | Requerido |
+| ---------- | ------ | --------- |
+| `nombre`   | String | Sí        |
+| `apellido` | String | Sí        |
+| `telefono` | String | Sí        |
+| `email`    | String | Sí        |
+
+- **Estado inicial:** se asigna automáticamente `activa` si no se especifica otro valor.
+- **Respuesta exitosa:** `201 Created`.
+- **Errores:**
+  - `400 Bad Request`: datos obligatorios ausentes, tipos incorrectos o restricciones incumplidas.
+
+No se aplican restricciones de unicidad a los datos de las salas: actualmente se permite registrar salas con información repetida.
+
+#### PATCH `/salas/:id`
+
+Actualiza parcialmente los datos de una sala.
+
+- **Acceso:** administrador.
+- **Parámetros:**
+  - `id`: identificador de la sala.
+- **Body:** admite los siguientes campos opcionales:
+
+| Campo           | Tipo   | Restricciones                                  |
+| --------------- | ------ | ---------------------------------------------- |
+| `nombre`        | String | No puede estar vacío.                          |
+| `capacidad`     | Number | Entero mayor o igual a 1.                      |
+| `direccion`     | String | No puede estar vacío.                          |
+| `precioReserva` | Number | Mayor o igual a 0.                             |
+| `responsable`   | Object | Permite actualizar sus atributos parcialmente. |
+| `estado`        | String | Valores permitidos: `activa`, `inactiva`.      |
+
+Los campos no enviados conservan sus valores actuales. Las actualizaciones parciales de `responsable` modifican únicamente los atributos recibidos, sin reemplazar el resto del objeto.
+
+Los campos desconocidos o protegidos se ignoran.
+
+**Regla de negocio para la baja de salas:**
+
+No se permite cambiar el estado de una sala de `activa` a `inactiva` si tiene eventos próximos en estado `activo`. En ese caso, la operación se rechaza para evitar inactivar espacios que todavía tienen eventos programados.
+
+Los eventos cancelados y los que ya comenzaron o cuya fecha de inicio pasó no impiden la inactivación.
+
+- **Respuesta exitosa:** `200 OK`.
+- **Errores:**
+  - `400 Bad Request`: identificador inválido, tipos incorrectos o valores que incumplen las restricciones.
+  - `404 Not Found`: sala inexistente.
+  - `409 Conflict`: se intenta inactivar una sala que tiene eventos próximos activos.
+
+#### Autenticación y autorización
+
+Todas las rutas de Salas aplican los siguientes controles:
+
+| Situación                                    | Respuesta                          |
+| -------------------------------------------- | ---------------------------------- |
+| Usuario sin sesión                           | `401 Unauthorized`                 |
+| Usuario autenticado sin rol de administrador | `403 Forbidden`                    |
+| Administrador autorizado                     | Se procesa la operación solicitada |
 
 ### 3.3. Eventos
 
