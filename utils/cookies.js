@@ -13,7 +13,7 @@ export function setearCookieToken(res, token) {
 }
 
 export function limpiarCookieToken(res) {
-  res.clearCookie(NOMBRE_COOKIE);
+  res.clearCookie(NOMBRE_COOKIE, { path: "/" });
 }
 
 export function leerCookieToken(req) {
