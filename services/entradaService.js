@@ -1,7 +1,7 @@
 import { Entrada } from "../models/entradaModel.js";
 import { obtenerPorId as obtenerEventoPorId, puedeVenderEntradas } from "./eventoService.js";
 import { obtenerPorId as obtenerSalaPorId } from "./salaService.js";
-import { ROLES_USUARIO } from "../models/usuarioModel.js";
+import { ROLES_USUARIO } from "../definitions/usuario.js";
 import { NotFoundError, ConflictError, ForbiddenError } from "../errors/errores.js";
 
 // Obtiene las entradas según el rol del usuario autenticado.

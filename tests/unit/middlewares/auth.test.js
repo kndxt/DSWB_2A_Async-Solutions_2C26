@@ -20,7 +20,7 @@ process.env.JWT_EXPIRES_IN = "1h";
 
 // Dependencias y módulos bajo prueba.
 const { default: Usuario } = await import("../../../models/usuarioModel.js");
-const { ESTADOS_USUARIO, ROLES_USUARIO } = await import("../../../models/usuarioModel.js");
+const { ESTADOS_USUARIO, ROLES_USUARIO } = await import("../../../definitions/usuario.js");
 
 const { generarToken } = await import("../../../utils/jwt.js");
 

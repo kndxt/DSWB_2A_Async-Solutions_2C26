@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 // Equivalencias entre los tipos declarativos y los tipos de Mongoose.
 const tiposMongoose = {
   string: String,
+  email: String,
   number: Number,
   boolean: Boolean,
   date: Date,

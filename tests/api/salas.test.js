@@ -15,7 +15,7 @@ import {
   Evento,
 } from "../helpers/environment.js";
 
-import { ROLES_USUARIO } from "../../models/usuarioModel.js";
+import { ROLES_USUARIO } from "../../definitions/usuario.js";
 
 before(iniciarEntorno);
 after(cerrarEntorno);

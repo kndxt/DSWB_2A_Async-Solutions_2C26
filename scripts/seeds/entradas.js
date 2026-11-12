@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import { ESTADOS_ENTRADA } from "../../models/entradaModel.js";
-import { ESTADOS_USUARIO } from "../../models/usuarioModel.js";
+import { ESTADOS_USUARIO } from "../../definitions/usuario.js";
 import { CUPOS_LIBRES_EVENTO_ESPECIAL, ENTRADAS_POR_EVENTO_NORMAL } from "./config.js";
 import { ESCENARIOS, escenarioDe } from "./eventos.js";
 import { fechaDeVenta } from "./fechas.js";

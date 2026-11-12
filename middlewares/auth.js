@@ -1,4 +1,5 @@
-import Usuario, { ESTADOS_USUARIO } from "../models/usuarioModel.js";
+import Usuario from "../models/usuarioModel.js";
+import { ESTADOS_USUARIO } from "../definitions/usuario.js";
 import { verificarToken } from "../utils/jwt.js";
 import { leerCookieToken } from "../utils/cookies.js";
 import asyncHandler from "./asyncHandler.js";

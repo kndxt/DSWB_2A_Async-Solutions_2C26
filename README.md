@@ -25,7 +25,6 @@ En esta etapa se continuó el desarrollo de los módulos existentes y se incorpo
 
 El desarrollo se realizó a partir de la estructura y las reglas de negocio de la primera entrega, adaptándolas al nuevo mecanismo de persistencia e incorporando las funcionalidades previstas para esta etapa.
 
-
 ### Funcionalidades fuera del alcance y aspectos pendientes
 
 Algunas funcionalidades y tareas de validación se identificaron como necesarias para completar el sistema, pero quedaron pendientes para una etapa posterior.
@@ -40,20 +39,20 @@ Estas tareas se retomarán en la siguiente etapa para completar la integración 
 
 ## 3. Tecnologías utilizadas
 
-| Tecnología | Uso |
-|---|---|
-| **Node.js** | Entorno de ejecución del backend. |
-| **Express.js** | Framework utilizado para construir la API REST, gestionar rutas y configurar middlewares. |
-| **JavaScript (ES Modules)** | Lenguaje y sistema de módulos utilizados en el backend. |
-| **MongoDB** | Base de datos utilizada para almacenar la información del sistema. |
-| **Mongoose** | ODM utilizado para definir esquemas y modelos, establecer referencias entre documentos y realizar operaciones sobre MongoDB. |
-| **dotenv** | Carga de variables de entorno desde un archivo `.env`, para separar la configuración del entorno del código de la aplicación. |
-| **Pug** | Motor de plantillas utilizado para generar las vistas de la aplicación. |
-| **HTML y CSS** | Estructura y estilos de las interfaces. |
-| **JavaScript (Fetch API)** | Consumo de los endpoints de la API desde el navegador mediante solicitudes asíncronas. |
-| **npm** | Gestión de dependencias y ejecución de scripts definidos en `package.json`. |
-| **Git / GitHub** | Control de versiones, gestión de ramas y colaboración entre los integrantes. |
-| **Thunder Client / Postman** | Herramientas para probar los endpoints de la API. |
+| Tecnología                   | Uso                                                                                                                           |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| **Node.js**                  | Entorno de ejecución del backend.                                                                                             |
+| **Express.js**               | Framework utilizado para construir la API REST, gestionar rutas y configurar middlewares.                                     |
+| **JavaScript (ES Modules)**  | Lenguaje y sistema de módulos utilizados en el backend.                                                                       |
+| **MongoDB**                  | Base de datos utilizada para almacenar la información del sistema.                                                            |
+| **Mongoose**                 | ODM utilizado para definir esquemas y modelos, establecer referencias entre documentos y realizar operaciones sobre MongoDB.  |
+| **dotenv**                   | Carga de variables de entorno desde un archivo `.env`, para separar la configuración del entorno del código de la aplicación. |
+| **Pug**                      | Motor de plantillas utilizado para generar las vistas de la aplicación.                                                       |
+| **HTML y CSS**               | Estructura y estilos de las interfaces.                                                                                       |
+| **JavaScript (Fetch API)**   | Consumo de los endpoints de la API desde el navegador mediante solicitudes asíncronas.                                        |
+| **npm**                      | Gestión de dependencias y ejecución de scripts definidos en `package.json`.                                                   |
+| **Git / GitHub**             | Control de versiones, gestión de ramas y colaboración entre los integrantes.                                                  |
+| **Thunder Client / Postman** | Herramientas para probar los endpoints de la API.                                                                             |
 
 ---
 
@@ -82,7 +81,7 @@ Urbana-Cult/
 │   ├── asyncHandler.js
 │   ├── errorHandler.js
 │   ├── notFound.js
-│   └── validarIds.js
+│   └── validarDatos.js
 ├── models/
 │   ├── entradaModel.js
 │   ├── eventoModel.js
@@ -314,14 +313,14 @@ La protección se aplica con dos middlewares:
 
 **Reglas de acceso:**
 
-| Módulo | Lectura (GET) | Escritura (POST/PUT/PATCH) |
-|--------|---------------|----------------------------|
-| Usuarios | Solo `admin` | Solo `admin` |
-| Salas | Autenticado (cualquier rol) | Solo `admin` |
-| Eventos | Autenticado (cualquier rol) | Solo `admin` |
+| Módulo   | Lectura (GET)               | Escritura (POST/PUT/PATCH)  |
+| -------- | --------------------------- | --------------------------- |
+| Usuarios | Solo `admin`                | Solo `admin`                |
+| Salas    | Autenticado (cualquier rol) | Solo `admin`                |
+| Eventos  | Autenticado (cualquier rol) | Solo `admin`                |
 | Entradas | Autenticado (cualquier rol) | Autenticado (cualquier rol) |
-| Reservas | Autenticado (cualquier rol) | — (no tiene escritura) |
-| Vistas | Público | — |
+| Reservas | Autenticado (cualquier rol) | — (no tiene escritura)      |
+| Vistas   | Público                     | —                           |
 
 **Justificación:** solo un administrador debe poder ver y modificar la información de usuarios (datos sensibles), gestionar el catálogo de salas y eventos, y supervisar el sistema. Los clientes solo necesitan consultar la cartelera y operar con sus compras.
 
@@ -337,14 +336,14 @@ Además, se dispone de rutas para renderizar las interfaces mediante Pug. Las op
 
 Prefijo: `/usuarios`
 
-| Método | Endpoint | Descripción |
-|---|---|---|
-| `GET` | `/usuarios` | Obtener todos los usuarios. |
-| `GET` | `/usuarios/:id` | Obtener un usuario por su identificador. |
-| `POST` | `/usuarios` | Registrar un usuario. |
-| `POST` | `/usuarios/login` | Validar las credenciales de inicio de sesión. |
-| `PUT` | `/usuarios/:id` | Actualizar los datos de un usuario. |
-| `PATCH` | `/usuarios/:id/estado` | Activar o desactivar un usuario. |
+| Método  | Endpoint               | Descripción                                   |
+| ------- | ---------------------- | --------------------------------------------- |
+| `GET`   | `/usuarios`            | Obtener todos los usuarios.                   |
+| `GET`   | `/usuarios/:id`        | Obtener un usuario por su identificador.      |
+| `POST`  | `/usuarios`            | Registrar un usuario.                         |
+| `POST`  | `/usuarios/login`      | Validar las credenciales de inicio de sesión. |
+| `PUT`   | `/usuarios/:id`        | Actualizar los datos de un usuario.           |
+| `PATCH` | `/usuarios/:id/estado` | Activar o desactivar un usuario.              |
 
 El inicio de sesión valida las credenciales, pero no establece una sesión persistente ni implementa autorización mediante roles y permisos.
 
@@ -352,33 +351,33 @@ El inicio de sesión valida las credenciales, pero no establece una sesión pers
 
 Prefijo: `/salas`
 
-| Método | Endpoint | Descripción |
-|---|---|---|
-| `GET` | `/salas` | Obtener todas las salas. |
-| `GET` | `/salas/:id` | Obtener una sala por su identificador. |
-| `POST` | `/salas` | Registrar una sala. |
-| `PUT` | `/salas/:id` | Actualizar los datos de una sala. |
+| Método | Endpoint     | Descripción                            |
+| ------ | ------------ | -------------------------------------- |
+| `GET`  | `/salas`     | Obtener todas las salas.               |
+| `GET`  | `/salas/:id` | Obtener una sala por su identificador. |
+| `POST` | `/salas`     | Registrar una sala.                    |
+| `PUT`  | `/salas/:id` | Actualizar los datos de una sala.      |
 
 ### 8.3 Eventos
 
 Prefijo: `/eventos`
 
-| Método | Endpoint | Descripción |
-|---|---|---|
-| `GET` | `/eventos` | Obtener todos los eventos. |
-| `GET` | `/eventos/proximos` | Obtener los próximos eventos. |
-| `GET` | `/eventos/:id` | Obtener un evento por su identificador. |
-| `POST` | `/eventos` | Crear un evento y generar su reserva asociada. |
-| `PUT` | `/eventos/:id` | Actualizar los datos de un evento. |
+| Método | Endpoint            | Descripción                                    |
+| ------ | ------------------- | ---------------------------------------------- |
+| `GET`  | `/eventos`          | Obtener todos los eventos.                     |
+| `GET`  | `/eventos/proximos` | Obtener los próximos eventos.                  |
+| `GET`  | `/eventos/:id`      | Obtener un evento por su identificador.        |
+| `POST` | `/eventos`          | Crear un evento y generar su reserva asociada. |
+| `PUT`  | `/eventos/:id`      | Actualizar los datos de un evento.             |
 
 ### 8.4 Reservas
 
 Prefijo: `/reservas`
 
-| Método | Endpoint | Descripción |
-|---|---|---|
-| `GET` | `/reservas` | Obtener las reservas registradas. |
-| `GET` | `/reservas/:eventoId` | Obtener la reserva asociada a un evento. |
+| Método | Endpoint              | Descripción                              |
+| ------ | --------------------- | ---------------------------------------- |
+| `GET`  | `/reservas`           | Obtener las reservas registradas.        |
+| `GET`  | `/reservas/:eventoId` | Obtener la reserva asociada a un evento. |
 
 Las reservas se generan al crear un evento y se almacenan como subdocumentos dentro de este. El módulo permite consultarlas, pero no dispone de endpoints para crearlas, modificarlas o eliminarlas de manera independiente.
 
@@ -386,14 +385,14 @@ Las reservas se generan al crear un evento y se almacenan como subdocumentos den
 
 Prefijo: `/entradas`
 
-| Método | Endpoint | Descripción |
-|---|---|---|
-| `GET` | `/entradas` | Obtener las entradas con información detallada. |
-| `GET` | `/entradas/:id` | Obtener una entrada por su identificador. |
-| `GET` | `/entradas/vendidas/:eventoId` | Obtener las entradas vendidas de un evento. |
-| `GET` | `/entradas/disponibles/:eventoId` | Consultar la disponibilidad de entradas de un evento. |
-| `POST` | `/entradas` | Vender una entrada. |
-| `PATCH` | `/entradas/:id/cancelar` | Cancelar una entrada. |
+| Método  | Endpoint                          | Descripción                                           |
+| ------- | --------------------------------- | ----------------------------------------------------- |
+| `GET`   | `/entradas`                       | Obtener las entradas con información detallada.       |
+| `GET`   | `/entradas/:id`                   | Obtener una entrada por su identificador.             |
+| `GET`   | `/entradas/vendidas/:eventoId`    | Obtener las entradas vendidas de un evento.           |
+| `GET`   | `/entradas/disponibles/:eventoId` | Consultar la disponibilidad de entradas de un evento. |
+| `POST`  | `/entradas`                       | Vender una entrada.                                   |
+| `PATCH` | `/entradas/:id/cancelar`          | Cancelar una entrada.                                 |
 
 La disponibilidad se calcula a partir de la capacidad de la sala y de las entradas vendidas para el evento. Las entradas canceladas se conservan en la base de datos, pero dejan de contabilizarse como vendidas.
 
@@ -403,22 +402,22 @@ Prefijo: `/vistas`
 
 Estas rutas renderizan las páginas de la interfaz mediante Pug.
 
-| Método | Endpoint | Descripción |
-|---|---|---|
-| `GET` | `/vistas/inicio` | Mostrar la página de inicio. |
-| `GET` | `/vistas/login` | Mostrar la página de inicio de sesión. |
-| `GET` | `/vistas/usuarios` | Mostrar la interfaz de usuarios. |
-| `GET` | `/vistas/salas` | Mostrar la interfaz de salas. |
-| `GET` | `/vistas/eventos` | Mostrar la interfaz de eventos. |
-| `GET` | `/vistas/entradas` | Mostrar la interfaz de entradas. |
-| `GET` | `/vistas/entradas/:eventoId` | Mostrar las entradas asociadas a un evento. |
-| `GET` | `/vistas/reservas` | Mostrar la interfaz de consulta de reservas. |
+| Método | Endpoint                     | Descripción                                  |
+| ------ | ---------------------------- | -------------------------------------------- |
+| `GET`  | `/vistas/inicio`             | Mostrar la página de inicio.                 |
+| `GET`  | `/vistas/login`              | Mostrar la página de inicio de sesión.       |
+| `GET`  | `/vistas/usuarios`           | Mostrar la interfaz de usuarios.             |
+| `GET`  | `/vistas/salas`              | Mostrar la interfaz de salas.                |
+| `GET`  | `/vistas/eventos`            | Mostrar la interfaz de eventos.              |
+| `GET`  | `/vistas/entradas`           | Mostrar la interfaz de entradas.             |
+| `GET`  | `/vistas/entradas/:eventoId` | Mostrar las entradas asociadas a un evento.  |
+| `GET`  | `/vistas/reservas`           | Mostrar la interfaz de consulta de reservas. |
 
 ### 8.7 Ruta raíz
 
-| Método | Endpoint | Descripción |
-|---|---|---|
-| `GET` | `/` | Redirigir a `/vistas/inicio`. |
+| Método | Endpoint | Descripción                   |
+| ------ | -------- | ----------------------------- |
+| `GET`  | `/`      | Redirigir a `/vistas/inicio`. |
 
 ### 8.8 Manejo de rutas inexistentes
 
@@ -501,15 +500,15 @@ Estas decisiones permiten preservar información histórica y mantener las relac
 
 La API utiliza códigos de estado HTTP para indicar el resultado de las operaciones y distinguir entre respuestas exitosas y errores.
 
-| Código | Uso |
-|---|---|
-| **200 OK** | Operación realizada correctamente. |
-| **201 Created** | Recurso creado correctamente. |
-| **400 Bad Request** | Datos inválidos o condiciones de negocio que impiden realizar la operación. |
-| **401 Unauthorized** | Credenciales incorrectas durante el inicio de sesión. |
-| **403 Forbidden** | Inicio de sesión rechazado porque el usuario está inactivo. |
-| **404 Not Found** | Recurso o ruta solicitada no encontrada. |
-| **500 Internal Server Error** | Error interno inesperado durante el procesamiento. |
+| Código                        | Uso                                                                         |
+| ----------------------------- | --------------------------------------------------------------------------- |
+| **200 OK**                    | Operación realizada correctamente.                                          |
+| **201 Created**               | Recurso creado correctamente.                                               |
+| **400 Bad Request**           | Datos inválidos o condiciones de negocio que impiden realizar la operación. |
+| **401 Unauthorized**          | Credenciales incorrectas durante el inicio de sesión.                       |
+| **403 Forbidden**             | Inicio de sesión rechazado porque el usuario está inactivo.                 |
+| **404 Not Found**             | Recurso o ruta solicitada no encontrada.                                    |
+| **500 Internal Server Error** | Error interno inesperado durante el procesamiento.                          |
 
 Los errores esperados, como las validaciones y las condiciones que impiden realizar una operación, se responden desde la capa correspondiente. Para los errores asíncronos no resueltos por los controladores, `asyncHandler` permite derivarlos al middleware centralizado `errorHandler`, que determina el código HTTP de respuesta.
 
@@ -546,3 +545,4 @@ npm test
 - [@Marcos028](https://github.com/Marcos028)
 
 
+```

@@ -126,8 +126,6 @@ Las rutas utilizan este middleware indicando la operación correspondiente de `d
 
 En las actualizaciones parciales mediante PATCH, las relaciones se comprueban cuando están presentes los valores necesarios para realizar la comparación. Esto permite validar los cambios sin exigir que el cliente envíe nuevamente todos los atributos.
 
-`middlewares/validarIds.js` también proporciona validaciones de identificadores para los casos en los que se utiliza.
-
 ### 5.2. Reglas de negocio
 
 Las condiciones que dependen del estado del sistema, de la existencia de otros recursos o de las reglas propias de una operación corresponden a los servicios.
@@ -150,15 +148,13 @@ Estas validaciones protegen la integridad de los documentos almacenados.
 
 ## 6. Manejo de errores
 
-El manejo de errores se centraliza mediante las clases definidas en `errors/errores.js` y los middlewares correspondientes.
+El backend utiliza clases de errores de aplicación y middlewares para centralizar la propagación y el tratamiento de errores.
 
-La aplicación utiliza errores de aplicación para representar situaciones como datos inválidos, falta de autenticación, permisos insuficientes, recursos inexistentes y conflictos con el estado del sistema.
-
-Los errores técnicos conocidos pueden traducirse a errores de aplicación mediante `errors/traducirError.js`.
+Los errores se definen en `errors/errores.js`. Los errores técnicos conocidos pueden traducirse mediante `errors/traducirError.js`.
 
 `middlewares/asyncHandler.js` permite propagar los errores producidos por handlers asíncronos, mientras que `middlewares/errorHandler.js` centraliza su tratamiento y la construcción de las respuestas HTTP.
 
-Los criterios de selección, reutilización y propagación de errores se encuentran documentados en [Manejo de errores](ERRORES.md).
+Los criterios para seleccionar, reutilizar y propagar errores se encuentran documentados en [Manejo de errores](ERRORS.md).
 
 ## 7. Comunicación entre servicios y modelos
 

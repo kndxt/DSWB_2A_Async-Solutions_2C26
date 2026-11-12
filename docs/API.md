@@ -47,7 +47,211 @@ Los códigos HTTP y las clases de errores se documentan en [ERRORS.md](./ERRORS.
 
 ### 3.1. Usuarios
 
-> Pendiente de documentar.
+Este módulo permite registrar usuarios, consultar y actualizar sus datos, gestionar sus roles y estados, e iniciar o cerrar sesión.
+
+**Prefijo:** `/usuarios`
+
+#### Endpoints
+
+| Método  | Endpoint               | Acceso      | Descripción                              |
+| ------- | ---------------------- | ----------- | ---------------------------------------- |
+| `POST`  | `/usuarios`            | Público     | Registrar un usuario.                    |
+| `POST`  | `/usuarios/login`      | Público     | Iniciar sesión.                          |
+| `POST`  | `/usuarios/logout`     | Autenticado | Cerrar la sesión actual.                 |
+| `GET`   | `/usuarios`            | ADMIN       | Obtener todos los usuarios.              |
+| `GET`   | `/usuarios/:id`        | ADMIN       | Obtener un usuario por su identificador. |
+| `PUT`   | `/usuarios/:id`        | ADMIN       | Actualizar los datos de un usuario.      |
+| `PATCH` | `/usuarios/:id/estado` | ADMIN       | Cambiar el estado de un usuario.         |
+| `PATCH` | `/usuarios/:id/rol`    | ADMIN       | Cambiar el rol de un usuario.            |
+
+#### Registro de usuarios
+
+**`POST /usuarios`**
+
+Permite registrar un nuevo usuario sin necesidad de iniciar sesión.
+
+**Cuerpo de la solicitud:**
+
+| Campo      | Tipo   | Obligatorio | Restricciones                                       |
+| ---------- | ------ | ----------- | --------------------------------------------------- |
+| `nombre`   | String | Sí          | No puede estar vacío.                               |
+| `apellido` | String | Sí          | No puede estar vacío.                               |
+| `email`    | Email  | Sí          | Debe tener un formato válido y no estar registrado. |
+| `password` | String | Sí          | No puede estar vacío.                               |
+| `telefono` | String | No          | —                                                   |
+
+El estado y el rol iniciales se asignan automáticamente en el servidor.
+
+**Respuesta exitosa:** `201 Created`.
+
+Devuelve los datos del usuario creado, sin exponer su contraseña.
+
+**Errores posibles:**
+
+- `400 Bad Request`: faltan datos obligatorios o alguno no cumple las validaciones.
+- `409 Conflict`: el email ya se encuentra registrado.
+
+#### Inicio y cierre de sesión
+
+**`POST /usuarios/login`**
+
+Permite iniciar sesión utilizando las credenciales de un usuario registrado.
+
+**Cuerpo de la solicitud:**
+
+| Campo      | Tipo   | Obligatorio |
+| ---------- | ------ | ----------- |
+| `email`    | Email  | Sí          |
+| `password` | String | Sí          |
+
+Si las credenciales son correctas y el usuario se encuentra activo, se genera un token de autenticación que se establece mediante una cookie.
+
+**Respuesta exitosa:** `200 OK`.
+
+Devuelve un mensaje de confirmación y los datos del usuario autenticado.
+
+**Errores posibles:**
+
+- `400 Bad Request`: faltan credenciales o los datos no cumplen las validaciones.
+- `401 Unauthorized`: las credenciales son incorrectas.
+- `403 Forbidden`: el usuario se encuentra inactivo.
+
+**`POST /usuarios/logout`**
+
+Cierra la sesión del usuario autenticado mediante la eliminación de la cookie de autenticación.
+
+No requiere cuerpo de solicitud.
+
+**Respuesta exitosa:** `200 OK`.
+
+Devuelve un mensaje de confirmación.
+
+**Errores posibles:**
+
+- `401 Unauthorized`: no existe una sesión autenticada válida.
+
+#### Consultas de usuarios
+
+**`GET /usuarios`**
+
+Obtiene todos los usuarios registrados.
+
+**Acceso:** únicamente `ADMIN`.
+
+**Respuesta exitosa:** `200 OK`.
+
+Devuelve un array con los datos de los usuarios. Las contraseñas no se incluyen en las respuestas.
+
+**`GET /usuarios/:id`**
+
+Obtiene un usuario por su identificador.
+
+**Acceso:** únicamente `ADMIN`.
+
+**Parámetros de ruta:**
+
+| Parámetro | Tipo     | Obligatorio | Descripción                |
+| --------- | -------- | ----------- | -------------------------- |
+| `id`      | ObjectId | Sí          | Identificador del usuario. |
+
+**Respuesta exitosa:** `200 OK`.
+
+Devuelve los datos del usuario solicitado, sin exponer su contraseña.
+
+**Errores posibles:**
+
+- `400 Bad Request`: identificador inválido.
+- `404 Not Found`: usuario inexistente.
+
+#### Actualización de usuarios
+
+**`PUT /usuarios/:id`**
+
+Actualiza los datos editables de un usuario.
+
+**Acceso:** únicamente `ADMIN`.
+
+**Parámetros de ruta:** `id`, identificador del usuario.
+
+**Cuerpo de la solicitud:**
+
+Todos los campos son opcionales. Se pueden enviar uno o varios de los siguientes atributos:
+
+| Campo      | Tipo   | Restricciones                                                        |
+| ---------- | ------ | -------------------------------------------------------------------- |
+| `nombre`   | String | No puede estar vacío.                                                |
+| `apellido` | String | No puede estar vacío.                                                |
+| `email`    | Email  | Debe tener un formato válido y no estar registrado por otro usuario. |
+| `telefono` | String | —                                                                    |
+| `password` | String | No puede estar vacío.                                                |
+
+Los campos no enviados conservan sus valores actuales. Los campos desconocidos o protegidos, como `id`, `estado` y `rol`, se ignoran.
+
+Si se modifica la contraseña, se almacena su versión cifrada mediante bcrypt.
+
+**Respuesta exitosa:** `200 OK`.
+
+Devuelve los datos actualizados del usuario, sin exponer su contraseña.
+
+**Errores posibles:**
+
+- `400 Bad Request`: identificador inválido o datos que no cumplen las validaciones.
+- `404 Not Found`: usuario inexistente.
+- `409 Conflict`: el email ya está registrado por otro usuario.
+
+#### Gestión de estado y rol
+
+Estas operaciones permiten modificar atributos administrativos del usuario de manera independiente de la actualización de sus datos personales.
+
+**`PATCH /usuarios/:id/estado`**
+
+Cambia el estado de un usuario.
+
+**Acceso:** únicamente `ADMIN`.
+
+**Parámetros de ruta:** `id`, identificador del usuario.
+
+**Cuerpo de la solicitud:**
+
+| Campo    | Tipo   | Obligatorio | Valores permitidos   |
+| -------- | ------ | ----------- | -------------------- |
+| `estado` | String | Sí          | `activo`, `inactivo` |
+
+**Respuesta exitosa:** `200 OK`.
+
+Devuelve los datos actualizados del usuario.
+
+**`PATCH /usuarios/:id/rol`**
+
+Cambia el rol de un usuario.
+
+**Acceso:** únicamente `ADMIN`.
+
+**Parámetros de ruta:** `id`, identificador del usuario.
+
+**Cuerpo de la solicitud:**
+
+| Campo | Tipo   | Obligatorio | Valores permitidos |
+| ----- | ------ | ----------- | ------------------ |
+| `rol` | String | Sí          | `admin`, `cliente` |
+
+**Respuesta exitosa:** `200 OK`.
+
+Devuelve los datos actualizados del usuario.
+
+**Errores posibles para ambas operaciones:**
+
+- `400 Bad Request`: identificador inválido, campo obligatorio ausente o valor no permitido.
+- `404 Not Found`: usuario inexistente.
+
+#### Consideraciones de seguridad
+
+- El registro de usuarios y el inicio de sesión son operaciones públicas.
+- Las consultas y operaciones de gestión de usuarios requieren autenticación y rol `ADMIN`.
+- El cierre de sesión requiere una sesión autenticada.
+- Las contraseñas se almacenan mediante hash con bcrypt y nunca se exponen en las respuestas.
+- La autenticación utiliza un token almacenado en una cookie.
+- La actualización general no permite modificar el rol ni el estado; estos atributos cuentan con endpoints específicos.
 
 ### 3.2. Salas
 

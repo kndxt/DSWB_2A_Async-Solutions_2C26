@@ -3,8 +3,7 @@ import asyncHandler from "../middlewares/asyncHandler.js";
 import validarDatos from "../middlewares/validarDatos.js";
 import { entradaDefinicion } from "../definitions/entrada.js";
 import { autenticar, autorizar } from "../middlewares/auth.js";
-import { ROLES_USUARIO } from "../models/usuarioModel.js";
-
+import { ROLES_USUARIO } from "../definitions/usuario.js";
 import {
   obtenerEntradas,
   obtenerVendidasPorEvento,
