@@ -12,9 +12,16 @@ block content
     .estado { display: inline-block; padding: 0.1rem 0.5rem; border-radius: 999px; font-size: 0.85rem; font-weight: 600; }
     .estado-activo { background: #dcfce7; color: #166534; }
     .estado-inactivo { background: #e5e7eb; color: #374151; }
+    .rol { display: inline-block; padding: 0.1rem 0.5rem; border-radius: 999px; font-size: 0.85rem; font-weight: 600; }
+    .rol-admin { background: #dbeafe; color: #1e40af; }
+    .rol-cliente { background: #fef3c7; color: #92400e; }
 
-  section.acciones
-    button#btn-nuevo-usuario(type="button") Nuevo usuario
+  if !usuario || usuario.rol !== "admin"
+    p Necesitás iniciar sesión como administrador para gestionar usuarios.
+
+  if usuario && usuario.rol === "admin"
+    section.acciones
+      button#btn-nuevo-usuario(type="button") Nuevo usuario
 
   section#listado-usuarios
     h2 Listado de usuarios
@@ -25,45 +32,47 @@ block content
           th Email
           th Teléfono
           th Estado
+          th Rol
           th Acciones
       tbody#usuarios-body
         tr
-          td(colspan="5") Cargando usuarios...
+          td(colspan="6") Cargando usuarios...
 
   section#detalle-usuario(hidden)
     h2 Detalle del usuario
     div#detalle-datos
     button#btn-cerrar-detalle(type="button") Cerrar
 
-  section#formulario-usuario(hidden)
-    h2#titulo-formulario Nuevo usuario
-    //- novalidate y sin required en los inputs: las validaciones de negocio las hace
-    //- el backend y sus mensajes son los que se muestran.
-    form#form-usuario(novalidate)
-      input#usuario-id(type="hidden" name="id")
+  if usuario && usuario.rol === "admin"
+    section#formulario-usuario(hidden)
+      h2#titulo-formulario Nuevo usuario
+      //- novalidate y sin required en los inputs: las validaciones de negocio las hace
+      //- el backend y sus mensajes son los que se muestran.
+      form#form-usuario(novalidate)
+        input#usuario-id(type="hidden" name="id")
 
-      fieldset
-        legend Datos del usuario
-        div.campo
-          label(for="nombre") Nombre
-          input#nombre(type="text" name="nombre" autocomplete="off")
-        div.campo
-          label(for="apellido") Apellido
-          input#apellido(type="text" name="apellido" autocomplete="off")
-        div.campo
-          label(for="email") Email
-          input#email(type="text" name="email" autocomplete="off")
-        div.campo
-          label(for="telefono") Teléfono
-          input#telefono(type="text" name="telefono" autocomplete="off")
-        div.campo
-          label(for="password") Contraseña
-          input#password(type="password" name="password" autocomplete="new-password")
-          small En edición, dejala vacía para no cambiarla.
+        fieldset
+          legend Datos del usuario
+          div.campo
+            label(for="nombre") Nombre
+            input#nombre(type="text" name="nombre" autocomplete="off")
+          div.campo
+            label(for="apellido") Apellido
+            input#apellido(type="text" name="apellido" autocomplete="off")
+          div.campo
+            label(for="email") Email
+            input#email(type="text" name="email" autocomplete="off")
+          div.campo
+            label(for="telefono") Teléfono
+            input#telefono(type="text" name="telefono" autocomplete="off")
+          div.campo
+            label(for="password") Contraseña
+            input#password(type="password" name="password" autocomplete="new-password")
+            small En edición, dejala vacía para no cambiarla.
 
-      div.botones
-        button#btn-guardar(type="submit") Guardar
-        button#btn-cancelar(type="button") Cancelar
+        div.botones
+          button#btn-guardar(type="submit") Guardar
+          button#btn-cancelar(type="button") Cancelar
 
 block scripts
   script(type="module" src="/js/usuarios.js")
