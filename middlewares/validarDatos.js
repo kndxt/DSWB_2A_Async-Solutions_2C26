@@ -161,7 +161,8 @@ const validarRelaciones = (datos, relaciones, atributos) => {
     }
 
     const atributo = atributos[campo];
-    const atributoReferencia = atributos[referencia];
+    const esReferenciaAhora = referencia === "ahora";
+    const atributoReferencia = esReferenciaAhora ? atributo : atributos[referencia];
 
     if (!atributo || !atributoReferencia) {
       throw new Error(
@@ -182,7 +183,7 @@ const validarRelaciones = (datos, relaciones, atributos) => {
     }
 
     const valor = datos[campo];
-    const valorReferencia = datos[referencia];
+    const valorReferencia = esReferenciaAhora ? obtenerInicioDelDia() : datos[referencia];
 
     // En actualizaciones parciales solo se comparan los campos recibidos.
     if (
@@ -205,6 +206,15 @@ const validarRelaciones = (datos, relaciones, atributos) => {
       );
     }
   }
+};
+
+/**
+ * Obtiene el inicio del día actual según la zona horaria del servidor.
+ */
+const obtenerInicioDelDia = () => {
+  const ahora = new Date();
+  ahora.setHours(0, 0, 0, 0);
+  return ahora;
 };
 
 /**

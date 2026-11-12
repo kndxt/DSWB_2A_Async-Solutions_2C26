@@ -115,61 +115,77 @@ describe("Autenticación y autorización de eventos", () => {
 // ---------------------------------------------------------------
 
 describe("GET /eventos", () => {
-  test("devuelve un array de eventos, un evento por ID y los próximos eventos", async () => {
+  test("devuelve eventos sin exponer reservas en las consultas públicas", async () => {
     const evento = await crearEvento();
 
     const todas = await peticion("/eventos");
     const una = await peticion(`/eventos/${evento.id}`);
     const proximos = await peticion("/eventos/proximos");
 
+    const eventos = await respuestaJSON(todas);
+    const eventoIndividual = await respuestaJSON(una);
+    const eventosProximos = await respuestaJSON(proximos);
+
     assert.equal(todas.status, 200);
-    assert.ok(Array.isArray(await respuestaJSON(todas)));
+    assert.ok(Array.isArray(eventos));
+    assert.ok(eventos.every((item) => item.reserva === undefined));
 
     assert.equal(una.status, 200);
-    assert.equal((await respuestaJSON(una)).id, evento.id);
+    assert.equal(eventoIndividual.id, evento.id);
+    assert.equal(eventoIndividual.reserva, undefined);
 
     assert.equal(proximos.status, 200);
-    assert.ok(Array.isArray(await respuestaJSON(proximos)));
+    assert.ok(Array.isArray(eventosProximos));
+    assert.ok(eventosProximos.every((item) => item.reserva === undefined));
   });
 
   test("excluye de próximos eventos aquellos cuya fecha de inicio ya pasó", async () => {
-    const headers = await sesionCliente();
     const sala = await crearSala();
     const usuario = await crearUsuario();
+    const evento = await crearEvento({ sala, usuario });
 
-    const ahora = Date.now();
-    const fechaInicio = new Date(ahora - 10 * 86400000);
+    const fechaInicio = new Date(Date.now() - 10 * 86400000);
     const fechaFin = new Date(fechaInicio.getTime() + 3 * 60 * 60 * 1000);
     const fechaInicioVenta = new Date(fechaInicio.getTime() - 10 * 86400000);
     const fechaFinVenta = new Date(fechaInicio.getTime() - 86400000);
 
-    const response = await peticion("/eventos", {
-      method: "POST",
-      headers: await sesionAdmin(),
-      body: bodyEvento({
-        salaId: sala.id,
-        usuarioId: usuario.id,
-        overrides: {
-          fechaInicio: fechaInicio.toISOString(),
-          fechaFin: fechaFin.toISOString(),
-          fechaInicioVenta: fechaInicioVenta.toISOString(),
-          fechaFinVenta: fechaFinVenta.toISOString(),
+    await Evento.updateOne(
+      { _id: evento.id },
+      {
+        $set: {
+          fechaInicio,
+          fechaFin,
+          fechaInicioVenta,
+          fechaFinVenta,
         },
-      }),
-    });
-
-    const body = await respuestaJSON(response);
-
-    assert.equal(response.status, 201);
-
-    const creado = await Evento.findById(body.id);
-    registrarCreado(Evento, creado);
+      },
+    );
 
     const proximos = await peticion("/eventos/proximos");
     const eventos = await respuestaJSON(proximos);
 
     assert.equal(proximos.status, 200);
-    assert.ok(!eventos.some((evento) => evento.id === body.id));
+    assert.ok(!eventos.some((item) => item.id === evento.id));
+  });
+
+  test("excluye de próximos eventos aquellos que están cancelados", async () => {
+    const sala = await crearSala();
+    const usuario = await crearUsuario();
+    const evento = await crearEvento({ sala, usuario });
+
+    const responseCancelar = await peticion(`/eventos/${evento.id}`, {
+      method: "PATCH",
+      headers: await sesionAdmin(),
+      body: { estado: "cancelado" },
+    });
+
+    assert.equal(responseCancelar.status, 200);
+
+    const responseProximos = await peticion("/eventos/proximos");
+    const eventos = await respuestaJSON(responseProximos);
+
+    assert.equal(responseProximos.status, 200);
+    assert.ok(!eventos.some((item) => item.id === evento.id));
   });
 
   test("distingue entre un ID inválido y un evento inexistente", async () => {
@@ -189,7 +205,7 @@ describe("GET /eventos", () => {
 // ---------------------------------------------------------------
 
 describe("POST /eventos", () => {
-  test("crea un evento válido y genera la reserva en el servidor", async () => {
+  test("crea un evento válido y genera la reserva en el servidor sin exponerla", async () => {
     const headers = await sesionAdmin();
     const sala = await crearSala();
     const usuario = await crearUsuario();
@@ -207,10 +223,14 @@ describe("POST /eventos", () => {
     const body = await respuestaJSON(response);
 
     assert.equal(response.status, 201);
-    assert.equal(body.reserva.precioFinal, sala.precioReserva);
-    assert.equal(body.reserva.usuarioId, usuario.id);
+    assert.equal(body.reserva, undefined);
 
     const creado = await Evento.findById(body.id);
+
+    assert.ok(creado.reserva);
+    assert.equal(creado.reserva.precioFinal, sala.precioReserva);
+    assert.equal(creado.reserva.usuarioId.toString(), usuario.id);
+
     registrarCreado(Evento, creado);
   });
 
@@ -323,6 +343,36 @@ describe("POST /eventos", () => {
 
     assert.equal(fechaInvalida.status, 400);
     assert.equal(precioIncorrecto.status, 400);
+  });
+
+  test("rechaza eventos cuya fecha de inicio es anterior al día actual", async () => {
+    const headers = await sesionAdmin();
+    const sala = await crearSala();
+    const usuario = await crearUsuario();
+
+    const fechaInicio = new Date();
+    fechaInicio.setDate(fechaInicio.getDate() - 1);
+
+    const fechaFin = new Date(fechaInicio.getTime() + 3 * 60 * 60 * 1000);
+    const fechaInicioVenta = new Date(fechaInicio.getTime() - 10 * 86400000);
+    const fechaFinVenta = new Date(fechaInicio.getTime() - 86400000);
+
+    const response = await peticion("/eventos", {
+      method: "POST",
+      headers,
+      body: bodyEvento({
+        salaId: sala.id,
+        usuarioId: usuario.id,
+        overrides: {
+          fechaInicio: fechaInicio.toISOString(),
+          fechaFin: fechaFin.toISOString(),
+          fechaInicioVenta: fechaInicioVenta.toISOString(),
+          fechaFinVenta: fechaFinVenta.toISOString(),
+        },
+      }),
+    });
+
+    assert.equal(response.status, 400);
   });
 
   test("rechaza precios negativos y fechas incoherentes", async () => {
@@ -548,9 +598,15 @@ describe("POST /eventos - reglas de negocio", () => {
 // ---------------------------------------------------------------
 
 describe("PATCH /eventos/:id - actualización", () => {
-  test("permite actualizar un solo campo y protege los datos de la reserva", async () => {
+  test("permite actualizar un solo campo sin exponer ni modificar la reserva", async () => {
     const headers = await sesionAdmin();
     const evento = await crearEvento();
+
+    const reservaOriginal = {
+      usuarioId: evento.reserva.usuarioId.toString(),
+      fechaReserva: evento.reserva.fechaReserva.getTime(),
+      precioFinal: evento.reserva.precioFinal,
+    };
 
     const response = await peticion(`/eventos/${evento.id}`, {
       method: "PATCH",
@@ -565,7 +621,13 @@ describe("PATCH /eventos/:id - actualización", () => {
 
     assert.equal(response.status, 200);
     assert.equal(body.descripcion, "Descripción actualizada");
-    assert.equal(body.reserva.precioFinal, evento.reserva.precioFinal);
+    assert.equal(body.reserva, undefined);
+
+    const actualizado = await Evento.findById(evento.id);
+
+    assert.equal(actualizado.reserva.usuarioId.toString(), reservaOriginal.usuarioId);
+    assert.equal(actualizado.reserva.fechaReserva.getTime(), reservaOriginal.fechaReserva);
+    assert.equal(actualizado.reserva.precioFinal, reservaOriginal.precioFinal);
   });
 
   test("ignora campos desconocidos y protegidos", async () => {
@@ -583,12 +645,15 @@ describe("PATCH /eventos/:id - actualización", () => {
     });
 
     const body = await respuestaJSON(response);
+    const actualizado = await Evento.findById(evento.id);
 
     assert.equal(response.status, 200);
-    assert.equal(body.reserva.precioFinal, evento.reserva.precioFinal);
-    assert.equal(body.reserva.usuarioId, evento.reserva.usuarioId.toString());
+    assert.equal(body.reserva, undefined);
     assert.equal(body.campoDesconocido, undefined);
     assert.equal(body.usuarioId, undefined);
+
+    assert.equal(actualizado.reserva.precioFinal, evento.reserva.precioFinal);
+    assert.equal(actualizado.reserva.usuarioId.toString(), evento.reserva.usuarioId.toString());
   });
 
   test("rechaza estados inválidos, precios negativos y fechas incoherentes", async () => {
@@ -616,6 +681,42 @@ describe("PATCH /eventos/:id - actualización", () => {
     assert.equal(estado.status, 400);
     assert.equal(precio.status, 400);
     assert.equal(fecha.status, 400);
+  });
+
+  test("rechaza modificar fechaInicio a un día anterior al actual", async () => {
+    const headers = await sesionAdmin();
+    const evento = await crearEvento();
+
+    // Ajusta las fechas de venta para que sean anteriores
+    // a la fecha de inicio que se enviará en el PATCH.
+    const fechaFinVenta = new Date();
+    fechaFinVenta.setDate(fechaFinVenta.getDate() - 2);
+
+    const fechaInicioVenta = new Date(fechaFinVenta);
+    fechaInicioVenta.setDate(fechaInicioVenta.getDate() - 10);
+
+    await Evento.updateOne(
+      { _id: evento.id },
+      {
+        $set: {
+          fechaInicioVenta,
+          fechaFinVenta,
+        },
+      },
+    );
+
+    const fechaInicio = new Date();
+    fechaInicio.setDate(fechaInicio.getDate() - 1);
+
+    const response = await peticion(`/eventos/${evento.id}`, {
+      method: "PATCH",
+      headers,
+      body: {
+        fechaInicio: fechaInicio.toISOString(),
+      },
+    });
+
+    assert.equal(response.status, 400);
   });
 
   test("rechaza modificar fechaInicio si contradice fechaFinVenta existente", async () => {

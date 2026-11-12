@@ -55,7 +55,110 @@ Los códigos HTTP y las clases de errores se documentan en [ERRORS.md](./ERRORS.
 
 ### 3.3. Eventos
 
-> Pendiente de documentar.
+Prefijo: `/eventos`
+
+Este módulo permite consultar, crear y actualizar eventos. Cada evento está asociado a una sala y contiene un registro histórico de la reserva generada al momento de su creación.
+
+**#### Endpoints**
+
+| Método  | Endpoint            | Acceso        | Descripción                                           |
+| ------- | ------------------- | ------------- | ----------------------------------------------------- |
+| `GET`   | `/eventos`          | Público       | Obtener todos los eventos.                            |
+| `GET`   | `/eventos/proximos` | Público       | Obtener los próximos eventos que no estén cancelados. |
+| `GET`   | `/eventos/:id`      | Público       | Obtener un evento por su identificador.               |
+| `POST`  | `/eventos`          | Administrador | Crear un evento y generar su reserva asociada.        |
+| `PATCH` | `/eventos/:id`      | Administrador | Actualizar los datos de un evento.                    |
+
+**#### Consultar eventos**
+
+**`GET /eventos`**
+
+Devuelve un array con los eventos registrados.
+
+**`GET /eventos/proximos`**
+
+Devuelve los eventos cuya fecha de inicio todavía no pasó y cuyo estado no sea `cancelado`.
+
+**`GET /eventos/:id`**
+
+Devuelve el evento correspondiente al identificador indicado.
+
+- Si el identificador no tiene un formato válido, responde `400`.
+- Si no existe un evento con ese identificador, responde `404`.
+
+Las respuestas de consulta incluyen los datos del evento, pero no exponen el registro histórico de la reserva asociada.
+
+**#### Crear un evento**
+
+**`POST /eventos`**
+
+Requiere autenticación y rol de administrador.
+
+Recibe en el cuerpo de la solicitud los datos del evento:
+
+| Campo              | Tipo     | Descripción                                                    |
+| ------------------ | -------- | -------------------------------------------------------------- |
+| `nombre`           | string   | Nombre del evento.                                             |
+| `descripcion`      | string   | Descripción del evento (opcional).                             |
+| `tipo`             | string   | Tipo o categoría del evento.                                   |
+| `fechaInicio`      | date     | Fecha y hora de inicio.                                        |
+| `fechaFin`         | date     | Fecha y hora de finalización.                                  |
+| `fechaInicioVenta` | date     | Inicio del período de venta de entradas.                       |
+| `fechaFinVenta`    | date     | Fin del período de venta de entradas.                          |
+| `precioEntrada`    | number   | Precio de la entrada.                                          |
+| `salaId`           | ObjectId | Identificador de la sala asociada.                             |
+| `usuarioId`        | ObjectId | Identificador del usuario al que se asocia la reserva inicial. |
+
+La reserva se genera en el servidor utilizando el precio de reserva configurado para la sala. Los datos de reserva enviados por el cliente no se utilizan.
+
+Si la creación es exitosa, responde `201 Created` con los datos del evento creado.
+
+**Reglas de negocio y validaciones:**
+
+- Todos los campos obligatorios deben estar presentes y tener el tipo de dato esperado.
+- El precio de entrada no puede ser negativo.
+- La fecha de inicio no puede ser anterior al día actual.
+- La fecha de finalización no puede ser anterior a la fecha de inicio.
+- El período de venta debe ser coherente: su finalización no puede ser anterior al inicio ni posterior al comienzo del evento.
+- La sala indicada debe existir y encontrarse activa.
+- El usuario indicado debe existir y encontrarse activo.
+- No puede existir otro evento con el mismo nombre, sala y fecha de inicio.
+- No se permiten eventos con períodos superpuestos en una misma sala.
+- Se permiten eventos consecutivos en una misma sala y eventos superpuestos en salas diferentes.
+
+**#### Actualizar un evento**
+
+**`PATCH /eventos/:id`**
+
+Requiere autenticación y rol de administrador.
+
+Permite modificar parcialmente los datos del evento. Solo se aceptan los campos editables del evento; los campos desconocidos o protegidos se ignoran.
+
+La reserva histórica no puede modificarse mediante esta operación.
+
+**Reglas de negocio y validaciones:**
+
+- El evento debe existir.
+- Su sala actual debe encontrarse activa.
+- Si se cambia la sala, la nueva sala debe existir y estar activa.
+- Se mantienen las validaciones de coherencia entre fechas y de precio de entrada.
+- Si se modifica la fecha de inicio, no puede establecerse una fecha anterior al día actual.
+- La actualización no puede generar duplicados ni superposiciones con otros eventos de la misma sala.
+- No se permite modificar un evento cuya sala actual esté inactiva.
+
+Si la actualización es exitosa, responde `200 OK` con los datos del evento actualizado.
+
+**#### Errores posibles**
+
+| Código HTTP        | Situación                                                                                                                                 |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `400 Bad Request`  | Datos obligatorios ausentes, tipos incorrectos, fechas incoherentes o anteriores al día actual, precio negativo o identificador inválido. |
+| `401 Unauthorized` | No se proporcionó una sesión autenticada para una operación protegida.                                                                    |
+| `403 Forbidden`    | El usuario autenticado no tiene rol de administrador.                                                                                     |
+| `404 Not Found`    | No existe el evento, la sala o el usuario indicado.                                                                                       |
+| `409 Conflict`     | Sala o usuario inactivo, evento duplicado o período superpuesto.                                                                          |
+
+Para conocer el formato general de las respuestas de error, consultar [ERRORS.md](./ERRORS.md).
 
 ### 3.4. Entradas
 
