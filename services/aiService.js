@@ -6,7 +6,7 @@ import { AppError, ValidationError } from "../errors/errores.js";
 // texto y devuelve un texto, o lanza un AsistenteError controlado.
 
 // El modelo puede cambiarse con la variable de entorno GEMINI_MODEL.
-export const MODELO_POR_DEFECTO = "gemini-3.8-flash";
+export const MODELO_POR_DEFECTO = "gemini-3.5-flash-lite";
 export const TIMEOUT_MS = 15000;
 export const MAX_TOKENS_RESPUESTA = 1024;
 export const MAX_CARACTERES_RESPUESTA = 1500;
@@ -149,9 +149,12 @@ export function crearServicioIA({
     return instrucciones;
   };
 
-  // Convierte cualquier fallo en un AsistenteError y deja registro en el
-  // servidor, sin exponer la clave.
+  // Convierte los fallos del asistente en un AsistenteError y deja registro en
+  // el servidor, sin exponer la clave. Los errores propios de la aplicación que
+  // no son del asistente se propagan tal cual, con su código y su identidad.
   const normalizarError = (error) => {
+    if (error instanceof AppError && !(error instanceof AsistenteError)) return error;
+
     const asistente =
       error instanceof AsistenteError
         ? error
