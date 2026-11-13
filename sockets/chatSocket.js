@@ -9,6 +9,14 @@ import { consultarIA as consultarIAReal, AsistenteError } from "../services/aiSe
 // Tiempo mínimo entre consultas de un mismo usuario.
 const COOLDOWN_GEMINI_MS = 10_000;
 
+// Límite general de mensajes por usuario.
+const LIMITE_MENSAJES = 5;
+const VENTANA_MENSAJES_MS = 10_000;
+const MAX_RECHAZOS = 3;
+
+// Máximo de conexiones simultáneas por usuario.
+const MAX_CONEXIONES = 3;
+
 // Construye un mensaje de sistema con el mismo formato que los demás mensajes.
 const crearMensajeSistema = (texto) => ({
   id: randomUUID(),
@@ -48,6 +56,65 @@ async function responderGemini(io, consultarIA, consulta) {
 }
 
 /**
+ * Elimina los registros de frecuencia que ya salieron de su ventana.
+ * Se ejecuta al recibir mensajes para evitar conservar datos vencidos.
+ *
+ * Si el volumen de conexiones crece, evaluar una estrategia de limpieza más eficiente.
+ */
+function limpiarLimitesVencidos(limitesPorUsuario, ahora, ventanaMs) {
+  for (const [usuarioId, estado] of limitesPorUsuario) {
+    estado.mensajes = estado.mensajes.filter((marca) => ahora - marca < ventanaMs);
+
+    estado.rechazos = estado.rechazos.filter((marca) => ahora - marca < ventanaMs);
+
+    if (estado.mensajes.length === 0 && estado.rechazos.length === 0) {
+      limitesPorUsuario.delete(usuarioId);
+    }
+  }
+}
+
+/**
+ * Comprueba si el usuario puede enviar otro mensaje.
+ * El estado se comparte entre todas sus conexiones.
+ */
+function excedioLimiteMensajes(
+  usuarioId,
+  limitesPorUsuario,
+  ahora,
+  limiteMensajes,
+  ventanaMs,
+  maxRechazos,
+  socket,
+) {
+  limpiarLimitesVencidos(limitesPorUsuario, ahora, ventanaMs);
+
+  const estado = limitesPorUsuario.get(usuarioId) ?? {
+    mensajes: [],
+    rechazos: [],
+  };
+
+  if (estado.mensajes.length >= limiteMensajes) {
+    estado.rechazos.push(ahora);
+    limitesPorUsuario.set(usuarioId, estado);
+
+    socket.emit(EVENTOS.ERROR, {
+      mensaje: "Estás enviando mensajes demasiado rápido. Esperá unos segundos.",
+    });
+
+    if (estado.rechazos.length >= maxRechazos) {
+      socket.disconnect(true);
+    }
+
+    return true;
+  }
+
+  estado.mensajes.push(ahora);
+  limitesPorUsuario.set(usuarioId, estado);
+
+  return false;
+}
+
+/**
  * Registra los eventos del chat sobre las conexiones autenticadas.
  *
  * Permite inyectar el servicio de IA y el cooldown para facilitar
@@ -55,13 +122,24 @@ async function responderGemini(io, consultarIA, consulta) {
  */
 export function registrarChat(
   io,
-  { consultarIA = consultarIAReal, cooldownMs = COOLDOWN_GEMINI_MS } = {},
+  {
+    consultarIA = consultarIAReal,
+    cooldownMs = COOLDOWN_GEMINI_MS,
+    limiteMensajes = LIMITE_MENSAJES,
+    ventanaMensajesMs = VENTANA_MENSAJES_MS,
+    maxRechazos = MAX_RECHAZOS,
+    maxConexiones = MAX_CONEXIONES,
+    obtenerAhora = Date.now,
+  } = {},
 ) {
   // Cantidad de sockets conectados por usuario.
   const conexionesPorUsuario = new Map();
 
   // Última consulta aceptada por usuario.
   const ultimaConsultaPorUsuario = new Map();
+
+  // Marcas de mensajes y rechazos por usuario.
+  const limitesPorUsuario = new Map();
 
   io.on("connection", (socket) => {
     const usuario = socket.data.usuario;
@@ -70,6 +148,17 @@ export function registrarChat(
     // Registra la conexión y anuncia la entrada solo si es la primera.
     const conexionesActuales = conexionesPorUsuario.get(usuarioId) ?? 0;
 
+    // Rechaza conexiones que superen el máximo permitido.
+    if (conexionesActuales >= maxConexiones) {
+      socket.emit(EVENTOS.ERROR, {
+        mensaje: "Alcanzaste el máximo de conexiones simultáneas al chat.",
+      });
+
+      socket.disconnect(true);
+      return;
+    }
+
+    // Registra la conexión y anuncia la entrada solo si es la primera.
     conexionesPorUsuario.set(usuarioId, conexionesActuales + 1);
 
     if (conexionesActuales === 0) {
@@ -92,14 +181,34 @@ export function registrarChat(
     socket.on(
       EVENTOS.MENSAJE,
       asyncHandlerSocket(socket, async (datos) => {
+        // El límite se aplica a todos los intentos, incluso los malformados.
+        const ahora = obtenerAhora();
+
+        if (
+          excedioLimiteMensajes(
+            usuarioId,
+            limitesPorUsuario,
+            ahora,
+            limiteMensajes,
+            ventanaMensajesMs,
+            maxRechazos,
+            socket,
+          )
+        ) {
+          return;
+        }
+
         // La sesión se revalida antes de aceptar cada mensaje.
         await revalidarSocket(socket);
 
-        // El cliente debe enviar un objeto con un texto.
+        // El cliente debe enviar un objeto plano con únicamente la propiedad texto.
         if (
           !datos ||
           typeof datos !== "object" ||
           Array.isArray(datos) ||
+          Object.getPrototypeOf(datos) !== Object.prototype ||
+          Object.keys(datos).length !== 1 ||
+          !Object.hasOwn(datos, "texto") ||
           typeof datos.texto !== "string"
         ) {
           throw new ValidationError("El mensaje no tiene un formato válido.");
@@ -135,9 +244,7 @@ export function registrarChat(
 
         if (!consulta) return;
 
-        // Limpia entradas vencidas para evitar conservar usuarios indefinidamente.
-        const ahora = Date.now();
-
+        // Limpia consultas vencidas para evitar conservar usuarios indefinidamente.
         for (const [id, ultimaConsulta] of ultimaConsultaPorUsuario) {
           if (ahora - ultimaConsulta >= cooldownMs) {
             ultimaConsultaPorUsuario.delete(id);

@@ -19,7 +19,9 @@ const MODULOS = [
 export function inicializarSockets(httpServer, opcionesChat = {}) {
   if (io) return io;
 
-  io = new Server(httpServer);
+  io = new Server(httpServer, {
+    maxHttpBufferSize: 16 * 1024, // limite de tamaño
+  });
 
   io.on("connection", (socket) => {
     console.log(`Cliente conectado: ${socket.id}`);
