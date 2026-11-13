@@ -1,6 +1,7 @@
 import { NOMBRE_COOKIE } from "../utils/cookies.js";
 import { obtenerUsuarioDesdeToken } from "../services/authService.js";
-import { EVENTOS } from "./eventos.js";
+import { UnauthorizedError, ForbiddenError } from "../errors/errores.js";
+import traducirError from "../errors/traducirError.js";
 
 // Extrae el valor de la cookie del header crudo. cookie-parser no actúa
 // sobre sockets, así que socket.handshake.headers.cookie llega como string.
@@ -33,10 +34,18 @@ export function registrarAuth(io) {
       socket.data.token = token;
 
       next();
-    } catch {
-      // El cliente recibe este error como "connect_error". No se filtra
-      // el motivo real (token inválido, usuario inactivo, etc.).
-      next(new Error("No autorizado"));
+    } catch (err) {
+      const error = traducirError(err);
+      // Los errores de autenticación reciben un mensaje genérico.
+      if (error instanceof UnauthorizedError || error instanceof ForbiddenError) {
+        return next(new Error("No autorizado"));
+      }
+
+      // Los errores inesperados se registran en el servidor.
+      console.error("Error al autenticar conexión Socket.IO:", error);
+
+      // No se exponen detalles internos al cliente.
+      return next(new Error("No se pudo validar la conexión"));
     }
   });
 }
@@ -46,17 +55,10 @@ export function registrarAuth(io) {
 // Si falla, emite chat:sesion-expirada y desconecta el socket.
 export async function revalidarSocket(socket) {
   if (Date.now() >= socket.data.expiraEn) {
-    socket.emit(EVENTOS.SESION_EXPIRADA);
-    socket.disconnect();
-    return false;
+    throw new UnauthorizedError("La sesión expiró");
   }
 
-  try {
-    await obtenerUsuarioDesdeToken(socket.data.token);
-    return true;
-  } catch {
-    socket.emit(EVENTOS.SESION_EXPIRADA);
-    socket.disconnect();
-    return false;
-  }
+  await obtenerUsuarioDesdeToken(socket.data.token);
+
+  return true;
 }
