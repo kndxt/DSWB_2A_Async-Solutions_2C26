@@ -58,6 +58,32 @@ test("varios clientes pueden conectarse simultáneamente", async () => {
   await esperarHasta(() => conexionesActivas() === 3);
 });
 
+test("un usuario no puede superar las tres conexiones simultáneas", async () => {
+  const usuario = await crearUsuario();
+  const opciones = { extraHeaders: crearSesion(usuario) };
+
+  const clientes = await Promise.all([
+    conectarCliente(opciones),
+    conectarCliente(opciones),
+    conectarCliente(opciones),
+  ]);
+
+  await esperarHasta(() => conexionesActivas() === 3);
+
+  // El cuarto cliente supera el máximo permitido.
+  const cuarto = await conectarCliente(opciones);
+
+  await esperarHasta(() => !cuarto.connected);
+
+  // Las tres conexiones anteriores deben seguir activas.
+  assert.equal(
+    clientes.every((cliente) => cliente.connected),
+    true,
+  );
+  assert.equal(conexionesActivas(), 3);
+  assert.equal(cuarto.connected, false);
+});
+
 test("el servidor detecta la desconexión de un cliente", async () => {
   const opciones = await opcionesConSesion();
   const [primero, segundo] = await Promise.all([
@@ -203,13 +229,13 @@ test("un mensaje válido se difunde a todos los clientes conectados", async () =
   assert.equal(Number.isNaN(Date.parse(mensaje.fecha)), false);
 });
 
-test("el servidor ignora la identidad enviada por el cliente", async () => {
+test("el servidor rechaza los campos de identidad enviados por el cliente", async () => {
   const usuario = await crearUsuario();
   const cliente = await conectarCliente({
     extraHeaders: crearSesion(usuario),
   });
 
-  const recepcion = esperarEvento(cliente, EVENTOS.MENSAJE);
+  const error = esperarEvento(cliente, EVENTOS.ERROR);
 
   cliente.emit(EVENTOS.MENSAJE, {
     texto: "Hola",
@@ -218,12 +244,9 @@ test("el servidor ignora la identidad enviada por el cliente", async () => {
     rol: "admin",
   });
 
-  const mensaje = await recepcion;
+  const respuesta = await error;
 
-  assert.deepEqual(mensaje.autor, {
-    id: usuario.id,
-    nombre: `${usuario.nombre} ${usuario.apellido}`.trim(),
-  });
+  assert.equal(respuesta.mensaje, "El mensaje no tiene un formato válido.");
 });
 
 test("un mensaje vacío es rechazado y el error solo llega al emisor", async () => {
@@ -248,17 +271,37 @@ test("un mensaje vacío es rechazado y el error solo llega al emisor", async () 
   assert.equal(otro.connected, true);
 });
 
-test("un payload con formato inválido es rechazado", async () => {
-  const cliente = await conectarCliente(await opcionesConSesion());
+test("un payload con formato inválido es rechazado sin afectar a otros clientes", async () => {
+  const opciones = await opcionesConSesion();
+  const [emisor, otro] = await Promise.all([conectarCliente(opciones), conectarCliente(opciones)]);
 
-  const error = esperarEvento(cliente, EVENTOS.ERROR);
-  cliente.emit(EVENTOS.MENSAJE, { texto: 123 });
+  let erroresDelOtro = 0;
+  let mensajesDifundidos = 0;
+
+  otro.on(EVENTOS.ERROR, () => {
+    erroresDelOtro++;
+  });
+
+  otro.on(EVENTOS.MENSAJE, (mensaje) => {
+    if (mensaje.tipo === TIPOS.USUARIO) {
+      mensajesDifundidos++;
+    }
+  });
+
+  const error = esperarEvento(emisor, EVENTOS.ERROR);
+
+  emisor.emit(EVENTOS.MENSAJE, { texto: 123 });
 
   assert.deepEqual(await error, {
     mensaje: "El mensaje no tiene un formato válido.",
   });
 
-  assert.equal(cliente.connected, true);
+  await new Promise((resolve) => setTimeout(resolve, 100));
+
+  assert.equal(erroresDelOtro, 0);
+  assert.equal(mensajesDifundidos, 0);
+  assert.equal(emisor.connected, true);
+  assert.equal(otro.connected, true);
 });
 
 test("un mensaje que supera el límite de caracteres es rechazado", async () => {
@@ -303,6 +346,162 @@ test("el servidor elimina los espacios al principio y al final del mensaje", asy
   const mensaje = await recepcion;
 
   assert.equal(mensaje.texto, "Hola a todos");
+});
+
+test("un usuario no puede enviar más de cinco mensajes en diez segundos", async () => {
+  const observador = await conectarCliente(await opcionesConSesion());
+  const usuario = await crearUsuario();
+  const emisor = await conectarCliente({
+    extraHeaders: crearSesion(usuario),
+  });
+
+  // Espera el anuncio de entrada para no confundirlo con los mensajes.
+  const entrada = esperarEvento(observador, EVENTOS.MENSAJE);
+  // La conexión ya se estableció; esperamos el anuncio.
+  await entrada;
+
+  // Los primeros cinco mensajes deben aceptarse.
+  for (let i = 1; i <= 5; i++) {
+    const recepcion = esperarEvento(observador, EVENTOS.MENSAJE);
+
+    emisor.emit(EVENTOS.MENSAJE, {
+      texto: `Mensaje ${i}`,
+    });
+
+    const mensaje = await recepcion;
+
+    assert.equal(mensaje.tipo, TIPOS.USUARIO);
+    assert.equal(mensaje.texto, `Mensaje ${i}`);
+  }
+
+  let mensajesAdicionales = 0;
+
+  observador.on(EVENTOS.MENSAJE, (mensaje) => {
+    if (mensaje.tipo === TIPOS.USUARIO) {
+      mensajesAdicionales++;
+    }
+  });
+
+  const error = esperarEvento(emisor, EVENTOS.ERROR);
+
+  emisor.emit(EVENTOS.MENSAJE, {
+    texto: "Este sexto mensaje debe rechazarse.",
+  });
+
+  const respuesta = await error;
+
+  assert.deepEqual(respuesta, {
+    mensaje: "Estás enviando mensajes demasiado rápido. Esperá unos segundos.",
+  });
+
+  await new Promise((resolve) => setTimeout(resolve, 100));
+
+  assert.equal(mensajesAdicionales, 0);
+  assert.equal(emisor.connected, true);
+});
+
+test("el límite de mensajes se comparte entre las conexiones de un usuario", async () => {
+  const observador = await conectarCliente(await opcionesConSesion());
+  const usuario = await crearUsuario();
+  const opciones = { extraHeaders: crearSesion(usuario) };
+
+  const primero = await conectarCliente(opciones);
+
+  const entrada = esperarEvento(observador, EVENTOS.MENSAJE);
+  await entrada;
+
+  const segundo = await conectarCliente(opciones);
+
+  // Tres mensajes desde la primera conexión.
+  for (let i = 1; i <= 3; i++) {
+    const recepcion = esperarEvento(observador, EVENTOS.MENSAJE);
+
+    primero.emit(EVENTOS.MENSAJE, {
+      texto: `Mensaje ${i}`,
+    });
+
+    await recepcion;
+  }
+
+  // Dos mensajes desde la segunda conexión.
+  for (let i = 4; i <= 5; i++) {
+    const recepcion = esperarEvento(observador, EVENTOS.MENSAJE);
+
+    segundo.emit(EVENTOS.MENSAJE, {
+      texto: `Mensaje ${i}`,
+    });
+
+    await recepcion;
+  }
+
+  // El sexto mensaje también debe rechazarse desde la segunda conexión.
+  const error = esperarEvento(segundo, EVENTOS.ERROR);
+
+  segundo.emit(EVENTOS.MENSAJE, {
+    texto: "Sexto mensaje",
+  });
+
+  const respuesta = await error;
+
+  assert.deepEqual(respuesta, {
+    mensaje: "Estás enviando mensajes demasiado rápido. Esperá unos segundos.",
+  });
+
+  assert.equal(primero.connected, true);
+  assert.equal(segundo.connected, true);
+});
+
+test("el servidor desconecta una conexión después de tres rechazos por exceso de mensajes", async () => {
+  const cliente = await conectarCliente(await opcionesConSesion());
+
+  // Primero se consumen los cinco mensajes permitidos.
+  for (let i = 1; i <= 5; i++) {
+    const recepcion = esperarEvento(cliente, EVENTOS.MENSAJE);
+
+    cliente.emit(EVENTOS.MENSAJE, {
+      texto: `Mensaje ${i}`,
+    });
+
+    await recepcion;
+  }
+
+  // Los tres intentos siguientes deben rechazarse.
+  for (let i = 1; i <= 3; i++) {
+    const error = esperarEvento(cliente, EVENTOS.ERROR);
+
+    cliente.emit(EVENTOS.MENSAJE, {
+      texto: `Mensaje rechazado ${i}`,
+    });
+
+    const respuesta = await error;
+
+    assert.deepEqual(respuesta, {
+      mensaje: "Estás enviando mensajes demasiado rápido. Esperá unos segundos.",
+    });
+
+    if (i < 3) {
+      assert.equal(cliente.connected, true);
+    }
+  }
+
+  await esperarHasta(() => !cliente.connected);
+
+  assert.equal(cliente.connected, false);
+});
+
+test("el servidor desconecta clientes que envían paquetes demasiado grandes", async () => {
+  const cliente = await conectarCliente(await opcionesConSesion());
+
+  // El paquete supera ampliamente el máximo de 16 KiB.
+  const paqueteGrande = {
+    texto: "a".repeat(20 * 1024),
+  };
+
+  cliente.emit(EVENTOS.MENSAJE, paqueteGrande);
+
+  await esperarHasta(() => !cliente.connected, 3000);
+
+  assert.equal(cliente.connected, false);
 });
 
 // REVALIDACIÓN DE SESIÓN
