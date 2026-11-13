@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import { ESTADOS_EVENTO } from "../../models/eventoModel.js";
-import { ESTADOS_USUARIO } from "../../models/usuarioModel.js";
+import { ESTADOS_USUARIO } from "../../definitions/usuario.js";
 import { CANTIDAD_EVENTOS, HORA_BASE_EVENTOS, DURACION_EVENTO_HORAS } from "./config.js";
 import { sumarDias, sumarHoras } from "./fechas.js";
 

@@ -1,7 +1,9 @@
 import express from "express";
 import asyncHandler from "../middlewares/asyncHandler.js";
-import validarIds from "../middlewares/validarIds.js";
-import { autenticarOpcional } from "../middlewares/auth.js";
+import validarDatos from "../middlewares/validarDatos.js";
+import { entradaDefinicion } from "../definitions/entrada.js";
+import { autenticar, autorizar, autenticarOpcional } from "../middlewares/auth.js";
+import { ROLES_USUARIO } from "../definitions/usuario.js";
 
 import {
   renderizarUsuarios,
@@ -16,24 +18,25 @@ import {
 } from "../controllers/vistasController.js";
 
 const router = express.Router();
+const { operaciones } = entradaDefinicion;
+const validarVista = validarDatos(entradaDefinicion);
 
-// Carga el usuario actual (si hay sesión) en res.locals.usuario.
-router.use(autenticarOpcional);
-
-router.get("/usuarios", renderizarUsuarios);
-router.get("/salas", renderizarSalas);
-router.get("/eventos", renderizarEventos);
-router.get("/entradas", renderizarEntradas);
-router.get("/login", renderizarLogin);
-router.get("/registro", renderizarRegistro);
-router.get("/inicio", renderizarInicio);
+router.get("/usuarios", autenticarOpcional, renderizarUsuarios);
+router.get("/salas", autenticarOpcional, renderizarSalas);
+router.get("/eventos", autenticarOpcional, renderizarEventos);
+router.get("/entradas", autenticarOpcional, renderizarEntradas);
+router.get("/login", autenticarOpcional, renderizarLogin);
+router.get("/registro", autenticarOpcional, renderizarRegistro);
+router.get("/inicio", autenticarOpcional, renderizarInicio);
 
 router.get(
   "/entradas/:eventoId",
-  validarIds("params", "eventoId"),
+  autenticar,
+  autorizar(ROLES_USUARIO.ADMIN),
+  validarVista(operaciones.obtenerResumenPorEvento),
   asyncHandler(renderizarEntradasPorEvento),
 );
 
-router.get("/reservas", renderizarReservas);
+router.get("/reservas", autenticarOpcional, renderizarReservas);
 
 export default router;

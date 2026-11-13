@@ -8,12 +8,12 @@ import {
 } from "../services/entradaService.js";
 
 const obtenerEntradas = async (req, res) => {
-  const entradas = await obtenerEntradasService();
+  const entradas = await obtenerEntradasService(req.usuario, req.query.usuarioId);
   res.status(200).json(entradas);
 };
 
 const obtenerEntradaPorId = async (req, res) => {
-  const entrada = await obtenerEntradaPorIdService(req.params.id);
+  const entrada = await obtenerEntradaPorIdService(req.params.id, req.usuario);
   res.status(200).json(entrada);
 };
 
@@ -26,7 +26,7 @@ const venderEntrada = async (req, res) => {
 };
 
 const cancelarEntrada = async (req, res) => {
-  const entradaCancelada = await cancelarEntradaService(req.params.id);
+  const entradaCancelada = await cancelarEntradaService(req.params.id, req.usuario);
   res.status(200).json(entradaCancelada);
 };
 

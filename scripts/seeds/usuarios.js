@@ -1,32 +1,59 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
-import {
-  ESTADOS_USUARIO,
-  ROLES_USUARIO,
-} from "../../models/usuarioModel.js";
+import { ESTADOS_USUARIO, ROLES_USUARIO } from "../../definitions/usuario.js";
 import { CANTIDAD_USUARIOS, USUARIOS_INACTIVOS } from "./config.js";
 
 const nombres = [
-  "Lucía", "Mateo", "Sofía", "Tomás", "Valentina",
-  "Joaquín", "Camila", "Benjamín", "Martina", "Nicolás",
-  "Julieta", "Santiago", "Agustina", "Facundo", "Florencia",
-  "Lautaro", "Emilia", "Franco", "Catalina", "Bruno",
+  "Lucía",
+  "Mateo",
+  "Sofía",
+  "Tomás",
+  "Valentina",
+  "Joaquín",
+  "Camila",
+  "Benjamín",
+  "Martina",
+  "Nicolás",
+  "Julieta",
+  "Santiago",
+  "Agustina",
+  "Facundo",
+  "Florencia",
+  "Lautaro",
+  "Emilia",
+  "Franco",
+  "Catalina",
+  "Bruno",
 ];
 
 const apellidos = [
-  "Gómez", "Pérez", "Rodríguez", "Fernández", "López",
-  "Martínez", "Díaz", "Sánchez", "Romero", "Torres",
-  "Álvarez", "Ruiz", "Acosta", "Medina", "Herrera",
-  "Castro", "Suárez", "Rojas", "Silva", "Molina",
+  "Gómez",
+  "Pérez",
+  "Rodríguez",
+  "Fernández",
+  "López",
+  "Martínez",
+  "Díaz",
+  "Sánchez",
+  "Romero",
+  "Torres",
+  "Álvarez",
+  "Ruiz",
+  "Acosta",
+  "Medina",
+  "Herrera",
+  "Castro",
+  "Suárez",
+  "Rojas",
+  "Silva",
+  "Molina",
 ];
 
 // El primer usuario es admin, el resto cliente.
 // Los últimos quedan inactivos para probar ventas bloqueadas.
 export const generarUsuarios = async () => {
   if (nombres.length < CANTIDAD_USUARIOS || apellidos.length < CANTIDAD_USUARIOS) {
-    throw new Error(
-      "Faltan nombres o apellidos para generar la cantidad de usuarios configurada.",
-    );
+    throw new Error("Faltan nombres o apellidos para generar la cantidad de usuarios configurada.");
   }
 
   const saltRounds = 10;

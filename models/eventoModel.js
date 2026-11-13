@@ -64,8 +64,15 @@ const eventoSchema = new mongoose.Schema(
   {
     versionKey: false,
     toJSON: {
-      // Mantiene el contrato de la API: se responde id (string) en lugar de _id.
-      transform: (doc, { _id, ...resto }) => ({ id: _id.toString(), ...resto }),
+      // Mantiene el contrato de la API: responde id en lugar de _id
+      // y no expone el registro histórico de la reserva.
+      transform: (doc, ret) => {
+        const { _id, ...resto } = ret;
+
+        delete resto.reserva;
+
+        return { id: _id.toString(), ...resto };
+      },
     },
   },
 );
@@ -91,6 +98,7 @@ eventoSchema.statics.obtenerPorSala = function (salaId) {
 eventoSchema.statics.obtenerProximos = function () {
   return this.find({
     fechaInicio: { $gt: new Date() },
+    estado: { $ne: ESTADOS_EVENTO.CANCELADO },
   }).sort({ _id: 1 });
 };
 

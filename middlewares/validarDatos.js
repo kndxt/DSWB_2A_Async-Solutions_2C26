@@ -32,6 +32,9 @@ const validarTipo = (valor, tipo) => {
         !(valor instanceof Date)
       );
 
+    case "email":
+      return typeof valor === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(valor);
+
     default:
       throw new Error(`Tipo de dato no soportado: ${tipo}`);
   }
@@ -62,7 +65,7 @@ const validarRestricciones = (valor, validaciones, nombreCampo) => {
  */
 const validarAtributo = (valor, atributo, nombreCampo, requerido = false) => {
   if (valor === undefined || valor === null || valor === "") {
-    if (requerido) {
+    if (requerido || (valor === "" && atributo.validaciones?.noVacio)) {
       throw new ValidationError(`El campo '${nombreCampo}' es obligatorio`);
     }
 
@@ -74,6 +77,13 @@ const validarAtributo = (valor, atributo, nombreCampo, requerido = false) => {
       atributo.tipo === "objectId"
         ? `El identificador '${nombreCampo}' no tiene un formato válido`
         : `El campo '${nombreCampo}' no tiene un tipo de dato válido`,
+    );
+  }
+
+  // Comprueba que el valor pertenezca a los valores permitidos, si están definidos.
+  if (atributo.valores && !Object.values(atributo.valores).includes(valor)) {
+    throw new ValidationError(
+      `El campo '${nombreCampo}' debe tener uno de estos valores: ${Object.values(atributo.valores).join(", ")}`,
     );
   }
 
@@ -161,7 +171,8 @@ const validarRelaciones = (datos, relaciones, atributos) => {
     }
 
     const atributo = atributos[campo];
-    const atributoReferencia = atributos[referencia];
+    const esReferenciaAhora = referencia === "ahora";
+    const atributoReferencia = esReferenciaAhora ? atributo : atributos[referencia];
 
     if (!atributo || !atributoReferencia) {
       throw new Error(
@@ -182,7 +193,7 @@ const validarRelaciones = (datos, relaciones, atributos) => {
     }
 
     const valor = datos[campo];
-    const valorReferencia = datos[referencia];
+    const valorReferencia = esReferenciaAhora ? obtenerInicioDelDia() : datos[referencia];
 
     // En actualizaciones parciales solo se comparan los campos recibidos.
     if (
@@ -205,6 +216,15 @@ const validarRelaciones = (datos, relaciones, atributos) => {
       );
     }
   }
+};
+
+/**
+ * Obtiene el inicio del día actual según la zona horaria del servidor.
+ */
+const obtenerInicioDelDia = () => {
+  const ahora = new Date();
+  ahora.setHours(0, 0, 0, 0);
+  return ahora;
 };
 
 /**

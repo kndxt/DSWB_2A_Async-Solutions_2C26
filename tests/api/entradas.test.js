@@ -15,6 +15,7 @@ import {
   mongoose,
   Sala,
   Entrada,
+  ROLES_USUARIO,
 } from "../helpers/environment.js";
 
 before(iniciarEntorno);
@@ -35,6 +36,16 @@ async function assertError(response, status, mensaje) {
 // Crea un cliente y devuelve sus datos junto con su sesión autenticada.
 async function sesionCliente() {
   const usuario = await crearUsuario();
+
+  return {
+    usuario,
+    headers: crearSesion(usuario),
+  };
+}
+
+// Crea un administrador y devuelve sus datos junto con su sesión autenticada.
+async function sesionAdministrador() {
+  const usuario = await crearUsuario({ rol: ROLES_USUARIO.ADMIN });
 
   return {
     usuario,
@@ -66,7 +77,29 @@ describe("POST /entradas - venta", () => {
     assert.equal(body.eventoId, evento.id);
     assert.equal(body.usuarioId, usuario.id);
 
-    // Registra la entrada creada por la API para limpiarla al finalizar.
+    const creada = await Entrada.findById(body.id);
+    registrarCreado(Entrada, creada);
+  });
+
+  test("permite al administrador comprar una entrada para sí mismo", async () => {
+    const sala = await crearSala();
+    const { usuario, headers } = await sesionAdministrador();
+    const evento = await crearEvento({ sala, usuario });
+
+    const response = await peticion("/entradas", {
+      method: "POST",
+      headers,
+      body: {
+        eventoId: evento.id,
+      },
+    });
+
+    const body = await respuestaJSON(response);
+
+    assert.equal(response.status, 201);
+    assert.equal(body.eventoId, evento.id);
+    assert.equal(body.usuarioId, usuario.id);
+
     const creada = await Entrada.findById(body.id);
     registrarCreado(Entrada, creada);
   });
@@ -166,7 +199,6 @@ describe("POST /entradas - reglas de negocio", () => {
     });
 
     await assertError(ventaCancelado, 409, "El evento no permite nuevas ventas");
-
     await assertError(ventaFinalizado, 409, "El evento no permite nuevas ventas");
   });
 
@@ -194,7 +226,6 @@ describe("POST /entradas - reglas de negocio", () => {
     const { usuario, headers } = await sesionCliente();
     const evento = await crearEvento({ sala, usuario });
 
-    // Elimina la sala para simular una referencia inexistente.
     await Sala.findByIdAndDelete(sala.id);
 
     const response = await peticion("/entradas", {
@@ -214,9 +245,9 @@ describe("POST /entradas - reglas de negocio", () => {
 // ============================================================
 
 describe("PATCH /entradas/:id/cancelar - cancelación", () => {
-  test("cancela una entrada existente", async () => {
-    const { headers } = await sesionCliente();
-    const entrada = await crearEntrada();
+  test("permite al cliente cancelar una entrada propia", async () => {
+    const { usuario, headers } = await sesionCliente();
+    const entrada = await crearEntrada({ usuario });
 
     const response = await peticion(`/entradas/${entrada.id}/cancelar`, {
       method: "PATCH",
@@ -226,24 +257,61 @@ describe("PATCH /entradas/:id/cancelar - cancelación", () => {
     const body = await respuestaJSON(response);
 
     assert.equal(response.status, 200);
+    assert.equal(body.id, entrada.id);
     assert.equal(body.estado, "cancelada");
   });
 
-  test("rechaza una cancelación repetida", async () => {
-    const { headers } = await sesionCliente();
-    const entrada = await crearEntrada();
-
-    await peticion(`/entradas/${entrada.id}/cancelar`, {
-      method: "PATCH",
-      headers,
-    });
+  test("permite al administrador cancelar una entrada ajena", async () => {
+    const { headers } = await sesionAdministrador();
+    const otroUsuario = await crearUsuario();
+    const entrada = await crearEntrada({ usuario: otroUsuario });
 
     const response = await peticion(`/entradas/${entrada.id}/cancelar`, {
       method: "PATCH",
       headers,
     });
 
-    await assertError(response, 409, "Entrada no encontrada o ya está cancelada");
+    const body = await respuestaJSON(response);
+
+    assert.equal(response.status, 200);
+    assert.equal(body.id, entrada.id);
+    assert.equal(body.estado, "cancelada");
+  });
+
+  test("rechaza al cliente la cancelación de una entrada ajena", async () => {
+    const { headers } = await sesionCliente();
+    const otroUsuario = await crearUsuario();
+    const entrada = await crearEntrada({ usuario: otroUsuario });
+
+    const response = await peticion(`/entradas/${entrada.id}/cancelar`, {
+      method: "PATCH",
+      headers,
+    });
+
+    await assertError(response, 404, "Entrada no encontrada");
+
+    // Comprueba que la entrada ajena no haya sido modificada.
+    const persistida = await Entrada.findById(entrada.id);
+    assert.equal(persistida.estado, "vendida");
+  });
+
+  test("rechaza una cancelación repetida", async () => {
+    const { usuario, headers } = await sesionCliente();
+    const entrada = await crearEntrada({ usuario });
+
+    const primeraCancelacion = await peticion(`/entradas/${entrada.id}/cancelar`, {
+      method: "PATCH",
+      headers,
+    });
+
+    assert.equal(primeraCancelacion.status, 200);
+
+    const segundaCancelacion = await peticion(`/entradas/${entrada.id}/cancelar`, {
+      method: "PATCH",
+      headers,
+    });
+
+    await assertError(segundaCancelacion, 409, "La entrada ya está cancelada");
   });
 
   test("rechaza un ID de entrada inválido", async () => {
@@ -265,7 +333,7 @@ describe("PATCH /entradas/:id/cancelar - cancelación", () => {
       headers,
     });
 
-    await assertError(response, 409, "Entrada no encontrada o ya está cancelada");
+    await assertError(response, 404, "Entrada no encontrada");
   });
 });
 
@@ -274,18 +342,128 @@ describe("PATCH /entradas/:id/cancelar - cancelación", () => {
 // ============================================================
 
 describe("GET /entradas - consultas", () => {
-  test("obtiene todas las entradas", async () => {
-    const { headers } = await sesionCliente();
+  test("permite al administrador obtener todas las entradas", async () => {
+    const { headers } = await sesionAdministrador();
+
+    const usuarioA = await crearUsuario();
+    const usuarioB = await crearUsuario();
+
+    const eventoA = await crearEvento({ usuario: usuarioA });
+    const eventoB = await crearEvento({ usuario: usuarioB });
+
+    const entradaA = await crearEntrada({ evento: eventoA, usuario: usuarioA });
+    const entradaB = await crearEntrada({ evento: eventoB, usuario: usuarioB });
 
     const response = await peticion("/entradas", { headers });
 
+    const body = await respuestaJSON(response);
+    const ids = body.map((entrada) => entrada.id);
+
     assert.equal(response.status, 200);
-    assert.ok(Array.isArray(await respuestaJSON(response)));
+    assert.ok(ids.includes(entradaA.id));
+    assert.ok(ids.includes(entradaB.id));
   });
 
-  test("obtiene una entrada por su ID", async () => {
-    const { headers } = await sesionCliente();
-    const entrada = await crearEntrada();
+  test("permite al administrador filtrar las entradas por titular", async () => {
+    const { headers } = await sesionAdministrador();
+
+    const usuarioA = await crearUsuario();
+    const usuarioB = await crearUsuario();
+
+    const eventoA = await crearEvento({ usuario: usuarioA });
+    const eventoB = await crearEvento({ usuario: usuarioB });
+
+    const entradaA = await crearEntrada({ evento: eventoA, usuario: usuarioA });
+    await crearEntrada({ evento: eventoB, usuario: usuarioB });
+
+    const response = await peticion(`/entradas?usuarioId=${usuarioA.id}`, {
+      headers,
+    });
+
+    const body = await respuestaJSON(response);
+
+    assert.equal(response.status, 200);
+    assert.deepEqual(
+      body.map((entrada) => entrada.id),
+      [entradaA.id],
+    );
+  });
+
+  test("devuelve una lista vacía cuando el administrador filtra por un titular sin entradas", async () => {
+    const { headers } = await sesionAdministrador();
+    const usuario = await crearUsuario();
+
+    const response = await peticion(`/entradas?usuarioId=${usuario.id}`, {
+      headers,
+    });
+
+    const body = await respuestaJSON(response);
+
+    assert.equal(response.status, 200);
+    assert.deepEqual(body, []);
+  });
+
+  test("permite al cliente obtener únicamente sus propias entradas", async () => {
+    const { usuario, headers } = await sesionCliente();
+    const otroUsuario = await crearUsuario();
+
+    const eventoPropio = await crearEvento({ usuario });
+    const eventoAjeno = await crearEvento({ usuario: otroUsuario });
+
+    const entradaPropia = await crearEntrada({
+      evento: eventoPropio,
+      usuario,
+    });
+
+    await crearEntrada({
+      evento: eventoAjeno,
+      usuario: otroUsuario,
+    });
+
+    const response = await peticion("/entradas", { headers });
+
+    const body = await respuestaJSON(response);
+
+    assert.equal(response.status, 200);
+    assert.deepEqual(
+      body.map((entrada) => entrada.id),
+      [entradaPropia.id],
+    );
+  });
+
+  test("ignora el usuarioId solicitado por un cliente y devuelve únicamente sus propias entradas", async () => {
+    const { usuario, headers } = await sesionCliente();
+    const otroUsuario = await crearUsuario();
+
+    const eventoPropio = await crearEvento({ usuario });
+    const eventoAjeno = await crearEvento({ usuario: otroUsuario });
+
+    const entradaPropia = await crearEntrada({
+      evento: eventoPropio,
+      usuario,
+    });
+
+    await crearEntrada({
+      evento: eventoAjeno,
+      usuario: otroUsuario,
+    });
+
+    const response = await peticion(`/entradas?usuarioId=${otroUsuario.id}`, {
+      headers,
+    });
+
+    const body = await respuestaJSON(response);
+
+    assert.equal(response.status, 200);
+    assert.deepEqual(
+      body.map((entrada) => entrada.id),
+      [entradaPropia.id],
+    );
+  });
+
+  test("permite al cliente consultar una entrada propia", async () => {
+    const { usuario, headers } = await sesionCliente();
+    const entrada = await crearEntrada({ usuario });
 
     const response = await peticion(`/entradas/${entrada.id}`, {
       headers,
@@ -297,9 +475,25 @@ describe("GET /entradas - consultas", () => {
     assert.equal(body.id, entrada.id);
   });
 
-  test("obtiene las entradas vendidas de un evento", async () => {
-    const { usuario, headers } = await sesionCliente();
-    const evento = await crearEvento({ usuario });
+  test("permite al administrador consultar una entrada ajena", async () => {
+    const { headers } = await sesionAdministrador();
+    const otroUsuario = await crearUsuario();
+    const entrada = await crearEntrada({ usuario: otroUsuario });
+
+    const response = await peticion(`/entradas/${entrada.id}`, {
+      headers,
+    });
+
+    const body = await respuestaJSON(response);
+
+    assert.equal(response.status, 200);
+    assert.equal(body.id, entrada.id);
+  });
+
+  test("obtiene las entradas vendidas de un evento para el administrador", async () => {
+    const sala = await crearSala();
+    const { usuario, headers } = await sesionAdministrador();
+    const evento = await crearEvento({ sala, usuario });
     const entrada = await crearEntrada({ evento, usuario });
 
     const response = await peticion(`/entradas/vendidas/${evento.id}`, { headers });
@@ -310,9 +504,9 @@ describe("GET /entradas - consultas", () => {
     assert.ok(body.some((item) => item.id === entrada.id));
   });
 
-  test("obtiene la cantidad de entradas disponibles de un evento", async () => {
+  test("obtiene la cantidad de entradas disponibles de un evento para el administrador", async () => {
     const sala = await crearSala({ capacidad: 3 });
-    const { usuario, headers } = await sesionCliente();
+    const { usuario, headers } = await sesionAdministrador();
     const evento = await crearEvento({ sala, usuario });
 
     await crearEntrada({ evento, usuario });
@@ -327,10 +521,72 @@ describe("GET /entradas - consultas", () => {
 });
 
 // ============================================================
+// GET /entradas - AUTORIZACIÓN
+// ============================================================
+
+describe("GET /entradas - autorización", () => {
+  test("rechaza al cliente la consulta de una entrada ajena", async () => {
+    const { headers } = await sesionCliente();
+    const otroUsuario = await crearUsuario();
+    const entrada = await crearEntrada({ usuario: otroUsuario });
+
+    const response = await peticion(`/entradas/${entrada.id}`, {
+      headers,
+    });
+
+    await assertError(response, 404, "Entrada no encontrada");
+  });
+
+  test("devuelve el mismo error para una entrada ajena y una inexistente", async () => {
+    const { headers } = await sesionCliente();
+    const otroUsuario = await crearUsuario();
+    const entradaAjena = await crearEntrada({ usuario: otroUsuario });
+
+    const ajena = await peticion(`/entradas/${entradaAjena.id}`, { headers });
+    const inexistente = await peticion(`/entradas/${ID_INEXISTENTE}`, { headers });
+
+    await assertError(ajena, 404, "Entrada no encontrada");
+    await assertError(inexistente, 404, "Entrada no encontrada");
+  });
+
+  test("rechaza al cliente la consulta de entradas vendidas de un evento", async () => {
+    const { headers } = await sesionCliente();
+    const evento = await crearEvento();
+
+    const response = await peticion(`/entradas/vendidas/${evento.id}`, {
+      headers,
+    });
+
+    await assertError(response, 403, "No tenés permiso para realizar esta acción");
+  });
+
+  test("rechaza al cliente la consulta de entradas disponibles de un evento", async () => {
+    const { headers } = await sesionCliente();
+    const evento = await crearEvento();
+
+    const response = await peticion(`/entradas/disponibles/${evento.id}`, {
+      headers,
+    });
+
+    await assertError(response, 403, "No tenés permiso para realizar esta acción");
+  });
+});
+
+// ============================================================
 // GET /entradas - VALIDACIONES
 // ============================================================
 
 describe("GET /entradas - validaciones", () => {
+  test("rechaza un usuarioId inválido en la consulta de entradas", async () => {
+    const { headers } = await sesionAdministrador();
+
+    const response = await peticion(`/entradas?usuarioId=${ID_INVALIDO}`, {
+      headers,
+    });
+
+    assert.equal(response.status, 400);
+  });
+
   test("rechaza un ID de entrada inválido", async () => {
     const { headers } = await sesionCliente();
 
@@ -341,19 +597,10 @@ describe("GET /entradas - validaciones", () => {
     assert.equal(response.status, 400);
   });
 
-  test("rechaza la consulta de una entrada inexistente", async () => {
-    const { headers } = await sesionCliente();
-
-    const response = await peticion(`/entradas/${ID_INEXISTENTE}`, { headers });
-
-    await assertError(response, 404, "Entrada no encontrada");
-  });
-
   test("rechaza IDs de evento inválidos en las consultas por evento", async () => {
-    const { headers } = await sesionCliente();
+    const { headers } = await sesionAdministrador();
 
     const vendidas = await peticion(`/entradas/vendidas/${ID_INVALIDO}`, { headers });
-
     const disponibles = await peticion(`/entradas/disponibles/${ID_INVALIDO}`, { headers });
 
     assert.equal(vendidas.status, 400);
@@ -361,10 +608,9 @@ describe("GET /entradas - validaciones", () => {
   });
 
   test("rechaza consultas de entradas para un evento inexistente", async () => {
-    const { headers } = await sesionCliente();
+    const { headers } = await sesionAdministrador();
 
     const vendidas = await peticion(`/entradas/vendidas/${ID_INEXISTENTE}`, { headers });
-
     const disponibles = await peticion(`/entradas/disponibles/${ID_INEXISTENTE}`, { headers });
 
     await assertError(vendidas, 404, "Evento no encontrado");
@@ -373,7 +619,7 @@ describe("GET /entradas - validaciones", () => {
 
   test("rechaza consultar entradas disponibles cuando la sala no existe", async () => {
     const sala = await crearSala();
-    const { usuario, headers } = await sesionCliente();
+    const { usuario, headers } = await sesionAdministrador();
     const evento = await crearEvento({ sala, usuario });
 
     await Sala.findByIdAndDelete(sala.id);
@@ -381,6 +627,92 @@ describe("GET /entradas - validaciones", () => {
     const response = await peticion(`/entradas/disponibles/${evento.id}`, { headers });
 
     await assertError(response, 404, "Sala no encontrada");
+  });
+});
+
+// ============================================================
+// GET /vistas/entradas/:eventoId - VISTA
+// ============================================================
+
+describe("GET /vistas/entradas/:eventoId - vista", () => {
+  test("permite al administrador consultar el resumen de entradas de un evento", async () => {
+    const sala = await crearSala({ capacidad: 3 });
+    const { usuario, headers } = await sesionAdministrador();
+    const evento = await crearEvento({ sala, usuario });
+
+    await crearEntrada({ evento, usuario });
+
+    const response = await peticion(`/vistas/entradas/${evento.id}`, {
+      headers,
+    });
+
+    const html = await response.text();
+
+    assert.equal(response.status, 200);
+    assert.ok(html.includes(evento.nombre));
+    assert.ok(html.includes(sala.nombre));
+  });
+
+  test("rechaza el acceso a la vista sin una sesión autenticada", async () => {
+    const response = await peticion(`/vistas/entradas/${ID_INEXISTENTE}`);
+
+    assert.equal(response.status, 401);
+  });
+
+  test("rechaza el acceso a la vista para un cliente autenticado", async () => {
+    const { headers } = await sesionCliente();
+
+    const response = await peticion(`/vistas/entradas/${ID_INEXISTENTE}`, {
+      headers,
+    });
+
+    assert.equal(response.status, 403);
+  });
+});
+
+// ============================================================
+// GET /vistas/entradas/:eventoId - VALIDACIONES
+// ============================================================
+
+describe("GET /vistas/entradas/:eventoId - validaciones", () => {
+  test("rechaza un ID de evento inválido", async () => {
+    const { headers } = await sesionAdministrador();
+
+    const response = await peticion(`/vistas/entradas/${ID_INVALIDO}`, {
+      headers,
+    });
+
+    assert.equal(response.status, 400);
+  });
+
+  test("rechaza la consulta de un evento inexistente", async () => {
+    const { headers } = await sesionAdministrador();
+
+    const response = await peticion(`/vistas/entradas/${ID_INEXISTENTE}`, {
+      headers,
+    });
+
+    const html = await response.text();
+
+    assert.equal(response.status, 404);
+    assert.ok(html.includes("Evento no encontrado"));
+  });
+
+  test("rechaza la consulta cuando la sala asociada al evento no existe", async () => {
+    const sala = await crearSala();
+    const { usuario, headers } = await sesionAdministrador();
+    const evento = await crearEvento({ sala, usuario });
+
+    await Sala.findByIdAndDelete(sala.id);
+
+    const response = await peticion(`/vistas/entradas/${evento.id}`, {
+      headers,
+    });
+
+    const html = await response.text();
+
+    assert.equal(response.status, 404);
+    assert.ok(html.includes("Sala no encontrada"));
   });
 });
 
@@ -407,7 +739,21 @@ describe("Autenticación de entradas", () => {
   });
 
   test("rechaza cancelar entradas sin una sesión autenticada", async () => {
-    const response = await peticion(`/entradas/${ID_INEXISTENTE}/cancelar`, { method: "PATCH" });
+    const response = await peticion(`/entradas/${ID_INEXISTENTE}/cancelar`, {
+      method: "PATCH",
+    });
+
+    assert.equal(response.status, 401);
+  });
+
+  test("rechaza consultar entradas vendidas sin una sesión autenticada", async () => {
+    const response = await peticion(`/entradas/vendidas/${ID_INEXISTENTE}`);
+
+    assert.equal(response.status, 401);
+  });
+
+  test("rechaza consultar entradas disponibles sin una sesión autenticada", async () => {
+    const response = await peticion(`/entradas/disponibles/${ID_INEXISTENTE}`);
 
     assert.equal(response.status, 401);
   });

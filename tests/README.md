@@ -1,14 +1,16 @@
-# Pruebas automatizadas de API
+# Pruebas automatizadas
 
-Estas pruebas documentan el comportamiento actual de la API y sirven como red de seguridad durante refactorizaciones.
+Las pruebas automatizadas documentan el comportamiento actual del backend y funcionan como una red de seguridad para detectar regresiones durante el desarrollo y las refactorizaciones.
 
 ## Requisitos
 
 - Node.js compatible con el proyecto.
 - MongoDB local en ejecución.
-- Archivo `.env` con `MONGODB_URI` apuntando a la base local que utilizan para desarrollo/pruebas.
+- Archivo `.env` con `MONGODB_URI` apuntando a la base de datos local destinada a desarrollo y pruebas.
 
-## Ejecutar
+## Ejecución
+
+Para ejecutar toda la suite:
 
 ```bash
 npm test
@@ -20,30 +22,71 @@ Para ejecutar un archivo puntual:
 node --test tests/api/usuarios.test.js
 ```
 
-## Seguridad de datos
+Se puede reemplazar la ruta por la del archivo que se quiera ejecutar.
 
-La suite **no ejecuta `seed.js`, no vacía colecciones y no elimina la base**. Cada helper registra los `_id` de los documentos que crea y, al finalizar cada archivo de pruebas, elimina únicamente esos documentos.
+## Seguridad de los datos
+
+La suite **no ejecuta `seed.js`, no vacía colecciones ni elimina la base de datos**.
+
+Los helpers registran los `_id` de los documentos que crean y, al finalizar cada archivo de pruebas, eliminan únicamente esos documentos.
 
 Aun así, las pruebas escriben datos en la base indicada por `MONGODB_URI`. Antes de ejecutarlas, verificá que esa variable apunte a tu MongoDB local y no a Atlas ni a una base compartida.
 
 ## Organización
 
-- `helpers/environment.js`: conexión, servidor HTTP temporal, clientes de Socket.IO, peticiones y fixtures.
-- `api/usuarios.test.js`: endpoints de usuarios.
-- `api/salas.test.js`: endpoints de salas.
-- `api/eventos.test.js`: endpoints y reglas de eventos.
+Las pruebas se distribuyen en las siguientes categorías:
+
+### Helpers
+
+- `helpers/environment.js`: administra la conexión a MongoDB, el servidor HTTP temporal, los clientes de Socket.IO, las peticiones y los datos de prueba.
+
+### Pruebas de API
+
+Verifican el comportamiento de los endpoints y su interacción con la base de datos.
+
+- `api/usuarios.test.js`: operaciones de usuarios, autenticación y autorización.
+- `api/salas.test.js`: consultas, registro, actualización y reglas de negocio de salas.
+- `api/eventos.test.js`: consultas, creación, actualización y reglas de negocio de eventos.
 - `api/entradas.test.js`: venta, cancelación y consultas de entradas.
-- `middleware/validarIds.test.js`: comportamiento observable del middleware de IDs.
-- `sockets/conexion.test.js`: conexión de clientes, eco, difusión, detección de desconexión y emisión del servidor a todos.
-- `unit/sockets/index.test.js`: ciclo de vida de la instancia (inicializarSockets, obtenerIO, cerrarSockets).
-- `unit/services/aiService.test.js`: servicio de consultas a Gemini con cliente simulado. Cubre respuesta correcta, timeout, cuota agotada, credenciales inválidas, modelo inválido, respuesta vacía, contenido bloqueado, error desconocido y clave ausente.
+- `api/reservas.test.js`: consultas y permisos de acceso a reservas.
+- `api/smoke.test.js`: pruebas generales de funcionamiento de la API.
 
-## Alcance y criterios
+### Pruebas de Socket.IO
 
-Los tests priorizan status HTTP, estructura de respuesta y efectos persistidos. No dependen de los datos precargados por `seed.js`.
+- `sockets/conexion.test.js`: comportamiento de las conexiones, comunicación entre clientes y eventos de Socket.IO.
 
-Algunos comportamientos actuales se conservan intencionalmente como línea base, aunque estén marcados para revisar: por ejemplo, `precioReserva = 0` y la modificación de contraseña por PUT. Si una decisión funcional cambia, actualizá el test correspondiente junto con el cambio.
+### Pruebas unitarias
 
-## Limitaciones iniciales
+Verifican componentes individuales del backend sin depender de la ejecución completa de la aplicación.
 
-La suite cubre los flujos principales, pero no reemplaza una revisión de todos los casos límite. En particular, los casos de capacidad agotada, sala con eventos próximos al intentar inactivarla, solapamientos y duplicados exactos se pueden ampliar en una siguiente iteración.
+- `unit/errors/traducirError.test.js`: traducción de errores a respuestas y códigos HTTP.
+- `unit/middlewares/auth.test.js`: comportamiento del middleware de autenticación y autorización.
+- `unit/middlewares/errorHandler.test.js`: manejo centralizado de errores.
+- `unit/middlewares/validarDatos.test.js`: validación de datos de entrada.
+- `unit/services/aiService.test.js`: servicio de consultas a Gemini mediante un cliente simulado. Incluye respuestas correctas y distintos escenarios de error.
+- `unit/sockets/index.test.js`: ciclo de vida de la instancia de Socket.IO (`inicializarSockets`, `obtenerIO` y `cerrarSockets`).
+- `unit/utils/cookies.test.js`: utilidades para establecer y limpiar cookies.
+- `unit/utils/jwt.test.js`: generación y manejo de tokens JWT.
+- `unit/utils/traductoresMongoose.test.js`: traducción de definiciones de atributos a tipos y validadores de Mongoose.
+
+## Alcance y criterios de prueba
+
+La suite prioriza la verificación de:
+
+- Códigos de estado HTTP y estructura de las respuestas.
+- Validaciones de datos y reglas de negocio.
+- Autenticación, autorización y permisos de acceso.
+- Efectos de las operaciones sobre los documentos persistidos.
+- Comportamiento de middlewares, servicios y utilidades.
+- Conexiones y comunicación mediante Socket.IO.
+- Manejo y traducción de errores.
+
+Las pruebas de API utilizan sus propios datos y no dependen de los registros precargados por `seed.js`.
+
+Algunos comportamientos implementados se conservan intencionalmente como línea base, aunque estén identificados para una posible revisión. Si una decisión funcional cambia, debe actualizarse el test correspondiente junto con la implementación.
+
+## Cobertura pendiente de ampliar
+
+La suite cubre los principales componentes y flujos del backend, pero no reemplaza la revisión de todos los casos límite.
+
+Los escenarios pendientes de ampliar deben identificarse a partir de las reglas de negocio y de los casos que todavía no cuenten con pruebas específicas. La incorporación de nuevas pruebas debe acompañar los cambios funcionales y las refactorizaciones.

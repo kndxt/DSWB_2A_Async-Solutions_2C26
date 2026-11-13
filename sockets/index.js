@@ -1,5 +1,6 @@
 import { Server } from "socket.io";
 import { registrarEco } from "./ecoSocket.js";
+import { registrarAuth } from "./authSocket.js";
 
 // Instancia única de Socket.IO, compartida por todos los módulos.
 let io = null;
@@ -9,6 +10,7 @@ let io = null;
 // middlewares de handshake con io.use() y manejadores con io.on("connection").
 // El orden importa: los middlewares de handshake deben registrarse antes que los manejadores de conexión.
 const MODULOS = [
+  registrarAuth,   // handshake de autenticación, antes que los handlers
   registrarEco, // Temporal (F10.1): se elimina en F10.3, cuando lo reemplaza el chat.
 ];
 

@@ -69,6 +69,11 @@ export const eventoDefinicion = {
   validaciones: {
     entreAtributos: [
       {
+        campo: "fechaInicio",
+        operador: ">=",
+        referencia: "ahora",
+      },
+      {
         campo: "fechaFin",
         operador: ">=",
         referencia: "fechaInicio",

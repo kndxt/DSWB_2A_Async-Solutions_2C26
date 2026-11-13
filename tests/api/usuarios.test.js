@@ -11,7 +11,7 @@ import {
   Usuario,
   crearSesion,
 } from "../helpers/environment.js";
-import { ROLES_USUARIO } from "../../models/usuarioModel.js";
+import { ROLES_USUARIO } from "../../definitions/usuario.js";
 
 before(iniciarEntorno);
 after(cerrarEntorno);
@@ -27,7 +27,12 @@ async function sesionCliente() {
   return crearSesion(usuario);
 }
 
+// -----------------------------------------------------------------------------
+// GET /usuarios - Consultas
+// -----------------------------------------------------------------------------
+
 describe("GET /usuarios - consultas", () => {
+  // Obtención del listado.
   test("devuelve un array JSON", async () => {
     const headers = await sesionAdmin();
 
@@ -37,7 +42,8 @@ describe("GET /usuarios - consultas", () => {
     assert.ok(Array.isArray(await respuestaJSON(response)));
   });
 
-  test("devuelve el usuario por ID y no expone password", async () => {
+  // Obtención individual.
+  test("devuelve el usuario por ID y no expone la contraseña", async () => {
     const headers = await sesionAdmin();
     const usuario = await crearUsuario();
 
@@ -50,6 +56,7 @@ describe("GET /usuarios - consultas", () => {
     assert.equal("password" in body, false);
   });
 
+  // Validación de identificadores.
   test("distingue ID inválido y usuario inexistente", async () => {
     const headers = await sesionAdmin();
 
@@ -61,7 +68,12 @@ describe("GET /usuarios - consultas", () => {
   });
 });
 
+// -----------------------------------------------------------------------------
+// POST /usuarios - Registro
+// -----------------------------------------------------------------------------
+
 describe("POST /usuarios - registro", () => {
+  // Creación exitosa.
   test("crea un usuario válido sin requerir autenticación", async () => {
     const email = `post_${Date.now()}@example.test`;
 
@@ -85,6 +97,7 @@ describe("POST /usuarios - registro", () => {
     registrarCreado(Usuario, creado);
   });
 
+  // Validación de datos obligatorios y unicidad.
   test("rechaza campos obligatorios faltantes y email duplicado", async () => {
     const faltante = await peticion("/usuarios", {
       method: "POST",
@@ -108,12 +121,17 @@ describe("POST /usuarios - registro", () => {
     });
 
     assert.equal(faltante.status, 400);
-    assert.equal(duplicado.status, 400);
+    assert.equal(duplicado.status, 409);
     assert.match((await respuestaJSON(duplicado)).error, /email/i);
   });
 });
 
+// -----------------------------------------------------------------------------
+// PUT /usuarios/:id - Actualización
+// -----------------------------------------------------------------------------
+
 describe("PUT /usuarios/:id - actualización", () => {
+  // Actualización de campos permitidos.
   test("actualiza campos permitidos e ignora estado e ID", async () => {
     const headers = await sesionAdmin();
     const usuario = await crearUsuario();
@@ -137,6 +155,7 @@ describe("PUT /usuarios/:id - actualización", () => {
     assert.equal(body.id, usuario.id);
   });
 
+  // Conflictos y recursos inexistentes.
   test("rechaza email duplicado, contraseña vacía y usuario inexistente", async () => {
     const headers = await sesionAdmin();
     const [usuario, otro] = await Promise.all([crearUsuario(), crearUsuario()]);
@@ -159,11 +178,12 @@ describe("PUT /usuarios/:id - actualización", () => {
       body: { nombre: "X" },
     });
 
-    assert.equal(emailDuplicado.status, 400);
+    assert.equal(emailDuplicado.status, 409);
     assert.equal(passwordVacia.status, 400);
     assert.equal(inexistente.status, 404);
   });
 
+  // La contraseña debe almacenarse como hash bcrypt.
   test("hashea la contraseña al actualizarla", async () => {
     const headers = await sesionAdmin();
     const usuario = await crearUsuario();
@@ -189,8 +209,13 @@ describe("PUT /usuarios/:id - actualización", () => {
   });
 });
 
+// -----------------------------------------------------------------------------
+// PATCH /usuarios/:id/estado - Cambio de estado
+// -----------------------------------------------------------------------------
+
 describe("PATCH /usuarios/:id/estado - cambio de estado", () => {
-  test("cambia el estado y rechaza valores inválidos", async () => {
+  // Actualización del estado y protección de otros campos.
+  test("cambia el estado e ignora otros campos enviados", async () => {
     const headers = await sesionAdmin();
     const usuario = await crearUsuario();
 
@@ -203,22 +228,34 @@ describe("PATCH /usuarios/:id/estado - cambio de estado", () => {
       },
     });
 
+    const body = await respuestaJSON(actualizado);
+
+    assert.equal(actualizado.status, 200);
+    assert.equal(body.estado, "inactivo");
+    assert.equal(body.nombre, "Usuario");
+  });
+
+  // Validación del enum de estados.
+  test("rechaza valores de estado inválidos", async () => {
+    const headers = await sesionAdmin();
+    const usuario = await crearUsuario();
+
     const invalido = await peticion(`/usuarios/${usuario.id}/estado`, {
       method: "PATCH",
       headers,
       body: { estado: "bloqueado" },
     });
 
-    const body = await respuestaJSON(actualizado);
-
-    assert.equal(actualizado.status, 200);
-    assert.equal(body.estado, "inactivo");
-    assert.equal(body.nombre, "Usuario");
     assert.equal(invalido.status, 400);
   });
 });
 
+// -----------------------------------------------------------------------------
+// Autenticación y autorización
+// -----------------------------------------------------------------------------
+
 describe("Autenticación y autorización de usuarios", () => {
+  // Las consultas y modificaciones requieren autenticación.
   test("GET /usuarios requiere sesión", async () => {
     const response = await peticion("/usuarios");
 
@@ -255,6 +292,7 @@ describe("Autenticación y autorización de usuarios", () => {
     assert.equal(response.status, 401);
   });
 
+  // Los clientes autenticados no pueden acceder a operaciones administrativas.
   test("GET /usuarios rechaza a clientes autenticados", async () => {
     const headers = await sesionCliente();
 
