@@ -59,16 +59,23 @@ function obtenerId(referencia) {
 function renderizarNombreEId(celda, nombre, id) {
   const nombreElemento = document.createElement("strong");
   nombreElemento.textContent = nombre || "No disponible";
+  celda.append(nombreElemento);
 
-  const idElemento = document.createElement("small");
-  idElemento.textContent = `ID: ${id ?? "No disponible"}`;
-
-  celda.append(nombreElemento, idElemento);
+  // El ID es un dato técnico: solo lo ve el administrador.
+  if (esAdmin()) {
+    const idElemento = document.createElement("small");
+    idElemento.textContent = `ID: ${id ?? "No disponible"}`;
+    celda.append(idElemento);
+  }
 }
 
 // ========================================
 // Configuración de la tabla
 // ========================================
+
+// Para el cliente, "vendida" se muestra como "comprada": es su punto de vista.
+// El valor real que guarda la API no cambia.
+const textoEstado = (estado) => (!esAdmin() && estado === "vendida" ? "comprada" : estado);
 
 const columnas = [
   {
@@ -102,10 +109,10 @@ const columnas = [
   },
   {
     label: "Estado",
-    value: (entrada) => entrada.estado,
+    value: (entrada) => textoEstado(entrada.estado),
   },
   {
-    label: "Fecha de venta",
+    label: esAdmin() ? "Fecha de venta" : "Fecha de compra",
     value: (entrada) =>
       entrada.fechaVenta ? new Date(entrada.fechaVenta).toLocaleString("es-AR") : "",
   },
