@@ -2,7 +2,12 @@ import { randomUUID } from "node:crypto";
 import { ValidationError } from "../errors/errores.js";
 import { revalidarSocket } from "./authSocket.js";
 import asyncHandlerSocket from "./asyncHandlerSocket.js";
-import { EVENTOS, TIPOS, LIMITE_TEXTO } from "./eventos.js";
+import { EVENTOS, TIPOS, LIMITE_TEXTO, AUTOR_ASISTENTE } from "./eventos.js";
+import { extraerConsultaGemini } from "./mencionGemini.js";
+import { consultarIA as consultarIAReal, AsistenteError } from "../services/aiService.js";
+
+// Tiempo mínimo entre consultas de un mismo usuario.
+const COOLDOWN_GEMINI_MS = 10_000;
 
 // Construye un mensaje de sistema con el mismo formato que los demás mensajes.
 const crearMensajeSistema = (texto) => ({
@@ -13,12 +18,50 @@ const crearMensajeSistema = (texto) => ({
   fecha: new Date().toISOString(),
 });
 
+// Construye un mensaje de respuesta del asistente.
+const crearMensajeAsistente = (texto) => ({
+  id: randomUUID(),
+  tipo: TIPOS.ASISTENTE,
+  autor: AUTOR_ASISTENTE,
+  texto,
+  fecha: new Date().toISOString(),
+});
+
+// Consulta a Gemini y difunde su respuesta sin propagar errores al handler.
+async function responderGemini(io, consultarIA, consulta) {
+  try {
+    const respuesta = await consultarIA(consulta);
+
+    io.emit(EVENTOS.MENSAJE, crearMensajeAsistente(respuesta));
+  } catch (error) {
+    if (!(error instanceof AsistenteError)) {
+      console.error("Error inesperado en la integración con Gemini:", error);
+    }
+
+    io.emit(
+      EVENTOS.MENSAJE,
+      crearMensajeAsistente(
+        "Gemini no está disponible en este momento. Intentá nuevamente más tarde.",
+      ),
+    );
+  }
+}
+
 /**
  * Registra los eventos del chat sobre las conexiones autenticadas.
+ *
+ * Permite inyectar el servicio de IA y el cooldown para facilitar
+ * las pruebas de integración.
  */
-export function registrarChat(io) {
+export function registrarChat(
+  io,
+  { consultarIA = consultarIAReal, cooldownMs = COOLDOWN_GEMINI_MS } = {},
+) {
   // Cantidad de sockets conectados por usuario.
   const conexionesPorUsuario = new Map();
+
+  // Última consulta aceptada por usuario.
+  const ultimaConsultaPorUsuario = new Map();
 
   io.on("connection", (socket) => {
     const usuario = socket.data.usuario;
@@ -86,6 +129,36 @@ export function registrarChat(io) {
 
         // Difunde el mensaje a todos los clientes conectados, incluido el emisor.
         io.emit(EVENTOS.MENSAJE, mensaje);
+
+        // Si no hay una mención válida, el procesamiento termina acá.
+        const consulta = extraerConsultaGemini(texto);
+
+        if (!consulta) return;
+
+        // Limpia entradas vencidas para evitar conservar usuarios indefinidamente.
+        const ahora = Date.now();
+
+        for (const [id, ultimaConsulta] of ultimaConsultaPorUsuario) {
+          if (ahora - ultimaConsulta >= cooldownMs) {
+            ultimaConsultaPorUsuario.delete(id);
+          }
+        }
+
+        const ultimaConsulta = ultimaConsultaPorUsuario.get(usuarioId);
+
+        // Rechaza consultas demasiado próximas de un mismo usuario.
+        if (ultimaConsulta !== undefined && ahora - ultimaConsulta < cooldownMs) {
+          socket.emit(EVENTOS.ERROR, {
+            mensaje: "Esperá unos segundos antes de volver a consultar a Gemini.",
+          });
+          return;
+        }
+
+        // Registra el momento antes de iniciar la consulta.
+        ultimaConsultaPorUsuario.set(usuarioId, ahora);
+
+        // No se espera la respuesta: el chat puede seguir procesando mensajes.
+        void responderGemini(io, consultarIA, consulta);
       }),
     );
   });

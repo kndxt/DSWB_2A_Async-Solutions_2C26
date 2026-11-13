@@ -10,13 +10,13 @@ let io = null;
 // middlewares de handshake con io.use() y manejadores con io.on("connection").
 // El orden importa: los middlewares de handshake deben registrarse antes que los manejadores de conexión.
 const MODULOS = [
-  registrarAuth, // Middleware de autenticación del handshake.
-  registrarChat, // Eventos del chat para conexiones autenticadas.
+  (io) => registrarAuth(io), // Middleware de autenticación del handshake.
+  (io, opcionesChat) => registrarChat(io, opcionesChat), // Eventos del chat para conexiones autenticadas.
 ];
 
 // Inicializa Socket.IO sobre el servidor HTTP que también usa Express.
 // Se llama una sola vez, desde server.js.
-export function inicializarSockets(httpServer) {
+export function inicializarSockets(httpServer, opcionesChat = {}) {
   if (io) return io;
 
   io = new Server(httpServer);
@@ -30,7 +30,7 @@ export function inicializarSockets(httpServer) {
   });
 
   for (const registrar of MODULOS) {
-    registrar(io);
+    registrar(io, opcionesChat);
   }
 
   return io;
