@@ -1,0 +1,71 @@
+
+if usuario
+  section.chat(
+    id="chat"
+    data-usuario-id=String(usuario.id)
+    aria-labelledby="chat-titulo"
+  )
+    header.chat__header
+      div
+        h2#chat-titulo.chat__title Chat comunitario
+        p.chat__description Compartí mensajes con la comunidad de Urbana Cult.
+
+      div.chat__estado(
+        id="chat-estado"
+        role="status"
+        aria-live="polite"
+        data-estado="conectando"
+      )
+        span.chat__estado-indicador(aria-hidden="true")
+        span#chat-estado-texto Conectando...
+
+    div.chat__mensajes(
+      id="chat-mensajes"
+      role="log"
+      aria-label="Mensajes del chat"
+      aria-live="polite"
+      aria-relevant="additions"
+      tabindex="0"
+    )
+      p.chat__vacio(id="chat-vacio")
+        | Todavía no hay mensajes. ¡Podés iniciar la conversación!
+
+    p.chat__error(
+      id="chat-error"
+      role="alert"
+      hidden
+    )
+
+    form.chat__formulario(id="chat-formulario")
+      label.chat__etiqueta(for="chat-texto") Mensaje
+      div.chat__entrada
+        textarea#chat-texto.chat__texto(
+          name="texto"
+          rows="2"
+          maxlength="500"
+          placeholder="Escribí un mensaje..."
+          aria-describedby="chat-contador"
+          required
+        )
+        button.chat__enviar(
+          id="chat-enviar"
+          type="submit"
+          disabled
+        ) Enviar
+
+      div.chat__pie
+        span#chat-contador.chat__contador 0/500
+        span.chat__ayuda Enter para enviar · Shift + Enter para nueva línea
+
+      p.chat__sesion-expirada(
+        id="chat-sesion-expirada"
+        hidden
+      )
+        | No pudimos validar tu sesión.
+        a(href="/vistas/login") Iniciá sesión nuevamente.
+else
+  section.chat.chat--anonimo(aria-labelledby="chat-titulo")
+    h2#chat-titulo.chat__title Chat comunitario
+    p.chat__description
+      | Iniciá sesión para participar de la conversación.
+    a(href="/vistas/login") Iniciar sesión

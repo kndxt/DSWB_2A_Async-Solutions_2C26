@@ -1,0 +1,22 @@
+
+doctype html
+html(lang="es")
+  head
+    meta(charset="UTF-8")
+    meta(name="viewport" content="width=device-width, initial-scale=1.0")
+    title Chat de prueba | Urbana Cult
+    link(rel="stylesheet" href="/css/general.css")
+    link(rel="stylesheet" href="/css/chat.css")
+    script(type="module" src="/js/sesion.js")
+
+  body
+    header
+      include includes/navbar.pug
+
+    main
+      h1 Chat de prueba
+      p Esta página es temporal y se utiliza para verificar el componente.
+      include includes/chat.pug
+
+    script(src="/socket.io/socket.io.js")
+    script(type="module" src="/js/chat.js")
