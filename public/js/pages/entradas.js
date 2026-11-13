@@ -2,6 +2,7 @@ import { apiFetch } from "../core/apiClient.js";
 import { renderTable } from "../utils/tabla.js";
 import { limpiarMensajes, mostrarMensaje } from "../core/mensajes.js";
 import { formatearFechaHora } from "../utils/formato.js";
+import { esAdmin } from "../core/rol.js";
 
 // ========================================
 // Elementos del DOM
@@ -129,17 +130,19 @@ const columnas = [
   },
 ];
 
+// La columna "Usuario" solo la ve el administrador: para un cliente todas las entradas son suyas.
+const columnasVisibles = () =>
+  columnas.filter((columna) => esAdmin() || columna.label !== "Usuario");
+
 // ========================================
 // Renderizado y carga de entradas
 // ========================================
 
 function renderizarEntradas() {
-  renderTable(tabla, columnas, entradas);
+  renderTable(tabla, columnasVisibles(), entradas);
 
-  estado.textContent =
-    entradas.length === 0
-      ? "No hay entradas registradas."
-      : `Entradas registradas: ${entradas.length}`;
+  const vacio = esAdmin() ? "No hay entradas registradas." : "Todavía no tenés entradas.";
+  estado.textContent = entradas.length === 0 ? vacio : `Entradas registradas: ${entradas.length}`;
 }
 
 async function cargarEntradas() {

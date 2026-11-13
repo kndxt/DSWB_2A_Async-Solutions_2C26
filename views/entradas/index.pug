@@ -2,10 +2,13 @@ extends ../layout
 include ../mixins/tabla.pug
 
 block title
-  | Administración de entradas | Urbana Cult
+  | Entradas | Urbana Cult
 
 block content
-  h1 Administración de entradas
+  if usuario && usuario.rol === "admin"
+    h1 Administración de entradas
+  else
+    h1 Mis entradas
 
   section#mensajes(aria-live="polite")
 
@@ -21,7 +24,10 @@ block content
       button#boton-vender(type="submit") Vender entrada
 
   section
-    h2 Entradas registradas
+    if usuario && usuario.rol === "admin"
+      h2 Entradas registradas
+    else
+      h2 Mis entradas compradas
 
     p#estado Cargando entradas...
 
