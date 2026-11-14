@@ -3,7 +3,6 @@ import asyncHandler from "../middlewares/asyncHandler.js";
 import validarDatos from "../middlewares/validarDatos.js";
 import { entradaDefinicion } from "../definitions/entrada.js";
 import {
-  autenticar,
   autorizar,
   autenticarOpcional,
   requerirSesionVista,
@@ -54,7 +53,8 @@ router.get("/inicio", autenticarOpcional, renderizarInicio);
 
 router.get(
   "/entradas/:eventoId",
-  autenticar,
+  autenticarOpcional,
+  requerirSesionVista,
   autorizar(ROLES_USUARIO.ADMIN),
   validarVista(operaciones.obtenerResumenPorEvento),
   asyncHandler(renderizarEntradasPorEvento),
