@@ -60,6 +60,4 @@ router.get(
   asyncHandler(renderizarEntradasPorEvento),
 );
 
-router.get("/reservas", autenticarOpcional, renderizarReservas);
-
 export default router;
