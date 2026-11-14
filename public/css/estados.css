@@ -3,9 +3,9 @@
 .estado,
 .rol {
   display: inline-block;
-  padding: 0.1rem 0.5rem;
+  padding: 0.15rem 0.65rem;
   border-radius: 999px;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 600;
 }
 
@@ -20,8 +20,8 @@
 .estado-inactivo,
 .estado-inactiva,
 .estado-finalizado {
-  background: #e5e7eb;
-  color: #374151;
+  background: #e7e5e0;
+  color: #44403c;
 }
 
 .estado-cancelado {
@@ -30,8 +30,8 @@
 }
 
 .rol-admin {
-  background: #dbeafe;
-  color: #1e40af;
+  background: #e0e7ff;
+  color: #3730a3;
 }
 
 .rol-cliente {
@@ -43,8 +43,8 @@
 .usuario-inactivo td,
 .sala-inactiva td,
 .evento-finalizado td {
-  color: #6b7280;
-  background: #f3f4f6;
+  color: #78716c;
+  background: #f5f3ef;
 }
 
 .evento-cancelado td {

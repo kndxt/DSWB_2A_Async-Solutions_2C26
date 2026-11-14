@@ -4,16 +4,14 @@ import { formatearFechaHora } from "../utils/formato.js";
 import { esAdmin } from "../core/rol.js";
 import { entradasApi } from "../api/entradasApi.js";
 import { eventosApi } from "../api/eventosApi.js";
-import { usuariosApi } from "../api/usuariosApi.js";
 
 // ========================================
 // Elementos del DOM
 // ========================================
 
-const formVenta = document.querySelector("#form-venta");
+const formCompra = document.querySelector("#form-compra");
 const campoEventoId = document.querySelector("#eventoId");
-const campoUsuarioId = document.querySelector("#usuarioId");
-const botonVender = document.querySelector("#boton-vender");
+const botonComprar = document.querySelector("#boton-comprar");
 
 const tabla = document.querySelector("#tabla-entradas");
 const estado = document.querySelector("#estado");
@@ -36,26 +34,29 @@ function obtenerId(referencia) {
   return referencia;
 }
 
-function renderizarNombreEId(celda, nombre, id) {
-  const nombreElemento = document.createElement("strong");
-  nombreElemento.textContent = nombre || "No disponible";
-  celda.append(nombreElemento);
+function renderizarValor(celda, valor) {
+  celda.textContent = valor || "No disponible";
+}
 
-  // El ID es un dato técnico: solo lo ve el administrador.
-  if (esAdmin()) {
-    const idElemento = document.createElement("small");
-    idElemento.textContent = `ID: ${id ?? "No disponible"}`;
-    celda.append(idElemento);
-  }
+// Un evento admite compras si está activo y estamos dentro de su período de venta.
+// El backend vuelve a validarlo: acá solo se evita ofrecer opciones que van a fallar.
+function admiteCompra(evento) {
+  const ahora = Date.now();
+
+  return (
+    evento.estado === "activo" &&
+    ahora >= new Date(evento.fechaInicioVenta).getTime() &&
+    ahora <= new Date(evento.fechaFinVenta).getTime()
+  );
 }
 
 // ========================================
 // Configuración de la tabla
 // ========================================
 
-// Para el cliente, "vendida" se muestra como "comprada": es su punto de vista.
+// Desde el punto de vista de quien la tiene, "vendida" es una entrada comprada.
 // El valor real que guarda la API no cambia.
-const textoEstado = (estado) => (!esAdmin() && estado === "vendida" ? "comprada" : estado);
+const textoEstado = (valor) => (valor === "vendida" ? "comprada" : valor);
 
 const columnas = [
   {
@@ -64,15 +65,13 @@ const columnas = [
       const id = obtenerId(entrada);
       const indice = entradas.findIndex((item) => String(obtenerId(item)) === String(id));
 
-      renderizarNombreEId(celda, `Entrada ${indice + 1}`, id);
+      renderizarValor(celda, `Entrada ${indice + 1}`);
     },
   },
   {
     label: "Evento",
     render: (celda, entrada) => {
-      const evento = entrada.eventoId;
-
-      renderizarNombreEId(celda, evento?.nombre, obtenerId(evento));
+      renderizarValor(celda, entrada.eventoId?.nombre);
     },
   },
   {
@@ -84,19 +83,7 @@ const columnas = [
         ? `${usuario.nombre ?? ""} ${usuario.apellido ?? ""}`.trim()
         : "";
 
-      renderizarNombreEId(celda, nombreCompleto, obtenerId(usuario));
-    },
-  },
-  {
-    label: "Registrada por",
-    render: (celda, entrada) => {
-      const registrante = entrada.registradaPor;
-
-      const nombreCompleto = registrante
-        ? `${registrante.nombre ?? ""} ${registrante.apellido ?? ""}`.trim()
-        : "";
-
-      renderizarNombreEId(celda, nombreCompleto, obtenerId(registrante));
+      renderizarValor(celda, nombreCompleto);
     },
   },
   {
@@ -104,7 +91,7 @@ const columnas = [
     value: (entrada) => textoEstado(entrada.estado),
   },
   {
-    label: esAdmin() ? "Fecha de venta" : "Fecha de compra",
+    label: "Fecha de compra",
     value: (entrada) =>
       entrada.fechaVenta ? new Date(entrada.fechaVenta).toLocaleString("es-AR") : "",
   },
@@ -130,16 +117,10 @@ const columnas = [
   },
 ];
 
-// "Usuario" y "Registrada por" son solo del administrador. "Registrada por" aparece
-// únicamente cuando la API ya devuelve ese dato.
+// La columna "Usuario" solo tiene sentido para el administrador,
+// que ve las entradas de todos. El cliente solo ve las suyas.
 const columnasVisibles = () =>
-  columnas.filter((columna) => {
-    if (columna.label === "Usuario") return esAdmin();
-    if (columna.label === "Registrada por") {
-      return esAdmin() && entradas.some((entrada) => entrada.registradaPor);
-    }
-    return true;
-  });
+  columnas.filter((columna) => columna.label !== "Usuario" || esAdmin());
 
 // ========================================
 // Renderizado y carga de entradas
@@ -174,46 +155,24 @@ async function cargarEntradas() {
   }
 }
 
-function llenarSelect(select, textoInicial, items, etiqueta) {
-  const inicial = document.createElement("option");
-  inicial.value = "";
-  inicial.textContent = textoInicial;
-
-  const opciones = items.map((item) => {
-    const opcion = document.createElement("option");
-    opcion.value = item.id;
-    opcion.textContent = etiqueta(item);
-    return opcion;
-  });
-
-  select.replaceChildren(inicial, ...opciones);
-}
-
-async function cargarOpciones() {
+async function cargarEventos() {
   try {
     const eventos = await eventosApi.listar();
 
-    llenarSelect(
-      campoEventoId,
-      "Seleccioná un evento...",
-      eventos.filter((evento) => evento.estado === "activo"),
-      (evento) => `${evento.nombre} (${formatearFechaHora(evento.fechaInicio)})`,
-    );
+    const inicial = document.createElement("option");
+    inicial.value = "";
+    inicial.textContent = "Seleccioná un evento...";
+
+    const opciones = eventos.filter(admiteCompra).map((evento) => {
+      const opcion = document.createElement("option");
+      opcion.value = evento.id;
+      opcion.textContent = `${evento.nombre} (${formatearFechaHora(evento.fechaInicio)})`;
+      return opcion;
+    });
+
+    campoEventoId.replaceChildren(inicial, ...opciones);
   } catch (error) {
     mostrarMensaje("error", `No se pudieron cargar los eventos: ${error.message}`);
-  }
-
-  try {
-    const usuarios = await usuariosApi.listar();
-
-    llenarSelect(
-      campoUsuarioId,
-      "Seleccioná un titular...",
-      usuarios.filter((usuario) => usuario.estado !== "inactivo"),
-      (usuario) => `${usuario.nombre} ${usuario.apellido} — ${usuario.email}`,
-    );
-  } catch (error) {
-    mostrarMensaje("error", `No se pudieron cargar los usuarios: ${error.message}`);
   }
 }
 
@@ -221,35 +180,35 @@ async function cargarOpciones() {
 // Operaciones de entradas
 // ========================================
 
-async function venderEntrada(event) {
+// La entrada siempre se registra a nombre de quien tiene la sesión iniciada:
+// el backend toma la identidad de la sesión, por eso solo se envía el evento.
+async function comprarEntrada(event) {
   event.preventDefault();
   limpiarMensajes();
 
   const eventoId = campoEventoId.value.trim();
-  const usuarioId = campoUsuarioId.value.trim();
 
-  // El administrador siempre vende a nombre de alguien: el titular es obligatorio.
-  if (!usuarioId) {
-    mostrarMensaje("error", "Seleccioná el titular de la entrada.");
+  if (!eventoId) {
+    mostrarMensaje("error", "Seleccioná el evento para el que querés comprar la entrada.");
     return;
   }
 
-  botonVender.disabled = true;
+  botonComprar.disabled = true;
 
   try {
-    await entradasApi.vender({ eventoId, usuarioId });
+    await entradasApi.comprar({ eventoId });
 
-    formVenta.reset();
+    formCompra.reset();
 
     const cargaCorrecta = await cargarEntradas();
 
     if (cargaCorrecta) {
-      mostrarMensaje("exito", "La entrada se vendió correctamente.");
+      mostrarMensaje("exito", "La entrada se compró correctamente.");
     }
   } catch (error) {
     mostrarMensaje("error", error.message);
   } finally {
-    botonVender.disabled = false;
+    botonComprar.disabled = false;
   }
 }
 
@@ -282,9 +241,9 @@ async function cancelarEntrada(id) {
 // Inicialización y eventos
 // ========================================
 
-if (formVenta) {
-  formVenta.addEventListener("submit", venderEntrada);
-  cargarOpciones();
+if (formCompra) {
+  formCompra.addEventListener("submit", comprarEntrada);
+  cargarEventos();
 }
 
 cargarEntradas();

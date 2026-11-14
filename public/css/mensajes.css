@@ -2,16 +2,20 @@
 
 .mensaje {
   margin: 12px 0;
-  padding: 10px 12px;
+  padding: 12px 14px;
+  border-left: 4px solid transparent;
   border-radius: var(--radio);
+  font-size: 0.95rem;
 }
 
 .mensaje-exito {
   color: var(--color-exito-texto);
   background-color: var(--color-exito-fondo);
+  border-left-color: #22c55e;
 }
 
 .mensaje-error {
   color: var(--color-error-texto);
   background-color: var(--color-error-fondo);
+  border-left-color: #ef4444;
 }

@@ -7,6 +7,7 @@
 
   const LIMITE_TEXTO = 500;
   const LIMITE_MENSAJES = 200;
+  const ESPERA_MAXIMA_GEMINI_MS = 20000;
 
   // Estos nombres deben coincidir con sockets/eventos.js.
   const EVENTOS = {
@@ -27,8 +28,11 @@
   const contador = document.getElementById("chat-contador");
   const error = document.getElementById("chat-error");
   const avisoSesion = document.getElementById("chat-sesion-expirada");
+  const geminiEstado = document.getElementById("chat-gemini-estado");
+  const botonReconectar = document.getElementById("chat-reconectar");
 
   let sesionExpirada = false;
+  let temporizadorGemini;
 
   /**
    * Actualiza el indicador visual de conexión.
@@ -62,6 +66,20 @@
   }
 
   /**
+   * Muestra u oculta el aviso "Gemini está respondiendo…".
+   * El temporizador es un respaldo: el backend corta a los 15 s,
+   * esto evita que el aviso quede colgado si la respuesta nunca llega.
+   */
+  function mostrarGeminiPensando(visible) {
+    geminiEstado.hidden = !visible;
+    clearTimeout(temporizadorGemini);
+
+    if (visible) {
+      temporizadorGemini = setTimeout(() => mostrarGeminiPensando(false), ESPERA_MAXIMA_GEMINI_MS);
+    }
+  }
+
+  /**
    * Bloquea el chat cuando el servidor informa que la sesión expiró
    * o no pudo autenticarse durante el handshake.
    */
@@ -69,6 +87,9 @@
     if (sesionExpirada) return;
 
     sesionExpirada = true;
+
+    mostrarGeminiPensando(false);
+    botonReconectar.hidden = true;
 
     actualizarEstado("error", "Sesión no válida");
     actualizarFormulario();
@@ -193,19 +214,24 @@
   socket.on("connect", () => {
     if (sesionExpirada) return;
 
+    botonReconectar.hidden = true;
     actualizarEstado("conectado", "Conectado");
     actualizarFormulario();
     limpiarError();
   });
 
   // Pérdida de conexión.
+  // Si el servidor corta la conexión (exceso de mensajes o de pestañas),
+  // Socket.IO no reintenta solo: se ofrece reconectar manualmente.
   socket.on("disconnect", (motivo) => {
     if (sesionExpirada) return;
 
     actualizarFormulario();
+    mostrarGeminiPensando(false);
 
     if (motivo === "io server disconnect") {
       actualizarEstado("desconectado", "Desconectado");
+      botonReconectar.hidden = false;
     } else {
       actualizarEstado("reconectando", "Reconectando...");
     }
@@ -218,7 +244,6 @@
     actualizarFormulario();
 
     if (err.message === "No autorizado") {
-      mostrarError("No pudimos validar tu sesión.");
       finalizarSesion();
       return;
     }
@@ -228,12 +253,19 @@
   });
 
   // Recepción de mensajes de usuarios, sistema o asistente.
+  // Cuando responde el asistente, se oculta el aviso de espera.
   socket.on(EVENTOS.MENSAJE, (mensaje) => {
+    if (mensaje?.tipo === "asistente") {
+      mostrarGeminiPensando(false);
+    }
+
     agregarMensaje(mensaje);
   });
 
-  // Errores comunicados por el backend.
+  // Errores comunicados por el backend (por ejemplo, el cooldown de Gemini).
   socket.on(EVENTOS.ERROR, (datos) => {
+    mostrarGeminiPensando(false);
+
     const mensaje =
       typeof datos?.mensaje === "string"
         ? datos.mensaje
@@ -245,6 +277,14 @@
   // La sesión dejó de ser válida durante la conexión.
   socket.on(EVENTOS.SESION_EXPIRADA, () => {
     finalizarSesion();
+  });
+
+  // Reconexión manual después de una desconexión iniciada por el servidor.
+  botonReconectar.addEventListener("click", () => {
+    botonReconectar.hidden = true;
+    limpiarError();
+    actualizarEstado("conectando", "Conectando...");
+    socket.connect();
   });
 
   /**
@@ -272,6 +312,11 @@
     limpiarError();
 
     socket.emit(EVENTOS.MENSAJE, { texto });
+
+    // Las consultas a Gemini son asíncronas: se avisa que la respuesta está en camino.
+    if (/^@gemini\b/i.test(texto)) {
+      mostrarGeminiPensando(true);
+    }
 
     campoTexto.value = "";
     actualizarContador();

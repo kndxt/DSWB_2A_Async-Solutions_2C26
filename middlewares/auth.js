@@ -1,4 +1,3 @@
-
 import { leerCookieToken } from "../utils/cookies.js";
 import { obtenerUsuarioDesdeToken } from "../services/authService.js";
 import { UnauthorizedError, ForbiddenError } from "../errors/errores.js";
@@ -59,3 +58,15 @@ export const autenticarOpcional = asyncHandler(async (req, res, next) => {
 
   next();
 });
+
+/**
+ * Para vistas: si no hay sesión válida, redirige al login.
+ * Debe usarse después de `autenticarOpcional`.
+ */
+export const requerirSesionVista = (req, res, next) => {
+  if (!req.usuario) {
+    return res.redirect("/vistas/login");
+  }
+
+  next();
+};

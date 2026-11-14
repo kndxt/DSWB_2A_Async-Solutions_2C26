@@ -3,29 +3,42 @@
 table {
   width: 100%;
   margin-top: 16px;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   background-color: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: 12px;
+  box-shadow: var(--sombra-suave);
+  overflow: hidden;
   overflow-wrap: anywhere;
 }
 
 th,
 td {
-  padding: 10px;
-  border: 1px solid var(--color-borde);
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--color-borde);
   text-align: left;
+  vertical-align: middle;
 }
 
 th {
   background-color: var(--color-encabezado);
-  font-size: 0.9rem;
+  color: var(--color-texto-suave);
+  font-size: 0.78rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+tbody tr:last-child td {
+  border-bottom: none;
 }
 
 tbody tr:nth-child(even) {
-  background-color: #f5f5f5;
+  background-color: #faf8f5;
 }
 
 tbody tr:hover {
-  background-color: #eee;
+  background-color: #f3efe9;
 }
 
 /* Dos líneas dentro de una celda: nombre y dato técnico (ID) */
@@ -44,7 +57,7 @@ td small {
 td button,
 td .boton {
   display: inline-block;
-  padding: 5px 8px;
+  padding: 5px 10px;
   margin: 2px 4px 2px 0;
   font-size: 0.8rem;
   line-height: 1.3;
@@ -66,6 +79,6 @@ td .boton {
 
   th,
   td {
-    padding: 7px;
+    padding: 8px;
   }
 }

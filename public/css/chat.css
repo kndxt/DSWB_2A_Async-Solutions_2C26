@@ -1,19 +1,19 @@
 /* ========================================
-   Urbana Cult — Chat comunitario
-   Estilos encapsulados del componente
+   Urbana Cult — Chat
    ======================================== */
 
 .chat {
-  --chat-color-texto: #333;
-  --chat-color-secundario: #777;
-  --chat-color-borde: #e2e2e2;
-  --chat-color-fondo: #fff;
-  --chat-color-superficie: #f5f5f8;
-  --chat-color-acento: #45456b;
-  --chat-color-acento-hover: #343451;
-  --chat-color-propio: #eeeef7;
-  --chat-color-error: #8b2525;
-  --chat-color-error-fondo: #fbeeee;
+  --chat-color-texto: var(--color-texto);
+  --chat-color-secundario: var(--color-texto-suave);
+  --chat-color-borde: var(--color-borde);
+  --chat-color-fondo: var(--color-superficie);
+  --chat-color-superficie: var(--color-fondo);
+  --chat-color-acento: var(--color-primario);
+  --chat-color-acento-hover: var(--color-primario-hover);
+  --chat-color-error: var(--color-error-texto);
+  --chat-color-error-fondo: var(--color-error-fondo);
+  --chat-color-propio: #ebe9f5;
+  --chat-color-propio-borde: #d6d2ea;
 
   width: 100%;
   max-width: 760px;
@@ -22,7 +22,8 @@
   color: var(--chat-color-texto);
   background: var(--chat-color-fondo);
   border: 1px solid var(--chat-color-borde);
-  border-radius: 12px;
+  border-radius: 16px;
+  box-shadow: var(--sombra-suave);
 }
 
 /* Encabezado */
@@ -133,13 +134,13 @@
 
 .chat__mensaje--propio .chat__burbuja {
   background: var(--chat-color-propio);
-  border-color: #d9d9e8;
+  border-color: var(--chat-color-propio-borde);
   border-radius: 12px 12px 3px 12px;
 }
 
 .chat__mensaje--asistente .chat__burbuja {
-  background: #f1f5f9;
-  border-color: #dce4ec;
+  background: #fdf1ec;
+  border-color: #f3d9cd;
 }
 
 .chat__autor {
@@ -173,7 +174,22 @@
   text-align: center;
 }
 
-/* Errores */
+.chat__mensaje--asistente .chat__autor {
+  color: var(--color-enlace);
+}
+
+/* Indicador de Gemini */
+
+.chat__gemini-estado {
+  margin: 0;
+  padding: 8px 20px;
+  color: var(--chat-color-secundario);
+  background: var(--chat-color-superficie);
+  font-size: 0.8rem;
+  font-style: italic;
+}
+
+/* Errores y avisos */
 
 .chat__error {
   padding: 10px 20px;
@@ -184,8 +200,14 @@
 }
 
 .chat__error[hidden],
-.chat__sesion-expirada[hidden] {
+.chat__sesion-expirada[hidden],
+.chat__gemini-estado[hidden],
+.chat__reconectar[hidden] {
   display: none;
+}
+
+.chat__reconectar {
+  margin: 12px 20px;
 }
 
 /* Formulario */
@@ -217,7 +239,7 @@
   padding: 10px 12px;
   color: var(--chat-color-texto);
   background: var(--chat-color-fondo);
-  border: 1px solid #ccc;
+  border: 1px solid var(--chat-color-borde);
   border-radius: 6px;
   font: inherit;
   font-size: 0.9rem;

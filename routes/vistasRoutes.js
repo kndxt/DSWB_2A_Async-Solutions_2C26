@@ -2,7 +2,12 @@ import express from "express";
 import asyncHandler from "../middlewares/asyncHandler.js";
 import validarDatos from "../middlewares/validarDatos.js";
 import { entradaDefinicion } from "../definitions/entrada.js";
-import { autenticar, autorizar, autenticarOpcional } from "../middlewares/auth.js";
+import {
+  autenticar,
+  autorizar,
+  autenticarOpcional,
+  requerirSesionVista,
+} from "../middlewares/auth.js";
 import { ROLES_USUARIO } from "../definitions/usuario.js";
 
 import {
@@ -21,10 +26,28 @@ const router = express.Router();
 const { operaciones } = entradaDefinicion;
 const validarVista = validarDatos(entradaDefinicion);
 
-router.get("/usuarios", autenticarOpcional, renderizarUsuarios);
-router.get("/salas", autenticarOpcional, renderizarSalas);
-router.get("/eventos", autenticarOpcional, renderizarEventos);
-router.get("/entradas", autenticarOpcional, renderizarEntradas);
+// Solo administradores
+router.get(
+  "/usuarios",
+  autenticarOpcional,
+  requerirSesionVista,
+  autorizar(ROLES_USUARIO.ADMIN),
+  renderizarUsuarios,
+);
+router.get(
+  "/salas",
+  autenticarOpcional,
+  requerirSesionVista,
+  autorizar(ROLES_USUARIO.ADMIN),
+  renderizarSalas,
+);
+
+// Cualquier usuario con sesión
+router.get("/eventos", autenticarOpcional, requerirSesionVista, renderizarEventos);
+router.get("/entradas", autenticarOpcional, requerirSesionVista, renderizarEntradas);
+router.get("/reservas", autenticarOpcional, requerirSesionVista, renderizarReservas);
+
+// Públicas: visitantes
 router.get("/login", autenticarOpcional, renderizarLogin);
 router.get("/registro", autenticarOpcional, renderizarRegistro);
 router.get("/inicio", autenticarOpcional, renderizarInicio);
@@ -38,12 +61,5 @@ router.get(
 );
 
 router.get("/reservas", autenticarOpcional, renderizarReservas);
-
-// Ruta TEMPORAL para probar el chat, mientras se espera al front
-// ELIMINAR LUEGO (!!!)
-
-router.get("/chat-prueba", autenticarOpcional, (req, res) => {
-  res.render("chat-prueba");
-});
 
 export default router;

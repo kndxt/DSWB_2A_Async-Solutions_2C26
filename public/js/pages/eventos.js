@@ -7,8 +7,10 @@ import { eventosApi } from "../api/eventosApi.js";
 import { salasApi } from "../api/salasApi.js";
 import { usuariosApi } from "../api/usuariosApi.js";
 
-// Cantidad de columnas de "Todos los eventos": el administrador tiene además acciones.
-const COLUMNAS_LISTADO = esAdmin() ? 8 : 7;
+// Cantidad de columnas: la sala solo se muestra al administrador,
+// que además tiene la columna de acciones en el listado.
+const COLUMNAS_LISTADO = esAdmin() ? 8 : 6;
+const COLUMNAS_PROXIMOS = esAdmin() ? 5 : 4;
 
 const CAMPOS_FECHA = ["fechaInicio", "fechaFin", "fechaInicioVenta", "fechaFinVenta"];
 
@@ -80,15 +82,19 @@ const crearFilaEvento = (evento) => {
   const fila = document.createElement("tr");
   if (claseDeFila(evento)) fila.className = claseDeFila(evento);
 
-  fila.append(
-    crearCelda(evento.nombre),
-    crearCelda(textoOGuion(evento.tipo)),
-    crearCelda(nombreDeSala(evento.salaId)),
+  const celdas = [crearCelda(evento.nombre), crearCelda(textoOGuion(evento.tipo))];
+
+  // La sala solo la ve el administrador (los clientes no pueden consultar /salas).
+  if (esAdmin()) celdas.push(crearCelda(nombreDeSala(evento.salaId)));
+
+  celdas.push(
     crearCelda(formatearRango(evento.fechaInicio, evento.fechaFin)),
     crearCelda(formatearRango(evento.fechaInicioVenta, evento.fechaFinVenta)),
     crearCelda(formatearPrecio(evento.precioEntrada)),
     crearEstado(evento.estado),
   );
+
+  fila.append(...celdas);
 
   // La columna de acciones solo existe para el administrador.
   if (esAdmin()) {
@@ -108,13 +114,18 @@ const crearFilaEvento = (evento) => {
 const crearFilaProximo = (evento) => {
   const fila = document.createElement("tr");
   if (claseDeFila(evento)) fila.className = claseDeFila(evento);
-  fila.append(
-    crearCelda(evento.nombre),
-    crearCelda(nombreDeSala(evento.salaId)),
+
+  const celdas = [crearCelda(evento.nombre)];
+
+  if (esAdmin()) celdas.push(crearCelda(nombreDeSala(evento.salaId)));
+
+  celdas.push(
     crearCelda(formatearFechaHora(evento.fechaInicio)),
     crearCelda(formatearPrecio(evento.precioEntrada)),
     crearEstado(evento.estado),
   );
+
+  fila.append(...celdas);
   return fila;
 };
 
@@ -198,12 +209,14 @@ const cargarProximos = async () => {
   try {
     const eventos = await eventosApi.proximos();
     if (!Array.isArray(eventos) || eventos.length === 0) {
-      cuerpo.replaceChildren(filaMensaje("No hay eventos próximos.", 5));
+      cuerpo.replaceChildren(filaMensaje("No hay eventos próximos.", COLUMNAS_PROXIMOS));
       return;
     }
     cuerpo.replaceChildren(...eventos.map(crearFilaProximo));
   } catch (error) {
-    cuerpo.replaceChildren(filaMensaje("No se pudieron cargar los eventos próximos.", 5));
+    cuerpo.replaceChildren(
+      filaMensaje("No se pudieron cargar los eventos próximos.", COLUMNAS_PROXIMOS),
+    );
     mostrarMensaje("error", error.message);
   }
 };

@@ -2,14 +2,16 @@
 
 fieldset {
   margin: 0 0 20px;
-  padding: 16px;
+  padding: 20px;
+  background-color: var(--color-superficie);
   border: 1px solid var(--color-borde);
-  border-radius: var(--radio);
+  border-radius: 12px;
+  box-shadow: var(--sombra-suave);
 }
 
 legend {
   padding: 0 8px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .campo {
@@ -35,20 +37,42 @@ legend {
   background-color: var(--color-superficie);
   border: 1px solid var(--color-borde);
   border-radius: var(--radio);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.campo input:hover,
+.campo select:hover,
+.campo textarea:hover {
+  border-color: #cfc8bc;
 }
 
 .campo input:focus-visible,
 .campo select:focus-visible,
 .campo textarea:focus-visible {
+  border-color: var(--color-primario-hover);
   outline: 2px solid var(--color-primario-hover);
-  outline-offset: 2px;
+  outline-offset: 1px;
 }
 
 .campo small {
   color: var(--color-texto-suave);
 }
 
+/* Login y registro como tarjeta centrada en el contenido */
 #formulario-login,
 #formulario-registro {
+  max-width: 480px;
+  padding: 24px;
   margin-top: 24px;
+  background-color: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: 12px;
+  box-shadow: var(--sombra-suave);
+}
+
+#formulario-login .campo input,
+#formulario-registro .campo input {
+  max-width: none;
 }

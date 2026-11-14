@@ -13,13 +13,14 @@ block content
       thead
         tr
           th Nombre
-          th Sala
+          if esAdmin
+            th Sala
           th Inicio
           th Precio de entrada
           th Estado
       tbody#proximos-body
         tr
-          td(colspan="5") Cargando eventos próximos...
+          td(colspan=esAdmin ? 5 : 4) Cargando eventos próximos...
 
   section#listado-eventos
     h2 Todos los eventos
@@ -28,7 +29,8 @@ block content
         tr
           th Nombre
           th Tipo
-          th Sala
+          if esAdmin
+            th Sala
           th Evento (inicio - fin)
           th Venta (inicio - fin)
           th Precio de entrada
@@ -37,7 +39,7 @@ block content
             th Acciones
       tbody#eventos-body
         tr
-          td(colspan=esAdmin ? 8 : 7) Cargando eventos...
+          td(colspan=esAdmin ? 8 : 6) Cargando eventos...
 
   if esAdmin
     section#formulario-evento(hidden)

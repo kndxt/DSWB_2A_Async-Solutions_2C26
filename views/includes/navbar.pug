@@ -3,18 +3,26 @@ include ../mixins/modulos.pug
 nav.navbar(aria-label="Navegación principal")
   a.navbar-brand(href="/vistas/inicio") Urbana Cult
 
-  ul.navbar-links
-    li
-      a(href="/vistas/inicio") Inicio
-    +enlacesModulos(usuario && usuario.rol)
+  if usuario
+    button#navbar-toggle.navbar-toggle(
+      type="button"
+      aria-label="Abrir menú"
+      aria-expanded="false"
+      aria-controls="navbar-links"
+    )
+      span.navbar-toggle__barra
+      span.navbar-toggle__barra
+      span.navbar-toggle__barra
 
+    ul#navbar-links.navbar-links
+      li
+        a(href="/vistas/inicio") Inicio
+      +enlacesModulos(usuario.rol)
+
+  div.navbar-sesion
     if usuario
-      li
-        span.navbar-usuario Hola, #{usuario.nombre}
-      li
-        button#btn-logout(type="button") Cerrar sesión
+      span.navbar-usuario Hola, #{usuario.nombre}
+      button#btn-logout(type="button") Cerrar sesión
     else
-      li
-        a(href="/vistas/login") Iniciar sesión
-      li
-        a(href="/vistas/registro") Registrarse
+      a(href="/vistas/login") Iniciar sesión
+      a(href="/vistas/registro") Registrarse

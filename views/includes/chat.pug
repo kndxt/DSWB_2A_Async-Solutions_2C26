@@ -1,4 +1,3 @@
-
 if usuario
   section.chat(
     id="chat"
@@ -8,7 +7,11 @@ if usuario
     header.chat__header
       div
         h2#chat-titulo.chat__title Chat comunitario
-        p.chat__description Compartí mensajes con la comunidad de Urbana Cult.
+        p.chat__description
+          | Compartí mensajes con la comunidad de Urbana Cult. Mencioná a
+          |
+          strong @gemini
+          |  para consultarle al asistente.
 
       div.chat__estado(
         id="chat-estado"
@@ -30,11 +33,16 @@ if usuario
       p.chat__vacio(id="chat-vacio")
         | Todavía no hay mensajes. ¡Podés iniciar la conversación!
 
+    p.chat__gemini-estado(id="chat-gemini-estado" role="status" hidden)
+      | Gemini está respondiendo…
+
     p.chat__error(
       id="chat-error"
       role="alert"
       hidden
     )
+
+    button.chat__reconectar(id="chat-reconectar" type="button" hidden) Reconectar al chat
 
     form.chat__formulario(id="chat-formulario")
       label.chat__etiqueta(for="chat-texto") Mensaje
@@ -43,8 +51,8 @@ if usuario
           name="texto"
           rows="2"
           maxlength="500"
-          placeholder="Escribí un mensaje..."
-          aria-describedby="chat-contador"
+          placeholder="Escribí un mensaje o @gemini seguido de tu consulta..."
+          aria-describedby="chat-contador chat-ayuda"
           required
         )
         button.chat__enviar(
@@ -55,7 +63,8 @@ if usuario
 
       div.chat__pie
         span#chat-contador.chat__contador 0/500
-        span.chat__ayuda Enter para enviar · Shift + Enter para nueva línea
+        span#chat-ayuda.chat__ayuda
+          | Enter para enviar · Shift + Enter para nueva línea · Los mensajes no se guardan
 
       p.chat__sesion-expirada(
         id="chat-sesion-expirada"

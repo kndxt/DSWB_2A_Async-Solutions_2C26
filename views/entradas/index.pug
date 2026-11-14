@@ -11,22 +11,17 @@ block content
 
   h1= esAdmin ? "Administración de entradas" : "Mis entradas"
 
-  //- Solo los administradores venden entradas, a nombre de un cliente.
-  if esAdmin
-    section
-      h2 Vender una entrada
+  //- Cualquier usuario con sesión compra entradas a su propio nombre.
+  section
+    h2 Comprar una entrada
 
-      form#form-venta(novalidate)
-        .campo
-          label(for="usuarioId") Titular de la entrada
-          select#usuarioId(name="usuarioId")
-            option(value="") Cargando usuarios...
-        .campo
-          label(for="eventoId") Evento
-          select#eventoId(name="eventoId")
-            option(value="") Cargando eventos...
+    form#form-compra(novalidate)
+      .campo
+        label(for="eventoId") Evento
+        select#eventoId(name="eventoId")
+          option(value="") Cargando eventos...
 
-        button#boton-vender(type="submit") Vender entrada
+      button#boton-comprar(type="submit") Comprar entrada
 
   section
     h2= esAdmin ? "Entradas registradas" : "Mis entradas compradas"

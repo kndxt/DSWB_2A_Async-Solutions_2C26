@@ -3,59 +3,139 @@
 .navbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 24px;
   max-width: 1100px;
-  margin: 0 auto 32px;
+  margin: 0 auto;
 }
 
 .navbar-brand,
-.navbar-links a {
+.navbar-links a,
+.navbar-sesion a {
   color: inherit;
   text-decoration: none;
 }
 
 .navbar-brand {
-  font-size: 1.15rem;
-  font-weight: 700;
-  letter-spacing: -0.03em;
+  color: var(--color-primario);
+  font-size: 1.3rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
 }
 
+.navbar-brand::after {
+  content: ".";
+  color: var(--color-acento);
+}
+
+/* Enlaces de navegación entre módulos */
 .navbar-links {
   display: flex;
+  flex: 1;
   align-items: center;
-  gap: 24px;
+  gap: 20px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.navbar-links a {
+.navbar-links a,
+.navbar-sesion a {
+  padding: 6px 2px;
   font-size: 0.95rem;
-  transition: opacity 0.2s ease;
+  font-weight: 500;
+  border-bottom: 2px solid transparent;
+  transition:
+    border-color 0.2s ease,
+    color 0.2s ease;
 }
 
-.navbar-links a:hover {
-  opacity: 0.65;
+.navbar-links a:hover,
+.navbar-sesion a:hover {
+  color: var(--color-primario-hover);
+  border-bottom-color: var(--color-acento);
 }
 
 .navbar a:focus-visible {
-  outline: 2px solid currentColor;
+  outline: 2px solid var(--color-primario-hover);
   outline-offset: 2px;
   border-radius: 2px;
 }
 
+/* Sesión: saludo y acceso, siempre visibles */
+.navbar-sesion {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-left: auto;
+}
+
 .navbar-usuario {
-  font-size: 0.95rem;
+  color: var(--color-texto-suave);
+  font-size: 0.92rem;
   font-weight: 600;
+}
+
+/* El botón de cerrar sesión es discreto, no un botón principal */
+.navbar-sesion button {
+  padding: 6px 12px;
+  color: var(--color-primario);
+  background-color: transparent;
+  border-color: var(--color-borde);
+  font-size: 0.85rem;
+}
+
+.navbar-sesion button:hover {
+  background-color: var(--color-encabezado);
+  box-shadow: none;
+}
+
+/* Botón hamburguesa: oculto en pantallas anchas */
+.navbar-toggle {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  width: 44px;
+  height: 44px;
+  padding: 0 10px;
+  background-color: transparent;
+  border-color: var(--color-borde);
+}
+
+.navbar-toggle:hover {
+  background-color: var(--color-encabezado);
+  box-shadow: none;
+}
+
+.navbar-toggle__barra {
+  display: block;
+  height: 2px;
+  background-color: var(--color-primario);
+  border-radius: 2px;
+  transition:
+    transform 0.2s ease,
+    opacity 0.2s ease;
+}
+
+/* Las tres barras se transforman en una X al abrir */
+.navbar--abierto .navbar-toggle__barra:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+
+.navbar--abierto .navbar-toggle__barra:nth-child(2) {
+  opacity: 0;
+}
+
+.navbar--abierto .navbar-toggle__barra:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
 }
 
 /* Menú principal de la página de inicio */
 
 .menu-principal ul {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 14px;
   margin: 24px 0;
   padding: 0;
   list-style: none;
@@ -63,16 +143,24 @@
 
 .menu-principal a {
   display: block;
-  padding: 12px 16px;
+  padding: 18px 20px;
   color: var(--color-texto);
   background-color: var(--color-superficie);
   border: 1px solid var(--color-borde);
-  border-radius: var(--radio);
+  border-radius: 12px;
+  box-shadow: var(--sombra-suave);
+  font-weight: 600;
   text-decoration: none;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    border-color 0.15s ease;
 }
 
 .menu-principal a:hover {
-  background-color: var(--color-encabezado);
+  border-color: var(--color-acento);
+  box-shadow: var(--sombra-media);
+  transform: translateY(-2px);
 }
 
 .menu-principal a:focus-visible {
@@ -80,25 +168,81 @@
   outline-offset: 3px;
 }
 
+/* Pantallas chicas */
+
 @media (max-width: 768px) {
   .navbar {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 16px;
+    flex-wrap: wrap;
+    gap: 12px;
   }
 
+  /* Sin JavaScript: los enlaces quedan visibles debajo de la marca */
   .navbar-links {
+    order: 4;
+    flex-basis: 100%;
     flex-wrap: wrap;
-    gap: 12px 16px;
+    gap: 10px 16px;
+  }
+
+  /* Con JavaScript: fila superior con marca, sesión y hamburguesa;
+     debajo, el menú colapsable solo con los módulos */
+  .navbar--js .navbar-toggle {
+    display: flex;
+    order: 3;
+  }
+
+  .navbar--js .navbar-links {
+    display: none;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    padding-top: 8px;
+    border-top: 1px solid var(--color-borde);
+  }
+
+  .navbar--js.navbar--abierto .navbar-links {
+    display: flex;
+  }
+
+  .navbar--js .navbar-links li {
+    border-bottom: 1px solid var(--color-borde);
+  }
+
+  .navbar--js .navbar-links li:last-child {
+    border-bottom: none;
+  }
+
+  .navbar--js .navbar-links a {
+    display: block;
+    padding: 12px 4px;
+    border-bottom: none;
+  }
+
+  .navbar--js .navbar-links a:hover {
+    background-color: var(--color-encabezado);
   }
 }
 
+/* El saludo se oculta en pantallas muy chicas para no saturar la barra */
 @media (max-width: 480px) {
-  .navbar {
-    margin-bottom: 24px;
+  .navbar-usuario {
+    display: none;
   }
 
-  .navbar-links {
-    gap: 16px;
+  .navbar-sesion {
+    gap: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .menu-principal a,
+  .navbar-links a,
+  .navbar-sesion a,
+  .navbar-toggle__barra {
+    transition: none;
+  }
+
+  .menu-principal a:hover {
+    transform: none;
   }
 }
