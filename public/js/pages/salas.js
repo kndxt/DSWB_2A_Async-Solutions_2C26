@@ -1,18 +1,10 @@
-// Vista de Salas: listado, detalle, alta y edición sobre la API /salas.
-// Usa apiFetch (apiClient.js) para consumir la API y renderTable (tabla.js) para la tabla.
-// Es un módulo ES: se carga con <script type="module"> y sus nombres no se mezclan con otros scripts.
-import { apiFetch, enviarJson } from "../core/apiClient.js";
-import { renderTable } from "../utils/tabla.js";
+import { renderTable, mostrarMensajeEnTabla } from "../utils/tabla.js";
+import { crearBoton, agregarDato, alCargarDOM } from "../utils/dom.js";
+import { leerNumero } from "../utils/formularios.js";
 import { formatearPrecio, textoOGuion } from "../utils/formato.js";
 import { mostrarMensaje, limpiarMensajes } from "../core/mensajes.js";
 import { esAdmin } from "../core/rol.js";
-
-const salasApi = {
-  listar: () => apiFetch("/salas"),
-  obtener: (id) => apiFetch(`/salas/${id}`),
-  crear: (datos) => apiFetch("/salas", enviarJson("POST", datos)),
-  actualizar: (id, datos) => apiFetch(`/salas/${id}`, enviarJson("PATCH", datos)),
-};
+import { salasApi } from "../api/salasApi.js";
 
 const ESTADOS_SALA = ["activa", "inactiva"];
 
@@ -38,25 +30,7 @@ const formulario = () => document.getElementById("form-sala");
 // ---- Listado ----
 
 // Muestra un texto (cargando, vacío o error) ocupando todo el ancho de la tabla.
-const mostrarEnTabla = (texto) => {
-  renderTable(tabla, COLUMNAS, []);
-  const fila = document.createElement("tr");
-  const celda = document.createElement("td");
-  celda.className = "vacio";
-  celda.colSpan = COLUMNAS.length;
-  celda.textContent = texto;
-  fila.append(celda);
-  cuerpoTabla.replaceChildren(fila);
-};
-
-const crearBoton = (texto, accion, id) => {
-  const boton = document.createElement("button");
-  boton.type = "button";
-  boton.textContent = texto;
-  boton.dataset.accion = accion;
-  boton.dataset.id = id;
-  return boton;
-};
+const mostrarEnTabla = (texto) => mostrarMensajeEnTabla(tabla, COLUMNAS, texto);
 
 // renderTable solo escribe texto: acá se agregan la clase de fila, la etiqueta de estado y los botones.
 const decorarFilas = (salas) => {
@@ -96,14 +70,6 @@ const cargarSalas = async () => {
 
 const cerrarDetalle = () => {
   document.getElementById("detalle-sala").hidden = true;
-};
-
-const agregarDato = (contenedor, etiqueta, valor) => {
-  const parrafo = document.createElement("p");
-  const negrita = document.createElement("strong");
-  negrita.textContent = `${etiqueta}: `;
-  parrafo.append(negrita, valor);
-  contenedor.append(parrafo);
 };
 
 const mostrarDetalle = async (id) => {
@@ -181,10 +147,6 @@ const abrirEdicion = async (id) => {
   }
 };
 
-// Un campo numérico vacío se envía sin valor (alta) o como null (edición), para que
-// sea el backend quien responda con su mensaje de dato obligatorio o inválido.
-const leerNumero = (texto, valorVacio) => (texto.trim() === "" ? valorVacio : Number(texto));
-
 const leerFormulario = (esEdicion) => {
   const campos = formulario().elements;
   const vacio = esEdicion ? null : undefined;
@@ -256,8 +218,4 @@ const iniciar = () => {
   cargarSalas();
 };
 
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", iniciar);
-} else {
-  iniciar();
-}
+alCargarDOM(iniciar);

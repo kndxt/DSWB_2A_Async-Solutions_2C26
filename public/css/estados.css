@@ -1,0 +1,59 @@
+/* Etiquetas de estado y rol, y filas atenuadas según el estado */
+
+.estado,
+.rol {
+  display: inline-block;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+/* Activo (usuarios y eventos: activo; salas: activa) */
+.estado-activo,
+.estado-activa {
+  background: var(--color-exito-fondo);
+  color: var(--color-exito-texto);
+}
+
+/* Inactivo o finalizado */
+.estado-inactivo,
+.estado-inactiva,
+.estado-finalizado {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.estado-cancelado {
+  background: var(--color-error-fondo);
+  color: var(--color-error-texto);
+}
+
+.rol-admin {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.rol-cliente {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+/* Filas atenuadas */
+.usuario-inactivo td,
+.sala-inactiva td,
+.evento-finalizado td {
+  color: #6b7280;
+  background: #f3f4f6;
+}
+
+.evento-cancelado td {
+  color: var(--color-error-texto);
+  background: #fef2f2;
+  text-decoration: line-through;
+}
+
+.evento-cancelado td:last-child,
+.evento-cancelado td.celda-estado {
+  text-decoration: none;
+}

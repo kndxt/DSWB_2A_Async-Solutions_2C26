@@ -13,13 +13,15 @@ const obtenerContenedor = () => {
   return contenedor;
 };
 
-export const mostrarMensaje = (tipo, texto, contenedor = obtenerContenedor()) => {
+export const mostrarMensaje = (tipo, texto, contenedor) => {
+  // Si no se indica un contenedor (o llega null), se usa #mensajes.
+  const destino = contenedor ?? obtenerContenedor();
   const esExito = tipo === "exito";
   const aviso = document.createElement("p");
   aviso.className = `mensaje ${esExito ? "mensaje-exito" : "mensaje-error"}`;
   aviso.setAttribute("role", esExito ? "status" : "alert");
   aviso.textContent = texto;
-  contenedor.replaceChildren(aviso);
+  destino.replaceChildren(aviso);
 };
 
 export const limpiarMensajes = (contenedor = document.getElementById("mensajes")) => {

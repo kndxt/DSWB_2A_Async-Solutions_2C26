@@ -3,79 +3,79 @@ extends layout
 block content
   h1 Salas
 
-  //- Mensajes de éxito y error (include compartido de F5.1)
-  include includes/mensajes
+  if !esAdmin
+    p Necesitás iniciar sesión como administrador para gestionar salas.
+  else
+    section.acciones
+      button#btn-nueva-sala(type="button") Nueva sala
 
-  section.acciones
-    button#btn-nueva-sala.solo-admin(type="button") Nueva sala
+    section#listado-salas
+      h2 Listado de salas
+      table#tabla-salas
+        thead
+          tr
+            th Nombre
+            th Capacidad
+            th Dirección
+            th Precio de reserva
+            th Estado
+            th Acciones
+        tbody#salas-body
+          tr
+            td(colspan="6") Cargando salas...
 
-  section#listado-salas
-    h2 Listado de salas
-    table#tabla-salas
-      thead
-        tr
-          th Nombre
-          th Capacidad
-          th Dirección
-          th Precio de reserva
-          th Estado
-          th Acciones
-      tbody#salas-body
-        tr
-          td(colspan="6") Cargando salas...
+    section#detalle-sala(hidden)
+      h2 Detalle de la sala
+      div#detalle-datos
+      button#btn-cerrar-detalle(type="button") Cerrar
 
-  section#detalle-sala(hidden)
-    h2 Detalle de la sala
-    dl#detalle-datos
-    button#btn-cerrar-detalle(type="button") Cerrar
+    section#formulario-sala(hidden)
+      h2#titulo-formulario Nueva sala
+      //- novalidate y sin min/max en los inputs: las validaciones de negocio
+      //- las hace el backend y sus mensajes son los que se muestran.
+      form#form-sala(novalidate)
+        input#sala-id(type="hidden" name="id")
 
-  section#formulario-sala.solo-admin(hidden)
-    h2#titulo-formulario Nueva sala
-    //- novalidate y sin min/max en los inputs: las validaciones de negocio
-    //- las hace el backend y sus mensajes son los que se muestran.
-    form#form-sala(novalidate)
-      input#sala-id(type="hidden" name="id")
+        fieldset
+          legend Datos de la sala
+          div.campo
+            label(for="nombre") Nombre
+            input#nombre(type="text" name="nombre" autocomplete="off")
+          div.campo
+            label(for="capacidad") Capacidad
+            input#capacidad(type="number" name="capacidad" step="any")
+          div.campo
+            label(for="direccion") Dirección
+            input#direccion(type="text" name="direccion" autocomplete="off")
+          div.campo
+            label(for="precioReserva") Precio de reserva
+            input#precioReserva(type="number" name="precioReserva" step="any")
+          //- Las salas nuevas siempre se crean activas: el estado solo se cambia al editar.
+          div.campo#campo-estado(hidden)
+            label(for="estado") Estado
+            select#estado(name="estado")
+              option(value="activa") activa
+              option(value="inactiva") inactiva
 
-      fieldset
-        legend Datos de la sala
-        div.campo
-          label(for="nombre") Nombre
-          input#nombre(type="text" name="nombre" autocomplete="off")
-        div.campo
-          label(for="capacidad") Capacidad
-          input#capacidad(type="number" name="capacidad" step="any")
-        div.campo
-          label(for="direccion") Dirección
-          input#direccion(type="text" name="direccion" autocomplete="off")
-        div.campo
-          label(for="precioReserva") Precio de reserva
-          input#precioReserva(type="number" name="precioReserva" step="any")
-        //- Las salas nuevas siempre se crean activas: el estado solo se cambia al editar.
-        div.campo#campo-estado(hidden)
-          label(for="estado") Estado
-          select#estado(name="estado")
-            option(value="activa") activa
-            option(value="inactiva") inactiva
+        fieldset
+          legend Responsable de la sala
+          div.campo
+            label(for="responsableNombre") Nombre
+            input#responsableNombre(type="text" name="responsableNombre" autocomplete="off")
+          div.campo
+            label(for="responsableApellido") Apellido
+            input#responsableApellido(type="text" name="responsableApellido" autocomplete="off")
+          div.campo
+            label(for="responsableTelefono") Teléfono
+            input#responsableTelefono(type="text" name="responsableTelefono" autocomplete="off")
+          div.campo
+            label(for="responsableEmail") Email
+            input#responsableEmail(type="text" name="responsableEmail" autocomplete="off")
 
-      fieldset
-        legend Responsable de la sala
-        div.campo
-          label(for="responsableNombre") Nombre
-          input#responsableNombre(type="text" name="responsableNombre" autocomplete="off")
-        div.campo
-          label(for="responsableApellido") Apellido
-          input#responsableApellido(type="text" name="responsableApellido" autocomplete="off")
-        div.campo
-          label(for="responsableTelefono") Teléfono
-          input#responsableTelefono(type="text" name="responsableTelefono" autocomplete="off")
-        div.campo
-          label(for="responsableEmail") Email
-          input#responsableEmail(type="text" name="responsableEmail" autocomplete="off")
-
-      div.botones
-        button#btn-guardar(type="submit") Guardar
-        button#btn-cancelar(type="button") Cancelar
+        div.botones
+          button#btn-guardar(type="submit") Guardar
+          button#btn-cancelar(type="button") Cancelar
 
 block scripts
-  script(type="module" src="/js/pages/salas.js")
-
+  if esAdmin
+    script(type="module" src="/js/pages/salas.js")

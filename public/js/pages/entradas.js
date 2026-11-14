@@ -1,8 +1,10 @@
-import { apiFetch } from "../core/apiClient.js";
 import { renderTable } from "../utils/tabla.js";
 import { limpiarMensajes, mostrarMensaje } from "../core/mensajes.js";
 import { formatearFechaHora } from "../utils/formato.js";
 import { esAdmin } from "../core/rol.js";
+import { entradasApi } from "../api/entradasApi.js";
+import { eventosApi } from "../api/eventosApi.js";
+import { usuariosApi } from "../api/usuariosApi.js";
 
 // ========================================
 // Elementos del DOM
@@ -10,6 +12,7 @@ import { esAdmin } from "../core/rol.js";
 
 const formVenta = document.querySelector("#form-venta");
 const campoEventoId = document.querySelector("#eventoId");
+const campoUsuarioId = document.querySelector("#usuarioId");
 const botonVender = document.querySelector("#boton-vender");
 
 const tabla = document.querySelector("#tabla-entradas");
@@ -20,29 +23,6 @@ const estado = document.querySelector("#estado");
 // ========================================
 
 let entradas = [];
-
-// ========================================
-// Comunicación con la API
-// ========================================
-
-const entradasApi = {
-  listar: () => apiFetch("/entradas"),
-  eventos: () => apiFetch("/eventos"),
-
-  vender: (datos) =>
-    apiFetch("/entradas", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(datos),
-    }),
-
-  cancelar: (id) =>
-    apiFetch(`/entradas/${id}/cancelar`, {
-      method: "PATCH",
-    }),
-};
 
 // ========================================
 // Utilidades
@@ -108,6 +88,18 @@ const columnas = [
     },
   },
   {
+    label: "Registrada por",
+    render: (celda, entrada) => {
+      const registrante = entrada.registradaPor;
+
+      const nombreCompleto = registrante
+        ? `${registrante.nombre ?? ""} ${registrante.apellido ?? ""}`.trim()
+        : "";
+
+      renderizarNombreEId(celda, nombreCompleto, obtenerId(registrante));
+    },
+  },
+  {
     label: "Estado",
     value: (entrada) => textoEstado(entrada.estado),
   },
@@ -126,6 +118,7 @@ const columnas = [
 
       const boton = document.createElement("button");
       boton.type = "button";
+      boton.className = "boton-peligro";
       boton.textContent = "Cancelar";
 
       boton.addEventListener("click", () => {
@@ -137,9 +130,16 @@ const columnas = [
   },
 ];
 
-// La columna "Usuario" solo la ve el administrador: para un cliente todas las entradas son suyas.
+// "Usuario" y "Registrada por" son solo del administrador. "Registrada por" aparece
+// únicamente cuando la API ya devuelve ese dato.
 const columnasVisibles = () =>
-  columnas.filter((columna) => esAdmin() || columna.label !== "Usuario");
+  columnas.filter((columna) => {
+    if (columna.label === "Usuario") return esAdmin();
+    if (columna.label === "Registrada por") {
+      return esAdmin() && entradas.some((entrada) => entrada.registradaPor);
+    }
+    return true;
+  });
 
 // ========================================
 // Renderizado y carga de entradas
@@ -191,7 +191,7 @@ function llenarSelect(select, textoInicial, items, etiqueta) {
 
 async function cargarOpciones() {
   try {
-    const eventos = await entradasApi.eventos();
+    const eventos = await eventosApi.listar();
 
     llenarSelect(
       campoEventoId,
@@ -201,6 +201,19 @@ async function cargarOpciones() {
     );
   } catch (error) {
     mostrarMensaje("error", `No se pudieron cargar los eventos: ${error.message}`);
+  }
+
+  try {
+    const usuarios = await usuariosApi.listar();
+
+    llenarSelect(
+      campoUsuarioId,
+      "Seleccioná un titular...",
+      usuarios.filter((usuario) => usuario.estado !== "inactivo"),
+      (usuario) => `${usuario.nombre} ${usuario.apellido} — ${usuario.email}`,
+    );
+  } catch (error) {
+    mostrarMensaje("error", `No se pudieron cargar los usuarios: ${error.message}`);
   }
 }
 
@@ -213,11 +226,18 @@ async function venderEntrada(event) {
   limpiarMensajes();
 
   const eventoId = campoEventoId.value.trim();
+  const usuarioId = campoUsuarioId.value.trim();
+
+  // El administrador siempre vende a nombre de alguien: el titular es obligatorio.
+  if (!usuarioId) {
+    mostrarMensaje("error", "Seleccioná el titular de la entrada.");
+    return;
+  }
 
   botonVender.disabled = true;
 
   try {
-    await entradasApi.vender({ eventoId });
+    await entradasApi.vender({ eventoId, usuarioId });
 
     formVenta.reset();
 
@@ -262,7 +282,9 @@ async function cancelarEntrada(id) {
 // Inicialización y eventos
 // ========================================
 
-formVenta.addEventListener("submit", venderEntrada);
+if (formVenta) {
+  formVenta.addEventListener("submit", venderEntrada);
+  cargarOpciones();
+}
 
-cargarOpciones();
 cargarEntradas();

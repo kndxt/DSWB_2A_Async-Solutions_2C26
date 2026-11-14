@@ -3,11 +3,9 @@ extends layout
 block content
   h1 Eventos
 
-  //- Mensajes de éxito y error (include compartido de F5.1)
-  include includes/mensajes
-
-  section.acciones
-    button#btn-nuevo-evento.solo-admin(type="button") Nuevo evento
+  if esAdmin
+    section.acciones
+      button#btn-nuevo-evento(type="button") Nuevo evento
 
   section#eventos-proximos
     h2 Eventos próximos
@@ -26,79 +24,81 @@ block content
   section#listado-eventos
     h2 Todos los eventos
     table#tabla-eventos
-        thead
-          tr
-            th Nombre
-            th Tipo
-            th Sala
-            th Evento (inicio - fin)
-            th Venta (inicio - fin)
-            th Precio de entrada
-            th Estado
-            th.solo-admin Acciones
-        tbody#eventos-body
-          tr
-            td(colspan="8") Cargando eventos...
+      thead
+        tr
+          th Nombre
+          th Tipo
+          th Sala
+          th Evento (inicio - fin)
+          th Venta (inicio - fin)
+          th Precio de entrada
+          th Estado
+          if esAdmin
+            th Acciones
+      tbody#eventos-body
+        tr
+          td(colspan=esAdmin ? 8 : 7) Cargando eventos...
 
-  section#formulario-evento.solo-admin(hidden)
-    h2#titulo-formulario Nuevo evento
-    //- novalidate y sin min/max: las reglas de negocio las valida el backend
-    //- y son sus mensajes los que se muestran.
-    form#form-evento(novalidate)
-      input#evento-id(type="hidden" name="id")
+  if esAdmin
+    section#formulario-evento(hidden)
+      h2#titulo-formulario Nuevo evento
+      //- novalidate y sin min/max: las reglas de negocio las valida el backend
+      //- y son sus mensajes los que se muestran.
+      form#form-evento(novalidate)
+        input#evento-id(type="hidden" name="id")
 
-      fieldset
-        legend Datos del evento
-        div.campo
-          label(for="nombre") Nombre
-          input#nombre(type="text" name="nombre" autocomplete="off")
-        div.campo
-          label(for="tipo") Tipo
-          input#tipo(type="text" name="tipo" autocomplete="off")
-        div.campo
-          label(for="descripcion") Descripción
-          textarea#descripcion(name="descripcion" rows="3")
-        div.campo
-          label(for="precioEntrada") Precio de entrada
-          input#precioEntrada(type="number" name="precioEntrada" step="any")
+        fieldset
+          legend Datos del evento
+          div.campo
+            label(for="nombre") Nombre
+            input#nombre(type="text" name="nombre" autocomplete="off")
+          div.campo
+            label(for="tipo") Tipo
+            input#tipo(type="text" name="tipo" autocomplete="off")
+          div.campo
+            label(for="descripcion") Descripción
+            textarea#descripcion(name="descripcion" rows="3")
+          div.campo
+            label(for="precioEntrada") Precio de entrada
+            input#precioEntrada(type="number" name="precioEntrada" step="any")
 
-      fieldset
-        legend Fechas
-        div.campo
-          label(for="fechaInicio") Inicio del evento
-          input#fechaInicio(type="datetime-local" name="fechaInicio")
-        div.campo
-          label(for="fechaFin") Fin del evento
-          input#fechaFin(type="datetime-local" name="fechaFin")
-        div.campo
-          label(for="fechaInicioVenta") Inicio de la venta
-          input#fechaInicioVenta(type="datetime-local" name="fechaInicioVenta")
-        div.campo
-          label(for="fechaFinVenta") Fin de la venta
-          input#fechaFinVenta(type="datetime-local" name="fechaFinVenta")
+        fieldset
+          legend Fechas
+          div.campo
+            label(for="fechaInicio") Inicio del evento
+            input#fechaInicio(type="datetime-local" name="fechaInicio")
+          div.campo
+            label(for="fechaFin") Fin del evento
+            input#fechaFin(type="datetime-local" name="fechaFin")
+          div.campo
+            label(for="fechaInicioVenta") Inicio de la venta
+            input#fechaInicioVenta(type="datetime-local" name="fechaInicioVenta")
+          div.campo
+            label(for="fechaFinVenta") Fin de la venta
+            input#fechaFinVenta(type="datetime-local" name="fechaFinVenta")
 
-      fieldset
-        legend Relaciones
-        div.campo
-          label(for="salaId") Sala
-          select#salaId(name="salaId")
-            option(value="") Cargando salas...
-          small Solo se pueden usar salas activas.
-        div.campo#campo-usuario
-          label(for="usuarioId") Usuario responsable
-          select#usuarioId(name="usuarioId")
-            option(value="") Cargando usuarios...
-          small Solo se pueden usar usuarios activos.
-        div.campo#campo-estado(hidden)
-          label(for="estado") Estado
-          select#estado(name="estado")
-            option(value="activo") activo
-            option(value="finalizado") finalizado
-            option(value="cancelado") cancelado
+        fieldset
+          legend Relaciones
+          div.campo
+            label(for="salaId") Sala
+            select#salaId(name="salaId")
+              option(value="") Cargando salas...
+            small Solo se pueden usar salas activas.
+          div.campo#campo-usuario
+            label(for="usuarioId") Usuario responsable
+            select#usuarioId(name="usuarioId")
+              option(value="") Cargando usuarios...
+            small Solo se pueden usar usuarios activos.
+          div.campo#campo-estado(hidden)
+            label(for="estado") Estado
+            select#estado(name="estado")
+              option(value="activo") activo
+              option(value="finalizado") finalizado
+              option(value="cancelado") cancelado
 
-      div.botones
-        button#btn-guardar(type="submit") Guardar
-        button#btn-cancelar-formulario(type="button") Cancelar
+        div.botones
+          button#btn-guardar(type="submit") Guardar
+          button#btn-cancelar-formulario(type="button") Cancelar
 
 block scripts
   script(type="module" src="/js/pages/eventos.js")

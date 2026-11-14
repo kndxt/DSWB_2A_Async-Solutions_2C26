@@ -1,0 +1,73 @@
+/* Variables, reset y estructura general */
+
+:root {
+  --color-texto: #333;
+  --color-texto-suave: #777;
+  --color-fondo: #f9f9f9;
+  --color-superficie: #fff;
+  --color-borde: #ccc;
+  --color-encabezado: #eee;
+  --color-primario: #333;
+  --color-primario-hover: #555;
+  --color-exito-fondo: #dcfce7;
+  --color-exito-texto: #166534;
+  --color-error-fondo: #fee2e2;
+  --color-error-texto: #991b1b;
+  --radio: 4px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 24px;
+  font-family: Arial, sans-serif;
+  color: var(--color-texto);
+  background-color: var(--color-fondo);
+}
+
+main {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+h1,
+h2 {
+  color: var(--color-texto);
+}
+
+[hidden] {
+  display: none !important;
+}
+
+/* Elementos solo para administradores (el permiso real lo verifica el backend) */
+
+.vacio {
+  color: var(--color-texto-suave);
+  font-style: italic;
+}
+
+/* Resumen de información de un evento */
+.resumen {
+  padding: 15px;
+  margin-bottom: 20px;
+  background-color: #eef;
+  border-radius: 5px;
+}
+
+.resumen p {
+  margin: 5px 0;
+  font-size: 16px;
+}
+
+.inicio {
+  margin-top: 24px;
+}
+
+@media (max-width: 480px) {
+  body {
+    padding: 16px;
+  }
+}

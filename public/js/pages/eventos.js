@@ -1,19 +1,14 @@
-// Vista de Eventos: listado, próximos, alta, edición y cancelación sobre la API /eventos.
-// Módulo ES: usa apiFetch desde apiClient.js, igual que salas.js.
-import { apiFetch, enviarJson } from "../core/apiClient.js";
+import { crearBoton, alCargarDOM } from "../utils/dom.js";
+import { leerNumero } from "../utils/formularios.js";
 import { textoOGuion, formatearPrecio, formatearFechaHora } from "../utils/formato.js";
 import { mostrarMensaje, limpiarMensajes } from "../core/mensajes.js";
 import { esAdmin } from "../core/rol.js";
+import { eventosApi } from "../api/eventosApi.js";
+import { salasApi } from "../api/salasApi.js";
+import { usuariosApi } from "../api/usuariosApi.js";
 
-const eventosApi = {
-  listar: () => apiFetch("/eventos"),
-  proximos: () => apiFetch("/eventos/proximos"),
-  obtener: (id) => apiFetch(`/eventos/${id}`),
-  crear: (datos) => apiFetch("/eventos", enviarJson("POST", datos)),
-  actualizar: (id, datos) => apiFetch(`/eventos/${id}`, enviarJson("PATCH", datos)),
-  salas: () => apiFetch("/salas"),
-  usuarios: () => apiFetch("/usuarios"),
-};
+// Cantidad de columnas de "Todos los eventos": el administrador tiene además acciones.
+const COLUMNAS_LISTADO = esAdmin() ? 8 : 7;
 
 const CAMPOS_FECHA = ["fechaInicio", "fechaFin", "fechaInicioVenta", "fechaFinVenta"];
 
@@ -61,13 +56,13 @@ const crearEstado = (estado) => {
   return celda;
 };
 
-const crearBoton = (texto, accion, id) => {
-  const boton = document.createElement("button");
-  boton.type = "button";
-  boton.textContent = texto;
-  boton.dataset.accion = accion;
-  boton.dataset.id = id;
-  return boton;
+// Enlace al resumen de entradas del evento (vendidas y disponibles). Solo admin.
+const crearEnlaceResumen = (id) => {
+  const enlace = document.createElement("a");
+  enlace.href = `/vistas/entradas/${id}`;
+  enlace.className = "boton";
+  enlace.textContent = "Ver entradas";
+  return enlace;
 };
 
 const filaMensaje = (texto, columnas) => {
@@ -85,17 +80,6 @@ const crearFilaEvento = (evento) => {
   const fila = document.createElement("tr");
   if (claseDeFila(evento)) fila.className = claseDeFila(evento);
 
-  const acciones = document.createElement("td");
-  acciones.className = "solo-admin";
-  if (esAdmin()) {
-    acciones.append(crearBoton("Editar", "editar", evento.id));
-    // Solo se puede cancelar un evento activo; el registro y su reserva se conservan.
-    if (evento.estado === "activo") {
-      acciones.append(" ", crearBoton("Cancelar", "cancelar", evento.id));
-    }
-  }
-  acciones.dataset.nombre = evento.nombre;
-
   fila.append(
     crearCelda(evento.nombre),
     crearCelda(textoOGuion(evento.tipo)),
@@ -104,8 +88,20 @@ const crearFilaEvento = (evento) => {
     crearCelda(formatearRango(evento.fechaInicioVenta, evento.fechaFinVenta)),
     crearCelda(formatearPrecio(evento.precioEntrada)),
     crearEstado(evento.estado),
-    acciones,
   );
+
+  // La columna de acciones solo existe para el administrador.
+  if (esAdmin()) {
+    const acciones = document.createElement("td");
+    acciones.dataset.nombre = evento.nombre;
+    acciones.append(crearBoton("Editar", "editar", evento.id));
+    acciones.append(" ", crearEnlaceResumen(evento.id));
+    // Solo se puede cancelar un evento activo; el registro y su reserva se conservan.
+    if (evento.estado === "activo") {
+      acciones.append(" ", crearBoton("Cancelar", "cancelar", evento.id));
+    }
+    fila.append(acciones);
+  }
   return fila;
 };
 
@@ -126,7 +122,7 @@ const crearFilaProximo = (evento) => {
 
 const cargarSalas = async () => {
   try {
-    const salas = await eventosApi.salas();
+    const salas = await salasApi.listar();
     salasPorId = new Map((Array.isArray(salas) ? salas : []).map((sala) => [sala.id, sala]));
   } catch (error) {
     // Sin nombres de sala se muestran los ids; los listados siguen funcionando.
@@ -156,7 +152,7 @@ let usuariosPorId = new Map();
 
 const cargarUsuarios = async () => {
   try {
-    const usuarios = await eventosApi.usuarios();
+    const usuarios = await usuariosApi.listar();
     usuariosPorId = new Map((Array.isArray(usuarios) ? usuarios : []).map((u) => [u.id, u]));
   } catch (error) {
     usuariosPorId = new Map();
@@ -187,12 +183,12 @@ const cargarListado = async () => {
   try {
     const eventos = await eventosApi.listar();
     if (!Array.isArray(eventos) || eventos.length === 0) {
-      cuerpo.replaceChildren(filaMensaje("No hay eventos registrados.", 8));
+      cuerpo.replaceChildren(filaMensaje("No hay eventos registrados.", COLUMNAS_LISTADO));
       return;
     }
     cuerpo.replaceChildren(...eventos.map(crearFilaEvento));
   } catch (error) {
-    cuerpo.replaceChildren(filaMensaje("No se pudieron cargar los eventos.", 8));
+    cuerpo.replaceChildren(filaMensaje("No se pudieron cargar los eventos.", COLUMNAS_LISTADO));
     mostrarMensaje("error", error.message);
   }
 };
@@ -212,9 +208,11 @@ const cargarProximos = async () => {
   }
 };
 
-// Las salas se cargan primero para poder mostrar sus nombres en ambas tablas.
+// Salas y usuarios solo los puede consultar un administrador (la API responde 403 a un cliente).
 const cargarTodo = async () => {
-  await Promise.all([cargarSalas(), esAdmin() ? cargarUsuarios() : Promise.resolve()]);
+  if (esAdmin()) {
+    await Promise.all([cargarSalas(), cargarUsuarios()]);
+  }
   await Promise.all([cargarListado(), cargarProximos()]);
 };
 
@@ -265,10 +263,6 @@ const abrirEdicion = async (id) => {
     mostrarMensaje("error", error.message);
   }
 };
-
-// Un campo numérico vacío se envía sin valor (alta) o como null (edición), para que
-// sea el backend quien responda con su mensaje de dato obligatorio o inválido.
-const leerNumero = (texto, valorVacio) => (texto.trim() === "" ? valorVacio : Number(texto));
 
 const leerFormulario = (esEdicion) => {
   const campos = formulario().elements;
@@ -345,12 +339,15 @@ const cancelarEvento = async (id, nombre) => {
 // ---- Inicio ----
 
 const iniciar = () => {
-  document.getElementById("btn-nuevo-evento").addEventListener("click", abrirAlta);
-  document.getElementById("btn-cancelar-formulario").addEventListener("click", () => {
-    limpiarMensajes();
-    cerrarFormulario();
-  });
-  formulario().addEventListener("submit", guardarEvento);
+  // El formulario y su botón solo existen en la página del administrador.
+  if (esAdmin()) {
+    document.getElementById("btn-nuevo-evento").addEventListener("click", abrirAlta);
+    document.getElementById("btn-cancelar-formulario").addEventListener("click", () => {
+      limpiarMensajes();
+      cerrarFormulario();
+    });
+    formulario().addEventListener("submit", guardarEvento);
+  }
 
   document.getElementById("eventos-body").addEventListener("click", (evento) => {
     const boton = evento.target.closest("button[data-accion]");

@@ -1,18 +1,8 @@
-// Vista de Usuarios: listado, detalle, alta, edición, cambio de estado y rol sobre la API /usuarios.
-import { apiFetch, enviarJson } from "../core/apiClient.js";
-import { renderTable } from "../utils/tabla.js";
+import { renderTable, mostrarMensajeEnTabla } from "../utils/tabla.js";
+import { crearBoton, agregarDato, alCargarDOM } from "../utils/dom.js";
 import { textoOGuion } from "../utils/formato.js";
 import { mostrarMensaje, limpiarMensajes } from "../core/mensajes.js";
-
-const usuariosApi = {
-  listar: () => apiFetch("/usuarios"),
-  obtener: (id) => apiFetch(`/usuarios/${id}`),
-  crear: (datos) => apiFetch("/usuarios", enviarJson("POST", datos)),
-  actualizar: (id, datos) => apiFetch(`/usuarios/${id}`, enviarJson("PUT", datos)),
-  cambiarEstado: (id, estado) =>
-    apiFetch(`/usuarios/${id}/estado`, enviarJson("PATCH", { estado })),
-  cambiarRol: (id, rol) => apiFetch(`/usuarios/${id}/rol`, enviarJson("PATCH", { rol })),
-};
+import { usuariosApi } from "../api/usuariosApi.js";
 
 const ESTADOS_USUARIO = ["activo", "inactivo"];
 
@@ -36,27 +26,8 @@ const tabla = document.getElementById("tabla-usuarios");
 const cuerpoTabla = tabla.querySelector("tbody");
 const formulario = () => document.getElementById("form-usuario");
 
-// ---- Listado ----
-
-const mostrarEnTabla = (texto) => {
-  renderTable(tabla, COLUMNAS, []);
-  const fila = document.createElement("tr");
-  const celda = document.createElement("td");
-  celda.className = "vacio";
-  celda.colSpan = COLUMNAS.length;
-  celda.textContent = texto;
-  fila.append(celda);
-  cuerpoTabla.replaceChildren(fila);
-};
-
-const crearBoton = (texto, accion, id) => {
-  const boton = document.createElement("button");
-  boton.type = "button";
-  boton.textContent = texto;
-  boton.dataset.accion = accion;
-  boton.dataset.id = id;
-  return boton;
-};
+// Muestra un texto (cargando, vacío o error) ocupando todo el ancho de la tabla.
+const mostrarEnTabla = (texto) => mostrarMensajeEnTabla(tabla, COLUMNAS, texto);
 
 // renderTable solo escribe texto: acá se agregan la clase de fila, la etiqueta de estado, la de rol y los botones.
 const decorarFilas = (usuarios) => {
@@ -124,14 +95,6 @@ const cargarUsuarios = async () => {
 
 const cerrarDetalle = () => {
   document.getElementById("detalle-usuario").hidden = true;
-};
-
-const agregarDato = (contenedor, etiqueta, valor) => {
-  const parrafo = document.createElement("p");
-  const negrita = document.createElement("strong");
-  negrita.textContent = `${etiqueta}: `;
-  parrafo.append(negrita, valor);
-  contenedor.append(parrafo);
 };
 
 const mostrarDetalle = async (id) => {
@@ -313,12 +276,9 @@ const iniciar = () => {
     if (accion === "hacer-cliente") cambiarRol(id, boton.dataset.nombre, "cliente");
   });
 
-  mostrarEnTabla("Cargando usuarios...");
+  mostrarMensajeEnTabla("Cargando usuarios...");
   cargarUsuarios();
 };
 
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", iniciar);
-} else {
-  iniciar();
-}
+mostrarEnTabla("Cargando usuarios...");
+cargarUsuarios();

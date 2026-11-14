@@ -1,0 +1,54 @@
+/* Formularios */
+
+fieldset {
+  margin: 0 0 20px;
+  padding: 16px;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+}
+
+legend {
+  padding: 0 8px;
+  font-weight: 600;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.campo label {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.campo input,
+.campo select,
+.campo textarea {
+  width: 100%;
+  max-width: 420px;
+  padding: 10px 12px;
+  font: inherit;
+  color: inherit;
+  background-color: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+}
+
+.campo input:focus-visible,
+.campo select:focus-visible,
+.campo textarea:focus-visible {
+  outline: 2px solid var(--color-primario-hover);
+  outline-offset: 2px;
+}
+
+.campo small {
+  color: var(--color-texto-suave);
+}
+
+#formulario-login,
+#formulario-registro {
+  margin-top: 24px;
+}

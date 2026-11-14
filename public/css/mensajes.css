@@ -1,0 +1,17 @@
+/* Mensajes de éxito y error */
+
+.mensaje {
+  margin: 12px 0;
+  padding: 10px 12px;
+  border-radius: var(--radio);
+}
+
+.mensaje-exito {
+  color: var(--color-exito-texto);
+  background-color: var(--color-exito-fondo);
+}
+
+.mensaje-error {
+  color: var(--color-error-texto);
+  background-color: var(--color-error-fondo);
+}

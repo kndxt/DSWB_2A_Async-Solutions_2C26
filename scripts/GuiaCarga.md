@@ -8,21 +8,21 @@ Los datos se generan con código (`scripts/seeds/`), se validan contra los esque
 
 El proyecto usa bases separadas para que las pruebas no afecten al sitio desplegado.
 
-| Base | Uso |
-|---|---|
-| `urbana_cult` | Producción: la usa el servicio desplegado en Render. |
+| Base              | Uso                                                    |
+| ----------------- | ------------------------------------------------------ |
+| `urbana_cult`     | Producción: la usa el servicio desplegado en Render.   |
 | `urbana_cult_dev` | Desarrollo: la usa cada integrante en su `.env` local. |
 
 Para trabajar sin Atlas, `npm run seed:local` carga una base MongoDB instalada en la propia máquina.
 
 ## Comandos
 
-| Comando | Qué hace |
-|---|---|
-| `npm run seed:verificar` | Genera y valida los datos sin conectarse a ninguna base. Sirve para comprobar que siguen siendo compatibles con los modelos. |
-| `npm run seed` | Carga los datos en la base que indica `MONGODB_URI` (destino `atlas`). |
-| `npm run seed:local` | Carga los datos en una base local. Usa `MONGODB_URI_LOCAL` si está definida; si no, `mongodb://127.0.0.1:27017/urbana_cult_dev`. |
-| `node scripts/db-testing.js` | Atajo equivalente a `npm run seed:local`. |
+| Comando                      | Qué hace                                                                                                                         |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run seed:verificar`     | Genera y valida los datos sin conectarse a ninguna base. Sirve para comprobar que siguen siendo compatibles con los modelos.     |
+| `npm run seed`               | Carga los datos en la base que indica `MONGODB_URI` (destino `atlas`).                                                           |
+| `npm run seed:local`         | Carga los datos en una base local. Usa `MONGODB_URI_LOCAL` si está definida; si no, `mongodb://127.0.0.1:27017/urbana_cult_dev`. |
+| `node scripts/db-testing.js` | Atajo equivalente a `npm run seed:local`.                                                                                        |
 
 Para cargar la base de producción hay que apuntar `MONGODB_URI` a `urbana_cult` y agregar `--permitir-produccion`. Conviene hacerlo sin modificar el `.env`, definiendo la variable solo para ese comando (en Git Bash, con comillas simples):
 
@@ -54,12 +54,12 @@ Las fechas se calculan respecto del momento en que se ejecuta el seed. Un evento
 
 Hay 20 usuarios. Los últimos dos (`usuario19` y `usuario20`) están inactivos.
 
-| Dato | Valor |
-|---|---|
-| Email | `usuario1@example.com` a `usuario20@example.com` |
+| Dato       | Valor                                                               |
+| ---------- | ------------------------------------------------------------------- |
+| Email      | `usuario1@example.com` a `usuario20@example.com`                    |
 | Contraseña | `Prueba001!` a `Prueba020!` (el número coincide con el del usuario) |
-| Estado | activos del 1 al 18, inactivos 19 y 20 |
-| Rol | `usuario1` es administrador; del 2 al 20 son clientes |
+| Estado     | activos del 1 al 18, inactivos 19 y 20                              |
+| Rol        | `usuario1` es administrador; del 2 al 20 son clientes               |
 
 El primer usuario (`usuario1@example.com`) es **administrador** y el resto son **clientes**. Las contraseñas de prueba son ficticias pero están **hasheadas con bcrypt** desde F7.2. La contraseña de prueba es `Prueba001!` para el usuario 1, `Prueba002!` para el 2, y así sucesivamente.
 
@@ -76,14 +76,14 @@ Hay 20 salas llamadas `Sala de prueba 1` a `Sala de prueba 20`.
 
 El nombre de cada evento indica su escenario.
 
-| Evento | Cantidad | Estado y fechas | Entradas vendidas |
-|---|---|---|---|
-| `Evento finalizado 1` a `5` | 5 | estado `finalizado`, fechas pasadas | 5 cada uno |
-| `Evento venta vencida 6` y `7` | 2 | `activo`, evento futuro, venta cerrada ayer | 5 cada uno |
-| `Evento cancelado 8` a `10` | 3 | estado `cancelado`, evento futuro | 5 cada uno |
-| `Evento pocos cupos 11` | 1 | `activo`, venta abierta, en la sala de 30 lugares | 27 (quedan 3 disponibles) |
-| `Evento agotado 12` | 1 | `activo`, venta abierta, en la sala de 30 lugares | 30 (quedan 0 disponibles) |
-| `Evento normal 13` a `20` | 8 | `activo`, venta abierta | 5 cada uno |
+| Evento                         | Cantidad | Estado y fechas                                   | Entradas vendidas         |
+| ------------------------------ | -------- | ------------------------------------------------- | ------------------------- |
+| `Evento finalizado 1` a `5`    | 5        | estado `finalizado`, fechas pasadas               | 5 cada uno                |
+| `Evento venta vencida 6` y `7` | 2        | `activo`, evento futuro, venta cerrada ayer       | 5 cada uno                |
+| `Evento cancelado 8` a `10`    | 3        | estado `cancelado`, evento futuro                 | 5 cada uno                |
+| `Evento pocos cupos 11`        | 1        | `activo`, venta abierta, en la sala de 30 lugares | 27 (quedan 3 disponibles) |
+| `Evento agotado 12`            | 1        | `activo`, venta abierta, en la sala de 30 lugares | 30 (quedan 0 disponibles) |
+| `Evento normal 13` a `20`      | 8        | `activo`, venta abierta                           | 5 cada uno                |
 
 Cada evento dura 3 horas y empieza a las 20:00. Además de las vendidas, cada evento tiene una entrada cancelada, que no ocupa lugar.
 
@@ -95,26 +95,26 @@ Los resultados esperados corresponden a las reglas de negocio vigentes. Los mens
 
 Para operar sobre un evento hace falta su `id`: se obtiene con `GET /eventos` o desde `/vistas/eventos`.
 
-| Escenario | Cómo reproducirlo | Resultado esperado |
-|---|---|---|
-| Disponibilidad con pocos cupos | `GET /entradas/disponibles/:id` de `Evento pocos cupos 11` | `disponibles: 3` |
-| Evento agotado | `GET /entradas/disponibles/:id` de `Evento agotado 12` | `disponibles: 0` |
-| Venta con evento agotado | `POST /entradas` con ese evento y un usuario activo | 400, el evento alcanzó su capacidad máxima |
-| Llenar los últimos cupos | Vender 3 entradas del evento con pocos cupos y una cuarta | Las tres primeras responden 201; la cuarta, 400 |
-| Cancelar libera el lugar | `PATCH /entradas/:id/cancelar` sobre una entrada vendida del evento agotado y volver a consultar | La disponibilidad pasa de 0 a 1; se puede vender de nuevo |
-| Cancelar dos veces | Repetir la cancelación de la misma entrada | 400, la entrada ya está cancelada |
-| Evento finalizado | `POST /entradas` sobre `Evento finalizado 1` | 400, el evento no permite nuevas ventas |
-| Venta vencida | `POST /entradas` sobre `Evento venta vencida 6` | 400, el evento no permite nuevas ventas |
-| Evento cancelado | `POST /entradas` sobre `Evento cancelado 8` | 400, el evento no permite nuevas ventas |
-| Cliente inactivo | `POST /entradas` sobre un evento normal con el `id` de `usuario19` | 400, el cliente está inactivo |
-| Venta normal | `POST /entradas` sobre `Evento normal 13` con un usuario activo | 201, y baja un cupo la disponibilidad |
-| Login de usuario inactivo | `POST /usuarios/login` con `usuario19@example.com` y `Prueba019!` | 403, usuario inactivo |
-| Login correcto | `POST /usuarios/login` con `usuario1@example.com` y `Prueba001!` | 200 |
-| Sala inactiva | `POST /eventos` con el `id` de `Sala de prueba 16` | 400, la sala está inactiva |
-| Superposición de eventos | `POST /eventos` en `Sala de prueba 1` con fechas que se pisen con las del evento con pocos cupos | 400, el evento se superpone con otro |
-| Baja de sala con eventos próximos | `PUT /salas/:id` con `estado: "inactiva"` sobre `Sala de prueba 2` | 400, tiene eventos próximos activos |
-| Baja de sala sin eventos próximos | El mismo pedido sobre `Sala de prueba 12` o `Sala de prueba 9` | 200 |
-| Reservas | `GET /reservas` | 20 reservas, una por evento, a nombre de usuarios activos |
+| Escenario                         | Cómo reproducirlo                                                                                | Resultado esperado                                        |
+| --------------------------------- | ------------------------------------------------------------------------------------------------ | --------------------------------------------------------- |
+| Disponibilidad con pocos cupos    | `GET /entradas/disponibles/:id` de `Evento pocos cupos 11`                                       | `disponibles: 3`                                          |
+| Evento agotado                    | `GET /entradas/disponibles/:id` de `Evento agotado 12`                                           | `disponibles: 0`                                          |
+| Venta con evento agotado          | `POST /entradas` con ese evento y un usuario activo                                              | 400, el evento alcanzó su capacidad máxima                |
+| Llenar los últimos cupos          | Vender 3 entradas del evento con pocos cupos y una cuarta                                        | Las tres primeras responden 201; la cuarta, 400           |
+| Cancelar libera el lugar          | `PATCH /entradas/:id/cancelar` sobre una entrada vendida del evento agotado y volver a consultar | La disponibilidad pasa de 0 a 1; se puede vender de nuevo |
+| Cancelar dos veces                | Repetir la cancelación de la misma entrada                                                       | 400, la entrada ya está cancelada                         |
+| Evento finalizado                 | `POST /entradas` sobre `Evento finalizado 1`                                                     | 400, el evento no permite nuevas ventas                   |
+| Venta vencida                     | `POST /entradas` sobre `Evento venta vencida 6`                                                  | 400, el evento no permite nuevas ventas                   |
+| Evento cancelado                  | `POST /entradas` sobre `Evento cancelado 8`                                                      | 400, el evento no permite nuevas ventas                   |
+| Cliente inactivo                  | `POST /entradas` sobre un evento normal con el `id` de `usuario19`                               | 400, el cliente está inactivo                             |
+| Venta normal                      | `POST /entradas` sobre `Evento normal 13` con un usuario activo                                  | 201, y baja un cupo la disponibilidad                     |
+| Login de usuario inactivo         | `POST /usuarios/login` con `usuario19@example.com` y `Prueba019!`                                | 403, usuario inactivo                                     |
+| Login correcto                    | `POST /usuarios/login` con `usuario1@example.com` y `Prueba001!`                                 | 200                                                       |
+| Sala inactiva                     | `POST /eventos` con el `id` de `Sala de prueba 16`                                               | 400, la sala está inactiva                                |
+| Superposición de eventos          | `POST /eventos` en `Sala de prueba 1` con fechas que se pisen con las del evento con pocos cupos | 400, el evento se superpone con otro                      |
+| Baja de sala con eventos próximos | `PATCH /salas/:id` con `estado: "inactiva"` sobre `Sala de prueba 2`                             | 409, tiene eventos próximos activos                       |
+| Baja de sala sin eventos próximos | El mismo pedido sobre `Sala de prueba 12` o `Sala de prueba 9`                                   | 200                                                       |
+| Reservas                          | `GET /reservas`                                                                                  | 20 reservas, una por evento, a nombre de usuarios activos |
 
 ## Pendientes
 

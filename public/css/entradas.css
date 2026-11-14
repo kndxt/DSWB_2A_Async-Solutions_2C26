@@ -1,0 +1,30 @@
+/* Vista de entradas: formulario de venta */
+
+#form-venta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 16px;
+  max-width: 720px;
+  padding: 20px;
+  margin-top: 16px;
+  background-color: var(--color-superficie);
+  border: 1px solid #e2e2e2;
+  border-radius: 8px;
+}
+
+#form-venta .campo input,
+#form-venta .campo select {
+  max-width: none;
+}
+
+#form-venta button {
+  justify-self: start;
+  align-self: end;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 600px) {
+  #form-venta {
+    grid-template-columns: 1fr;
+  }
+}

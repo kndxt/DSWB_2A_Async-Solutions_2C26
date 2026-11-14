@@ -1,10 +1,8 @@
-import { apiFetch, enviarJson } from "../core/apiClient.js";
-import { mostrarMensaje as mostrar } from "../core/mensajes.js";
+import { mostrarMensaje } from "../core/mensajes.js";
+import { usuariosApi } from "../api/usuariosApi.js";
 
 const formulario = document.querySelector("#form-registro");
-const contenedorMensaje = document.querySelector("#mensaje-registro");
 const botonRegistro = document.querySelector("#btn-registro");
-const mostrarMensaje = (tipo, texto) => mostrar(tipo, texto, contenedorMensaje);
 
 formulario.addEventListener("submit", async (evento) => {
   evento.preventDefault();
@@ -21,7 +19,7 @@ formulario.addEventListener("submit", async (evento) => {
   mostrarMensaje("exito", "Creando cuenta...");
 
   try {
-    await apiFetch("/usuarios", enviarJson("POST", datos));
+    await usuariosApi.crear(datos);
 
     mostrarMensaje("exito", "Cuenta creada. Redirigiendo al inicio de sesión...");
     setTimeout(() => {
@@ -29,7 +27,6 @@ formulario.addEventListener("submit", async (evento) => {
     }, 1500);
   } catch (error) {
     mostrarMensaje("error", error.message || "No se pudo crear la cuenta.");
-  } finally {
     botonRegistro.disabled = false;
   }
 });

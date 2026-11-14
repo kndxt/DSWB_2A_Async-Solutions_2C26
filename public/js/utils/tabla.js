@@ -1,4 +1,3 @@
-
 /**
  * Construye una tabla HTML a partir de columnas y filas de datos.
  *
@@ -87,4 +86,18 @@ function crearCelda(columna, row) {
   }
 
   return celda;
+}
+
+/**
+ * Muestra un mensaje (cargando, vacío o error) ocupando todo el ancho de la tabla.
+ */
+export function mostrarMensajeEnTabla(tabla, columnas, texto) {
+  renderTable(tabla, columnas, []);
+  const fila = document.createElement("tr");
+  const celda = document.createElement("td");
+  celda.className = "vacio";
+  celda.colSpan = columnas.length;
+  celda.textContent = texto;
+  fila.append(celda);
+  tabla.querySelector("tbody").replaceChildren(fila);
 }

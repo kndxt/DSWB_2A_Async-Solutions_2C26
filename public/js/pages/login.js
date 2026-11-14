@@ -1,10 +1,8 @@
-import { apiFetch, enviarJson } from "../core/apiClient.js";
-import { mostrarMensaje as mostrar } from "../core/mensajes.js";
+import { usuariosApi } from "../api/usuariosApi.js";
+import { mostrarMensaje } from "../core/mensajes.js";
 
 const formulario = document.querySelector("#form-login");
-const contenedorMensaje = document.querySelector("#mensaje-login");
 const botonLogin = document.querySelector("#btn-login");
-const mostrarMensaje = (tipo, texto) => mostrar(tipo, texto, contenedorMensaje);
 
 formulario.addEventListener("submit", async (evento) => {
   evento.preventDefault();
@@ -16,7 +14,7 @@ formulario.addEventListener("submit", async (evento) => {
   mostrarMensaje("exito", "Validando credenciales...");
 
   try {
-    await apiFetch("/usuarios/login", enviarJson("POST", { email, password }));
+    await usuariosApi.login(email, password);
 
     mostrarMensaje("exito", "Inicio de sesión exitoso. Redirigiendo...");
     setTimeout(() => {
@@ -24,7 +22,6 @@ formulario.addEventListener("submit", async (evento) => {
     }, 1000);
   } catch (error) {
     mostrarMensaje("error", error.message || "No se pudo iniciar sesión.");
-  } finally {
     botonLogin.disabled = false;
   }
 });

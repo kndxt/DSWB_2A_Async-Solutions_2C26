@@ -1,18 +1,18 @@
-// Vista de Reservas: solo consulta sobre la API /reservas.
-// Usa apiFetch (apiClient.js) y renderTable (tabla.js) compartidos de F5.1.
-
-import { apiFetch } from "../core/apiClient.js";
-import { renderTable } from "../utils/tabla.js";
-import { textoOGuion, formatearPrecio, formatearFecha } from "../utils/formato.js";
+import { renderTable, mostrarMensajeEnTabla } from "../utils/tabla.js";
+import { alCargarDOM } from "../utils/dom.js";
+import {
+  textoOGuion,
+  formatearPrecio,
+  formatearFecha,
+  formatearFechaHora,
+} from "../utils/formato.js";
 import { mostrarMensaje, limpiarMensajes } from "../core/mensajes.js";
-
-const reservasApi = {
-  listar: () => apiFetch("/reservas"),
-};
+import { reservasApi } from "../api/reservasApi.js";
+import { esAdmin } from "../core/rol.js";
 
 const COLUMNAS = [
   {
-    label: "Usuario",
+    label: "Titular",
     value: (r) => {
       const u = r.usuario;
       if (!u) return "—";
@@ -20,25 +20,31 @@ const COLUMNAS = [
     },
   },
   { label: "Evento", value: (r) => textoOGuion(r.evento?.nombre) },
-  { label: "Fecha del evento", value: (r) => formatearFecha(r.evento?.fecha) },
+  { label: "Estado del evento", value: (r) => textoOGuion(r.evento?.estado) },
+  { label: "Fecha del evento", value: (r) => formatearFechaHora(r.evento?.fecha) },
   { label: "Fecha de reserva", value: (r) => formatearFecha(r.fechaReserva) },
   { label: "Precio registrado", value: (r) => formatearPrecio(r.precioFinal) },
 ];
 
-const tabla = document.getElementById("tabla-reservas");
-const cuerpoTabla = tabla.querySelector("tbody");
-
-// ---- Tabla ----
-const mostrarEnTabla = (texto) => {
-  renderTable(tabla, COLUMNAS, []);
-  const fila = document.createElement("tr");
-  const celda = document.createElement("td");
-  celda.className = "vacio";
-  celda.colSpan = COLUMNAS.length;
-  celda.textContent = texto;
-  fila.append(celda);
-  cuerpoTabla.replaceChildren(fila);
+// Solo el administrador la ve, y únicamente si la API devuelve el dato.
+const COLUMNA_REGISTRADA_POR = {
+  label: "Registrada por",
+  value: (r) => {
+    const registrante = r.registradaPor;
+    if (!registrante) return "—";
+    return `${textoOGuion(registrante.nombre)} ${registrante.apellido ?? ""}`.trim();
+  },
 };
+
+const columnasPara = (reservas) =>
+  esAdmin() && reservas.some((r) => r.registradaPor)
+    ? [...COLUMNAS, COLUMNA_REGISTRADA_POR]
+    : COLUMNAS;
+
+const tabla = document.getElementById("tabla-reservas");
+
+// Muestra un texto (cargando, vacío o error) ocupando todo el ancho de la tabla.
+const mostrarEnTabla = (texto) => mostrarMensajeEnTabla(tabla, COLUMNAS, texto);
 
 // ---- Carga ----
 const cargarReservas = async () => {
@@ -50,7 +56,7 @@ const cargarReservas = async () => {
       return;
     }
 
-    renderTable(tabla, COLUMNAS, reservas);
+    renderTable(tabla, columnasPara(reservas), reservas);
   } catch (error) {
     mostrarEnTabla("No se pudieron cargar las reservas.");
     mostrarMensaje("error", error.message);
@@ -64,8 +70,4 @@ const iniciar = () => {
   cargarReservas();
 };
 
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", iniciar);
-} else {
-  iniciar();
-}
+alCargarDOM(iniciar);

@@ -1,0 +1,49 @@
+/* Botones */
+
+.botones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+button,
+.boton {
+  display: inline-block;
+  padding: 10px 16px;
+  font: inherit;
+  color: #fff;
+  background-color: var(--color-primario);
+  border: 1px solid var(--color-primario);
+  border-radius: var(--radio);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+button:hover,
+.boton:hover {
+  background-color: var(--color-primario-hover);
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+button:focus-visible,
+.boton:focus-visible {
+  outline: 2px solid var(--color-primario-hover);
+  outline-offset: 3px;
+}
+
+/* Acciones destructivas (cancelar una entrada, por ejemplo) */
+.boton-peligro {
+  color: var(--color-error-texto);
+  background-color: var(--color-superficie);
+  border-color: #d9baba;
+}
+
+.boton-peligro:hover {
+  background-color: #fbeeee;
+}
