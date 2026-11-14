@@ -276,9 +276,8 @@ const iniciar = () => {
     if (accion === "hacer-cliente") cambiarRol(id, boton.dataset.nombre, "cliente");
   });
 
-  mostrarMensajeEnTabla("Cargando usuarios...");
+  mostrarEnTabla("Cargando usuarios...");
   cargarUsuarios();
 };
 
-mostrarEnTabla("Cargando usuarios...");
-cargarUsuarios();
+alCargarDOM(iniciar);
