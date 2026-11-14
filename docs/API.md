@@ -677,27 +677,31 @@ Si el evento no existe, no tiene una reserva asociada o la reserva pertenece a o
 
 ### 3.6. Vistas
 
-Este módulo reúne las rutas que devuelven páginas HTML renderizadas mediante el servidor, en lugar de respuestas JSON.
+Este módulo reúne las rutas que devuelven páginas HTML renderizadas por el servidor, en lugar de respuestas JSON.
 
-Las vistas utilizan autenticación opcional, excepto el resumen de entradas por evento, que requiere autenticación y rol `ADMIN`.
+Todas las vistas cargan al usuario de la sesión, si existe, para que la barra de navegación muestre el saludo y las opciones que corresponden a su rol. El acceso varía según la vista:
 
-- **Con sesión:** se carga el usuario actual para mostrar la información correspondiente.
-- **Sin sesión:** las vistas públicas pueden consultarse igualmente.
-- **Resumen de entradas:** requiere una sesión válida y permisos de administrador.
+- **Públicas:** inicio, inicio de sesión y registro. Se pueden consultar sin sesión.
+- **Con sesión:** eventos, entradas y reservas. Sin sesión, redirigen a `/vistas/login`.
+- **Solo administradores:** usuarios, salas y el resumen de entradas de un evento. Sin sesión, redirigen a `/vistas/login`; con una sesión de cliente, responden `403 Forbidden` mediante la página de error.
+
+Estas restricciones controlan el acceso a la página. La información que muestran se obtiene luego mediante los endpoints de la API, que verifican la sesión y el rol de forma independiente.
 
 #### Endpoints
 
-| Método | Endpoint                     | Acceso  | Descripción                                  |
-| ------ | ---------------------------- | ------- | -------------------------------------------- |
-| `GET`  | `/vistas/usuarios`           | Público | Mostrar la vista de usuarios.                |
-| `GET`  | `/vistas/salas`              | Público | Mostrar la vista de salas.                   |
-| `GET`  | `/vistas/eventos`            | Público | Mostrar la vista de eventos.                 |
-| `GET`  | `/vistas/entradas`           | Público | Mostrar la vista general de entradas.        |
-| `GET`  | `/vistas/reservas`           | Público | Mostrar la vista de reservas.                |
-| `GET`  | `/vistas/login`              | Público | Mostrar el formulario de inicio de sesión.   |
-| `GET`  | `/vistas/registro`           | Público | Mostrar el formulario de registro.           |
-| `GET`  | `/vistas/inicio`             | Público | Mostrar la página de inicio.                 |
-| `GET`  | `/vistas/entradas/:eventoId` | ADMIN   | Mostrar el resumen de entradas de un evento. |
+| Método | Endpoint                     | Acceso          | Descripción                                          |
+| ------ | ---------------------------- | --------------- | ---------------------------------------------------- |
+| `GET`  | `/vistas/inicio`             | Público         | Mostrar la página de inicio. Con sesión incluye el chat. |
+| `GET`  | `/vistas/login`              | Público         | Mostrar el formulario de inicio de sesión.           |
+| `GET`  | `/vistas/registro`           | Público         | Mostrar el formulario de registro.                   |
+| `GET`  | `/vistas/eventos`            | CLIENTE / ADMIN | Mostrar la vista de eventos.                         |
+| `GET`  | `/vistas/entradas`           | CLIENTE / ADMIN | Mostrar la vista de entradas (propias o todas).      |
+| `GET`  | `/vistas/reservas`           | CLIENTE / ADMIN | Mostrar la vista de reservas (propias o todas).      |
+| `GET`  | `/vistas/usuarios`           | ADMIN           | Mostrar la vista de gestión de usuarios.             |
+| `GET`  | `/vistas/salas`              | ADMIN           | Mostrar la vista de gestión de salas.                |
+| `GET`  | `/vistas/entradas/:eventoId` | ADMIN           | Mostrar el resumen de entradas de un evento.         |
+
+Las rutas `/` y `/vistas/inicio` son el punto de entrada: `GET /` redirige a `/vistas/inicio`.
 
 #### Resumen de entradas por evento
 
@@ -709,16 +713,14 @@ Renderiza una vista con la información del evento, su sala, las entradas vendid
 - **Parámetro:** `eventoId`, identificador del evento (`ObjectId`).
 - **Respuesta exitosa:** `200 OK`. Devuelve una vista HTML renderizada.
 
-**Errores posibles:**
+**Respuestas posibles:**
 
+- `302 Found`: no existe una sesión válida; redirige a `/vistas/login`.
+- `403 Forbidden`: el usuario autenticado no tiene rol de administrador.
 - `400 Bad Request`: identificador del evento inválido.
-- `401 Unauthorized`: no existe una sesión válida.
-- `403 Forbidden`: el usuario no tiene permisos de administrador.
 - `404 Not Found`: no se encontró el evento o su sala asociada.
 
 Las operaciones de consulta y gestión de entradas se documentan en la sección [Entradas](#34-entradas). Esta ruta corresponde exclusivamente a la vista HTML del resumen.
-
----
 
 ## 4. Consideraciones generales
 
@@ -730,6 +732,6 @@ Las operaciones de consulta y gestión de entradas se documentan en la sección 
 
 ## 5. Documentación relacionada
 
-- [README.md](./README.md): presentación y puesta en marcha del proyecto.
+- [README.md](../README.md): presentación y puesta en marcha del proyecto.
 - [ARCHITECTURE.md](./ARCHITECTURE.md): arquitectura y organización interna.
 - [ERRORS.md](./ERRORS.md): manejo de errores y códigos HTTP.

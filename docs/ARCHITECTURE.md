@@ -100,7 +100,7 @@ La inicialización de la aplicación se distribuye entre los siguientes módulos
 
 Express y Socket.IO comparten el mismo servidor HTTP.
 
-El funcionamiento específico del chat, sus eventos, validaciones, límites, reconexión e integración con Gemini se documenta en [CHAT.md](./docs/CHAT.md).
+El funcionamiento específico del chat, sus eventos, validaciones, límites, reconexión e integración con Gemini se documenta en [CHAT.md](./CHAT.md).
 
 ## 8. Criterios de desarrollo
 

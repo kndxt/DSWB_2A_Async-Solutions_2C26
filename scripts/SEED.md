@@ -61,7 +61,7 @@ Hay 20 usuarios. Los últimos dos (`usuario19` y `usuario20`) están inactivos.
 | Estado     | activos del 1 al 18, inactivos 19 y 20                              |
 | Rol        | `usuario1` es administrador; del 2 al 20 son clientes               |
 
-El primer usuario (`usuario1@example.com`) es **administrador** y el resto son **clientes**. Las contraseñas de prueba son ficticias pero están **hasheadas con bcrypt** desde F7.2. La contraseña de prueba es `Prueba001!` para el usuario 1, `Prueba002!` para el 2, y así sucesivamente.
+El primer usuario (`usuario1@example.com`) es administrador y el resto son clientes. Las contraseñas se almacenan hasheadas con bcrypt, igual que las que se crean desde la aplicación (el hash se genera en `scripts/seeds/usuarios.js`). La contraseña de cada usuario es `Prueba` seguido de su número con tres dígitos y un signo de exclamación: `Prueba001!` para el usuario 1, `Prueba002!` para el 2, y así sucesivamente.
 
 ### Salas
 
@@ -91,30 +91,50 @@ La reserva de cada evento está a nombre de un usuario activo, con la fecha en e
 
 ## Escenarios de prueba
 
-Los resultados esperados corresponden a las reglas de negocio vigentes. Los mensajes exactos pueden cambiar con la refactorización del backend (F8); lo que no cambia es el código de estado y el motivo del rechazo.
+Los resultados esperados corresponden al comportamiento actual del backend. Los mensajes de error pueden ajustarse con futuras refactorizaciones; lo que debe mantenerse es el código de estado y el motivo del rechazo.
 
-Para operar sobre un evento hace falta su `id`: se obtiene con `GET /eventos` o desde `/vistas/eventos`.
+Todas las operaciones sobre entradas, reservas, salas y usuarios requieren una sesión. Primero hay que iniciar sesión con `POST /usuarios/login` (o desde `/vistas/login`) y reutilizar la cookie `token` en las siguientes peticiones. Para las consultas administrativas se usa `usuario1@example.com`; para las operaciones de cliente, cualquier usuario del 2 al 18.
 
-| Escenario                         | Cómo reproducirlo                                                                                | Resultado esperado                                        |
-| --------------------------------- | ------------------------------------------------------------------------------------------------ | --------------------------------------------------------- |
-| Disponibilidad con pocos cupos    | `GET /entradas/disponibles/:id` de `Evento pocos cupos 11`                                       | `disponibles: 3`                                          |
-| Evento agotado                    | `GET /entradas/disponibles/:id` de `Evento agotado 12`                                           | `disponibles: 0`                                          |
-| Venta con evento agotado          | `POST /entradas` con ese evento y un usuario activo                                              | 400, el evento alcanzó su capacidad máxima                |
-| Llenar los últimos cupos          | Vender 3 entradas del evento con pocos cupos y una cuarta                                        | Las tres primeras responden 201; la cuarta, 400           |
-| Cancelar libera el lugar          | `PATCH /entradas/:id/cancelar` sobre una entrada vendida del evento agotado y volver a consultar | La disponibilidad pasa de 0 a 1; se puede vender de nuevo |
-| Cancelar dos veces                | Repetir la cancelación de la misma entrada                                                       | 400, la entrada ya está cancelada                         |
-| Evento finalizado                 | `POST /entradas` sobre `Evento finalizado 1`                                                     | 400, el evento no permite nuevas ventas                   |
-| Venta vencida                     | `POST /entradas` sobre `Evento venta vencida 6`                                                  | 400, el evento no permite nuevas ventas                   |
-| Evento cancelado                  | `POST /entradas` sobre `Evento cancelado 8`                                                      | 400, el evento no permite nuevas ventas                   |
-| Cliente inactivo                  | `POST /entradas` sobre un evento normal con el `id` de `usuario19`                               | 400, el cliente está inactivo                             |
-| Venta normal                      | `POST /entradas` sobre `Evento normal 13` con un usuario activo                                  | 201, y baja un cupo la disponibilidad                     |
-| Login de usuario inactivo         | `POST /usuarios/login` con `usuario19@example.com` y `Prueba019!`                                | 403, usuario inactivo                                     |
-| Login correcto                    | `POST /usuarios/login` con `usuario1@example.com` y `Prueba001!`                                 | 200                                                       |
-| Sala inactiva                     | `POST /eventos` con el `id` de `Sala de prueba 16`                                               | 400, la sala está inactiva                                |
-| Superposición de eventos          | `POST /eventos` en `Sala de prueba 1` con fechas que se pisen con las del evento con pocos cupos | 400, el evento se superpone con otro                      |
-| Baja de sala con eventos próximos | `PUT /salas/:id` con `estado: "inactiva"` sobre `Sala de prueba 2`                               | 400, tiene eventos próximos activos                       |
-| Baja de sala sin eventos próximos | El mismo pedido sobre `Sala de prueba 12` o `Sala de prueba 9`                                   | 200                                                       |
-| Reservas                          | `GET /reservas`                                                                                  | 20 reservas, una por evento, a nombre de usuarios activos |
+Las entradas se compran siempre a nombre de quien tiene la sesión iniciada: el body solo lleva `eventoId`. Para operar sobre un evento hace falta su `id`, que se obtiene con `GET /eventos` o desde `/vistas/eventos`. Para cancelar una entrada hace falta el `id` de la entrada, que se obtiene con `GET /entradas`.
+
+### Entradas y disponibilidad
+
+| Escenario                      | Cómo reproducirlo                                                                                          | Resultado esperado                                        |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| Disponibilidad con pocos cupos | Como admin, `GET /entradas/disponibles/:id` de `Evento pocos cupos 11`                                     | `disponibles: 3`                                          |
+| Evento agotado                 | Como admin, `GET /entradas/disponibles/:id` de `Evento agotado 12`                                         | `disponibles: 0`                                          |
+| Venta con evento agotado       | Como cliente, `POST /entradas` con el `eventoId` de `Evento agotado 12`                                    | 409, el evento ya alcanzó su capacidad máxima             |
+| Llenar los últimos cupos       | Comprar 3 entradas de `Evento pocos cupos 11` y una cuarta                                                 | Las tres primeras responden 201; la cuarta, 409           |
+| Cancelar libera el lugar       | `PATCH /entradas/:id/cancelar` sobre una entrada vendida del evento agotado y volver a consultar           | La disponibilidad pasa de 0 a 1; se puede vender de nuevo |
+| Cancelar dos veces             | Repetir la cancelación de la misma entrada                                                                 | 409, la entrada ya está cancelada                         |
+| Evento finalizado              | `POST /entradas` sobre `Evento finalizado 1`                                                               | 409, el evento no permite nuevas ventas                   |
+| Venta vencida                  | `POST /entradas` sobre `Evento venta vencida 6`                                                            | 409, el evento no permite nuevas ventas                   |
+| Evento cancelado               | `POST /entradas` sobre `Evento cancelado 8`                                                                | 409, el evento no permite nuevas ventas                   |
+| Venta normal                   | `POST /entradas` sobre `Evento normal 13`                                                                  | 201, y baja un cupo la disponibilidad                     |
+
+### Autenticación y permisos
+
+| Escenario                         | Cómo reproducirlo                                                                                       | Resultado esperado                                       |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| Login correcto                    | `POST /usuarios/login` con `usuario1@example.com` y `Prueba001!`                                        | 200 y cookie `token`                                     |
+| Login de usuario inactivo         | `POST /usuarios/login` con `usuario19@example.com` y `Prueba019!`                                       | 403, el usuario se encuentra inactivo                    |
+| Credenciales incorrectas          | `POST /usuarios/login` con una contraseña equivocada                                                    | 401, credenciales incorrectas                            |
+| Sesión de un usuario desactivado  | Iniciar sesión como cliente, desactivarlo como admin con `PATCH /usuarios/:id/estado` y reutilizar su cookie | 403 en cualquier ruta protegida                          |
+| Cliente en rutas de administración| Como cliente, `GET /salas` o `GET /usuarios`                                                           | 403                                                      |
+| Cliente consulta entradas ajenas  | Como cliente, `GET /entradas?usuarioId=<otro>`                                                          | 200, pero solo devuelve sus propias entradas             |
+| Cancelar una entrada ajena        | Como cliente, `PATCH /entradas/:id/cancelar` con la entrada de otro usuario                             | 404, entrada no encontrada                               |
+| Autocambio de rol o estado        | Como admin, `PATCH /usuarios/:id/rol` o `/estado` con el `id` del propio administrador                 | 403                                                      |
+
+### Eventos, salas y reservas
+
+| Escenario                         | Cómo reproducirlo                                                                                  | Resultado esperado                                          |
+| --------------------------------- | -------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| Sala inactiva                     | Como admin, `POST /eventos` con el `id` de `Sala de prueba 16`                                     | 409, no se puede crear un evento en una sala inactiva       |
+| Superposición de eventos          | Como admin, `POST /eventos` en `Sala de prueba 1` con fechas que se pisen con `Evento pocos cupos 11` | 409, el evento se superpone con otro de la misma sala       |
+| Baja de sala con eventos próximos | Como admin, `PATCH /salas/:id` con `estado: "inactiva"` sobre `Sala de prueba 2`                   | 409, tiene eventos próximos activos                         |
+| Baja de sala sin eventos próximos | El mismo pedido sobre `Sala de prueba 12` o `Sala de prueba 9`                                     | 200                                                         |
+| Reservas como administrador       | Como admin, `GET /reservas`                                                                        | 20 reservas, una por evento, a nombre de usuarios activos   |
+| Reservas como cliente             | Como cliente, `GET /reservas`                                                                      | Solo las reservas a su nombre (puede ser un array vacío)    |
 
 ## Pendientes
 
