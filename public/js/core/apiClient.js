@@ -1,16 +1,15 @@
-
 export async function apiFetch(url, options = {}) {
-  // C la petición si supera los 15 segundos.
+  // Cancela la petición si supera los 15 segundos.
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 15000);
 
   try {
-    // Conservamos las opciones existentes y agregamos la señal de cancelación.
+    // Se envían las cookies de sesión y se agrega la señal de cancelación.
     const response = await fetch(url, {
-  ...options,
-  credentials: "include",
-  signal: controller.signal,
-  });
+      ...options,
+      credentials: "include",
+      signal: controller.signal,
+    });
 
     const contentType = response.headers.get("content-type") || "";
 
@@ -34,9 +33,17 @@ export async function apiFetch(url, options = {}) {
     }
 
     if (!response.ok) {
+      // Sesión ausente o vencida: se vuelve al login (salvo que ya estemos en él).
+      if (response.status === 401 && !window.location.pathname.startsWith("/vistas/login")) {
+        window.location.href = "/vistas/login";
+      }
+
       const message =
         typeof data === "string"
-          ? data.replace(/<[^>]*>/g, "").trim().slice(0, 300)
+          ? data
+              .replace(/<[^>]*>/g, "")
+              .trim()
+              .slice(0, 300)
           : data?.error || data?.message;
 
       throw new Error(message || `Error HTTP ${response.status}`);
@@ -63,3 +70,10 @@ export async function apiFetch(url, options = {}) {
     clearTimeout(timeout);
   }
 }
+
+// Arma las opciones de fetch para enviar un cuerpo JSON.
+export const enviarJson = (metodo, datos) => ({
+  method: metodo,
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(datos),
+});

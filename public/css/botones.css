@@ -1,0 +1,76 @@
+/* Botones */
+
+.botones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+button,
+.boton {
+  display: inline-block;
+  padding: 10px 18px;
+  font: inherit;
+  font-weight: 600;
+  color: #fff;
+  background-color: var(--color-primario);
+  border: 1px solid var(--color-primario);
+  border-radius: var(--radio);
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.1s ease;
+}
+
+button:hover,
+.boton:hover {
+  background-color: var(--color-primario-hover);
+  border-color: var(--color-primario-hover);
+  box-shadow: var(--sombra-suave);
+}
+
+button:active,
+.boton:active {
+  transform: translateY(1px);
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+button:focus-visible,
+.boton:focus-visible {
+  outline: 2px solid var(--color-primario-hover);
+  outline-offset: 3px;
+}
+
+/* Acción secundaria (por ejemplo, "Registrarse" junto a "Iniciar sesión") */
+.boton-secundario {
+  color: var(--color-primario);
+  background-color: var(--color-superficie);
+  border-color: var(--color-primario);
+}
+
+.boton-secundario:hover {
+  color: var(--color-primario);
+  background-color: var(--color-encabezado);
+  border-color: var(--color-primario);
+}
+
+/* Acciones destructivas (cancelar una entrada, por ejemplo) */
+.boton-peligro {
+  color: var(--color-error-texto);
+  background-color: var(--color-superficie);
+  border-color: #e5b4b4;
+}
+
+.boton-peligro:hover {
+  color: var(--color-error-texto);
+  background-color: var(--color-error-fondo);
+  border-color: #e5b4b4;
+}

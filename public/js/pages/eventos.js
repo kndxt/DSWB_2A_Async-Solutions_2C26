@@ -1,23 +1,16 @@
-// Vista de Eventos: listado, próximos, alta, edición y cancelación sobre la API /eventos.
-// Módulo ES: usa apiFetch desde apiClient.js, igual que salas.js.
-import { apiFetch } from "./apiClient.js";
+import { crearBoton, alCargarDOM } from "../utils/dom.js";
+import { leerNumero } from "../utils/formularios.js";
+import { textoOGuion, formatearPrecio, formatearFechaHora } from "../utils/formato.js";
+import { mostrarMensaje, limpiarMensajes } from "../core/mensajes.js";
+import { esAdmin } from "../core/rol.js";
+import { eventosApi } from "../api/eventosApi.js";
+import { salasApi } from "../api/salasApi.js";
+import { usuariosApi } from "../api/usuariosApi.js";
 
-// apiFetch pasa las options tal cual a fetch, así que armamos el JSON acá.
-const enviarJson = (metodo, datos) => ({
-  method: metodo,
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(datos),
-});
-
-const eventosApi = {
-  listar: () => apiFetch("/eventos"),
-  proximos: () => apiFetch("/eventos/proximos"),
-  obtener: (id) => apiFetch(`/eventos/${id}`),
-  crear: (datos) => apiFetch("/eventos", enviarJson("POST", datos)),
-  actualizar: (id, datos) => apiFetch(`/eventos/${id}`, enviarJson("PUT", datos)),
-  salas: () => apiFetch("/salas"),
-  usuarios: () => apiFetch("/usuarios"),   // ← nuevo
-};
+// Cantidad de columnas: la sala solo se muestra al administrador,
+// que además tiene la columna de acciones en el listado.
+const COLUMNAS_LISTADO = esAdmin() ? 8 : 6;
+const COLUMNAS_PROXIMOS = esAdmin() ? 5 : 4;
 
 const CAMPOS_FECHA = ["fechaInicio", "fechaFin", "fechaInicioVenta", "fechaFinVenta"];
 
@@ -28,23 +21,8 @@ let salasPorId = new Map();
 
 // ---- Formato ----
 
-const textoOGuion = (valor) =>
-  valor === undefined || valor === null || valor === "" ? "—" : String(valor);
-
-const formatearPrecio = (valor) =>
-  `$ ${Number(valor).toLocaleString("es-AR", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
-
-const formatearFecha = (iso) => {
-  const fecha = new Date(iso);
-  if (Number.isNaN(fecha.getTime())) return "—";
-  return fecha.toLocaleString("es-AR", { dateStyle: "short", timeStyle: "short" });
-};
-
 const formatearRango = (desde, hasta) =>
-  `${formatearFecha(desde)} - ${formatearFecha(hasta)}`;
+  `${formatearFechaHora(desde)} - ${formatearFechaHora(hasta)}`;
 
 const nombreDeSala = (salaId) => {
   const sala = salasPorId.get(salaId);
@@ -60,30 +38,6 @@ const aInputLocal = (iso) => {
   return `${fecha.getFullYear()}-${pad(fecha.getMonth() + 1)}-${pad(fecha.getDate())}T${pad(fecha.getHours())}:${pad(fecha.getMinutes())}`;
 };
 const deInputLocal = (texto) => (texto === "" ? "" : new Date(texto).toISOString());
-
-// ---- Mensajes ----
-
-const mostrarMensaje = (tipo, texto) => {
-  let contenedor = document.getElementById("mensajes");
-  if (!contenedor) {
-    contenedor = document.createElement("div");
-    contenedor.id = "mensajes";
-    const principal = document.querySelector("main");
-    if (principal) principal.prepend(contenedor);
-    else document.body.prepend(contenedor);
-  }
-  const esExito = tipo === "exito";
-  const aviso = document.createElement("p");
-  aviso.className = `mensaje ${esExito ? "mensaje-exito" : "mensaje-error"}`;
-  aviso.setAttribute("role", esExito ? "status" : "alert");
-  aviso.textContent = texto;
-  contenedor.replaceChildren(aviso);
-};
-
-const limpiarMensajes = () => {
-  const contenedor = document.getElementById("mensajes");
-  if (contenedor) contenedor.replaceChildren();
-};
 
 // ---- Tablas ----
 
@@ -104,13 +58,13 @@ const crearEstado = (estado) => {
   return celda;
 };
 
-const crearBoton = (texto, accion, id) => {
-  const boton = document.createElement("button");
-  boton.type = "button";
-  boton.textContent = texto;
-  boton.dataset.accion = accion;
-  boton.dataset.id = id;
-  return boton;
+// Enlace al resumen de entradas del evento (vendidas y disponibles). Solo admin.
+const crearEnlaceResumen = (id) => {
+  const enlace = document.createElement("a");
+  enlace.href = `/vistas/entradas/${id}`;
+  enlace.className = "boton";
+  enlace.textContent = "Ver entradas";
+  return enlace;
 };
 
 const filaMensaje = (texto, columnas) => {
@@ -122,45 +76,56 @@ const filaMensaje = (texto, columnas) => {
 };
 
 const claseDeFila = (evento) =>
-  evento.estado === "cancelado" || evento.estado === "finalizado"
-    ? `evento-${evento.estado}`
-    : "";
+  evento.estado === "cancelado" || evento.estado === "finalizado" ? `evento-${evento.estado}` : "";
 
 const crearFilaEvento = (evento) => {
   const fila = document.createElement("tr");
   if (claseDeFila(evento)) fila.className = claseDeFila(evento);
 
-  const acciones = document.createElement("td");
-  acciones.append(crearBoton("Editar", "editar", evento.id));
-  // Solo se puede cancelar un evento activo; el registro y su reserva se conservan.
-  if (evento.estado === "activo") {
-    acciones.append(" ", crearBoton("Cancelar", "cancelar", evento.id));
-  }
-  acciones.dataset.nombre = evento.nombre;
+  const celdas = [crearCelda(evento.nombre), crearCelda(textoOGuion(evento.tipo))];
 
-  fila.append(
-    crearCelda(evento.nombre),
-    crearCelda(textoOGuion(evento.tipo)),
-    crearCelda(nombreDeSala(evento.salaId)),
+  // La sala solo la ve el administrador (los clientes no pueden consultar /salas).
+  if (esAdmin()) celdas.push(crearCelda(nombreDeSala(evento.salaId)));
+
+  celdas.push(
     crearCelda(formatearRango(evento.fechaInicio, evento.fechaFin)),
     crearCelda(formatearRango(evento.fechaInicioVenta, evento.fechaFinVenta)),
     crearCelda(formatearPrecio(evento.precioEntrada)),
     crearEstado(evento.estado),
-    acciones,
   );
+
+  fila.append(...celdas);
+
+  // La columna de acciones solo existe para el administrador.
+  if (esAdmin()) {
+    const acciones = document.createElement("td");
+    acciones.dataset.nombre = evento.nombre;
+    acciones.append(crearBoton("Editar", "editar", evento.id));
+    acciones.append(" ", crearEnlaceResumen(evento.id));
+    // Solo se puede cancelar un evento activo; el registro y su reserva se conservan.
+    if (evento.estado === "activo") {
+      acciones.append(" ", crearBoton("Cancelar", "cancelar", evento.id));
+    }
+    fila.append(acciones);
+  }
   return fila;
 };
 
 const crearFilaProximo = (evento) => {
   const fila = document.createElement("tr");
   if (claseDeFila(evento)) fila.className = claseDeFila(evento);
-  fila.append(
-    crearCelda(evento.nombre),
-    crearCelda(nombreDeSala(evento.salaId)),
-    crearCelda(formatearFecha(evento.fechaInicio)),
+
+  const celdas = [crearCelda(evento.nombre)];
+
+  if (esAdmin()) celdas.push(crearCelda(nombreDeSala(evento.salaId)));
+
+  celdas.push(
+    crearCelda(formatearFechaHora(evento.fechaInicio)),
     crearCelda(formatearPrecio(evento.precioEntrada)),
     crearEstado(evento.estado),
   );
+
+  fila.append(...celdas);
   return fila;
 };
 
@@ -168,10 +133,8 @@ const crearFilaProximo = (evento) => {
 
 const cargarSalas = async () => {
   try {
-    const salas = await eventosApi.salas();
-    salasPorId = new Map(
-      (Array.isArray(salas) ? salas : []).map((sala) => [sala.id, sala]),
-    );
+    const salas = await salasApi.listar();
+    salasPorId = new Map((Array.isArray(salas) ? salas : []).map((sala) => [sala.id, sala]));
   } catch (error) {
     // Sin nombres de sala se muestran los ids; los listados siguen funcionando.
     salasPorId = new Map();
@@ -200,10 +163,8 @@ let usuariosPorId = new Map();
 
 const cargarUsuarios = async () => {
   try {
-    const usuarios = await eventosApi.usuarios();
-    usuariosPorId = new Map(
-      (Array.isArray(usuarios) ? usuarios : []).map((u) => [u.id, u]),
-    );
+    const usuarios = await usuariosApi.listar();
+    usuariosPorId = new Map((Array.isArray(usuarios) ? usuarios : []).map((u) => [u.id, u]));
   } catch (error) {
     usuariosPorId = new Map();
     mostrarMensaje("error", `No se pudieron cargar los usuarios: ${error.message}`);
@@ -233,12 +194,12 @@ const cargarListado = async () => {
   try {
     const eventos = await eventosApi.listar();
     if (!Array.isArray(eventos) || eventos.length === 0) {
-      cuerpo.replaceChildren(filaMensaje("No hay eventos registrados.", 8));
+      cuerpo.replaceChildren(filaMensaje("No hay eventos registrados.", COLUMNAS_LISTADO));
       return;
     }
     cuerpo.replaceChildren(...eventos.map(crearFilaEvento));
   } catch (error) {
-    cuerpo.replaceChildren(filaMensaje("No se pudieron cargar los eventos.", 8));
+    cuerpo.replaceChildren(filaMensaje("No se pudieron cargar los eventos.", COLUMNAS_LISTADO));
     mostrarMensaje("error", error.message);
   }
 };
@@ -248,21 +209,23 @@ const cargarProximos = async () => {
   try {
     const eventos = await eventosApi.proximos();
     if (!Array.isArray(eventos) || eventos.length === 0) {
-      cuerpo.replaceChildren(filaMensaje("No hay eventos próximos.", 5));
+      cuerpo.replaceChildren(filaMensaje("No hay eventos próximos.", COLUMNAS_PROXIMOS));
       return;
     }
     cuerpo.replaceChildren(...eventos.map(crearFilaProximo));
   } catch (error) {
     cuerpo.replaceChildren(
-      filaMensaje("No se pudieron cargar los eventos próximos.", 5),
+      filaMensaje("No se pudieron cargar los eventos próximos.", COLUMNAS_PROXIMOS),
     );
     mostrarMensaje("error", error.message);
   }
 };
 
-// Las salas se cargan primero para poder mostrar sus nombres en ambas tablas.
+// Salas y usuarios solo los puede consultar un administrador (la API responde 403 a un cliente).
 const cargarTodo = async () => {
-  await Promise.all([cargarSalas(), cargarUsuarios()]);   // ← cargarUsuarios acá
+  if (esAdmin()) {
+    await Promise.all([cargarSalas(), cargarUsuarios()]);
+  }
   await Promise.all([cargarListado(), cargarProximos()]);
 };
 
@@ -313,11 +276,6 @@ const abrirEdicion = async (id) => {
     mostrarMensaje("error", error.message);
   }
 };
-
-// Un campo numérico vacío se envía sin valor (alta) o como null (edición), para que
-// sea el backend quien responda con su mensaje de dato obligatorio o inválido.
-const leerNumero = (texto, valorVacio) =>
-  texto.trim() === "" ? valorVacio : Number(texto);
 
 const leerFormulario = (esEdicion) => {
   const campos = formulario().elements;
@@ -394,12 +352,15 @@ const cancelarEvento = async (id, nombre) => {
 // ---- Inicio ----
 
 const iniciar = () => {
-  document.getElementById("btn-nuevo-evento").addEventListener("click", abrirAlta);
-  document.getElementById("btn-cancelar-formulario").addEventListener("click", () => {
-    limpiarMensajes();
-    cerrarFormulario();
-  });
-  formulario().addEventListener("submit", guardarEvento);
+  // El formulario y su botón solo existen en la página del administrador.
+  if (esAdmin()) {
+    document.getElementById("btn-nuevo-evento").addEventListener("click", abrirAlta);
+    document.getElementById("btn-cancelar-formulario").addEventListener("click", () => {
+      limpiarMensajes();
+      cerrarFormulario();
+    });
+    formulario().addEventListener("submit", guardarEvento);
+  }
 
   document.getElementById("eventos-body").addEventListener("click", (evento) => {
     const boton = evento.target.closest("button[data-accion]");

@@ -1,24 +1,36 @@
-
 extends layout
 
 block title
   | Inicio | Urbana Cult
 
-block content
-  section.inicio
-    h1 Menú principal
-    p Bienvenido a Urbana Cult.
-    p Seleccioná el módulo al que querés acceder.
+block estilos
+  link(rel="stylesheet" href="/css/chat.css")
 
-    nav.menu-principal(aria-label="Módulos del sistema")
-      ul
-        li
-          a(href="/vistas/usuarios") Usuarios
-        li
-          a(href="/vistas/salas") Salas
-        li
-          a(href="/vistas/eventos") Eventos
-        li
-          a(href="/vistas/eventos") Entradas
-        li
-          a(href="/vistas/reservas") Reservas
+block content
+  if usuario
+    section.inicio.inicio--usuario
+      h1 Te damos la bienvenida a Urbana Cult
+      p.inicio__texto
+        | Hola, #{usuario.nombre}. Compartí mensajes con la comunidad y consultale al asistente con
+        |
+        strong @gemini
+        | .
+
+    include includes/chat.pug
+  else
+    section.inicio.inicio--visitante
+      h1 Te damos la bienvenida a Urbana Cult
+      p.inicio__texto
+        | La plataforma de gestión de espacios culturales independientes: eventos,
+        | salas, reservas y entradas en un solo lugar.
+      p.inicio__texto
+        | Iniciá sesión o creá tu cuenta para participar de la comunidad.
+
+      div.botones
+        a.boton(href="/vistas/login") Iniciar sesión
+        a.boton.boton-secundario(href="/vistas/registro") Registrarse
+
+block scripts
+  if usuario
+    script(src="/socket.io/socket.io.js")
+    script(type="module" src="/js/chat.js")

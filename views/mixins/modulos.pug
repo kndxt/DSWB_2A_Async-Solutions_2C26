@@ -1,0 +1,15 @@
+//- Módulos del sistema según el rol. Sin sesión se usa el rol virtual "visitante".
+mixin enlacesModulos(rol)
+  -
+    const modulos = [
+      { texto: "Usuarios", href: "/vistas/usuarios", roles: ["admin"] },
+      { texto: "Salas", href: "/vistas/salas", roles: ["admin"] },
+      { texto: "Eventos", href: "/vistas/eventos", roles: ["visitante", "admin", "cliente"] },
+      { texto: "Reservas", textoCliente: "Mis reservas", href: "/vistas/reservas", roles: ["admin", "cliente"] },
+      { texto: "Entradas", textoCliente: "Mis entradas", href: "/vistas/entradas", roles: ["admin", "cliente"] },
+    ]
+    const rolActual = rol || "visitante"
+  each modulo in modulos
+    if modulo.roles.includes(rolActual)
+      li
+        a(href=modulo.href)= (rolActual === "cliente" && modulo.textoCliente) || modulo.texto

@@ -11,7 +11,7 @@ const renderizarEntradasPorEvento = async (req, res) => {
 
   const resumen = await obtenerResumenPorEvento(eventoId);
 
-  res.render("entradas", {
+  res.render("entradas/evento", {
     eventoId,
     ...resumen,
   });

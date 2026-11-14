@@ -1,4 +1,3 @@
-
 extends layout
 
 block title
@@ -7,3 +6,9 @@ block title
 block content
   h1 Ocurrió un error
   p= mensaje || "No se pudo completar la solicitud."
+
+  //- Solo llega en desarrollo (lo decide errorHandler).
+  if detalles
+    details
+      summary Detalles técnicos (solo desarrollo)
+      pre= JSON.stringify(detalles, null, 2)

@@ -1,11 +1,16 @@
-mixin tabla(columnas, filas, id)
+//- Tabla con encabezados. Sin filas (undefined) deja el cuerpo vacío para que lo complete un script.
+mixin tabla(columnas, filas, id, idCuerpo)
   table(id=id)
     thead
       tr
         each columna in columnas
-          th= columna
-    tbody
-      each fila in filas
+          th(scope="col")= columna
+    tbody(id=idCuerpo)
+      if filas && filas.length === 0
         tr
-          each valor in fila
-            td= valor
+          td.vacio(colspan=Math.max(columnas.length, 1)) No hay registros.
+      else
+        each fila in (filas || [])
+          tr
+            each valor in fila
+              td= (valor === undefined || valor === null || valor === "") ? "—" : valor

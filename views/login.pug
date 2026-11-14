@@ -10,9 +10,6 @@ block content
   section#formulario-login
     p Ingresá tu email y contraseña para continuar.
 
-    div#mensaje-login(aria-live="polite")
-      include includes/mensajes
-
     form#form-login
       div.campo
         label(for="email") Email
@@ -39,7 +36,7 @@ block content
         a(href="/vistas/inicio") Volver al inicio
 
       p
-        a(href="/vistas/registro") ¿No tenés cuenta? Registrate  
+        a(href="/vistas/registro") ¿No tenés cuenta? Registrate
 
 block scripts
-  script(type="module" src="/js/login.js")
+  script(type="module" src="/js/pages/login.js")

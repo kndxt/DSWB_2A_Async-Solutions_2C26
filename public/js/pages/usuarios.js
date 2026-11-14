@@ -1,30 +1,10 @@
-// Vista de Usuarios: listado, detalle, alta, edición, cambio de estado y rol sobre la API /usuarios.
-// Módulo ES: usa apiFetch desde apiClient.js, igual que salas.js y eventos.js.
-import { apiFetch } from "./apiClient.js";
-import { renderTable } from "./tabla.js";
-
-// apiFetch pasa las options tal cual a fetch, así que armamos el JSON acá.
-const enviarJson = (metodo, datos) => ({
-  method: metodo,
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(datos),
-});
-
-const usuariosApi = {
-  listar: () => apiFetch("/usuarios"),
-  obtener: (id) => apiFetch(`/usuarios/${id}`),
-  crear: (datos) => apiFetch("/usuarios", enviarJson("POST", datos)),
-  actualizar: (id, datos) => apiFetch(`/usuarios/${id}`, enviarJson("PUT", datos)),
-  cambiarEstado: (id, estado) =>
-    apiFetch(`/usuarios/${id}/estado`, enviarJson("PATCH", { estado })),
-  cambiarRol: (id, rol) =>
-    apiFetch(`/usuarios/${id}/rol`, enviarJson("PATCH", { rol })),
-};
+import { renderTable, mostrarMensajeEnTabla } from "../utils/tabla.js";
+import { crearBoton, agregarDato, alCargarDOM } from "../utils/dom.js";
+import { textoOGuion } from "../utils/formato.js";
+import { mostrarMensaje, limpiarMensajes } from "../core/mensajes.js";
+import { usuariosApi } from "../api/usuariosApi.js";
 
 const ESTADOS_USUARIO = ["activo", "inactivo"];
-
-const textoOGuion = (valor) =>
-  valor === undefined || valor === null || valor === "" ? "—" : String(valor);
 
 // Columnas de la tabla (formato que espera renderTable). "Acciones" se rellena después.
 const COLUMNAS = [
@@ -46,51 +26,8 @@ const tabla = document.getElementById("tabla-usuarios");
 const cuerpoTabla = tabla.querySelector("tbody");
 const formulario = () => document.getElementById("form-usuario");
 
-// ---- Mensajes ----
-
-const mostrarMensaje = (tipo, texto) => {
-  let contenedor = document.getElementById("mensajes");
-  if (!contenedor) {
-    contenedor = document.createElement("div");
-    contenedor.id = "mensajes";
-    const principal = document.querySelector("main");
-    if (principal) principal.prepend(contenedor);
-    else document.body.prepend(contenedor);
-  }
-  const esExito = tipo === "exito";
-  const aviso = document.createElement("p");
-  aviso.className = `mensaje ${esExito ? "mensaje-exito" : "mensaje-error"}`;
-  aviso.setAttribute("role", esExito ? "status" : "alert");
-  aviso.textContent = texto;
-  contenedor.replaceChildren(aviso);
-};
-
-const limpiarMensajes = () => {
-  const contenedor = document.getElementById("mensajes");
-  if (contenedor) contenedor.replaceChildren();
-};
-
-// ---- Listado ----
-
-const mostrarEnTabla = (texto) => {
-  renderTable(tabla, COLUMNAS, []);
-  const fila = document.createElement("tr");
-  const celda = document.createElement("td");
-  celda.className = "vacio";
-  celda.colSpan = COLUMNAS.length;
-  celda.textContent = texto;
-  fila.append(celda);
-  cuerpoTabla.replaceChildren(fila);
-};
-
-const crearBoton = (texto, accion, id) => {
-  const boton = document.createElement("button");
-  boton.type = "button";
-  boton.textContent = texto;
-  boton.dataset.accion = accion;
-  boton.dataset.id = id;
-  return boton;
-};
+// Muestra un texto (cargando, vacío o error) ocupando todo el ancho de la tabla.
+const mostrarEnTabla = (texto) => mostrarMensajeEnTabla(tabla, COLUMNAS, texto);
 
 // renderTable solo escribe texto: acá se agregan la clase de fila, la etiqueta de estado, la de rol y los botones.
 const decorarFilas = (usuarios) => {
@@ -99,7 +36,8 @@ const decorarFilas = (usuarios) => {
     if (usuario.estado === "inactivo") fila.className = "usuario-inactivo";
 
     const etiquetaEstado = document.createElement("span");
-    etiquetaEstado.className = `estado ${ESTADOS_USUARIO.includes(usuario.estado) ? `estado-${usuario.estado}` : ""}`.trim();
+    etiquetaEstado.className =
+      `estado ${ESTADOS_USUARIO.includes(usuario.estado) ? `estado-${usuario.estado}` : ""}`.trim();
     etiquetaEstado.textContent = textoOGuion(usuario.estado);
     fila.cells[COL_ESTADO].replaceChildren(etiquetaEstado);
 
@@ -110,12 +48,20 @@ const decorarFilas = (usuarios) => {
 
     // Botón de estado: alterna entre activo e inactivo. No elimina nunca.
     const esActivo = usuario.estado === "activo";
-    const botonEstado = crearBoton(esActivo ? "Desactivar" : "Activar", esActivo ? "desactivar" : "activar", usuario.id);
+    const botonEstado = crearBoton(
+      esActivo ? "Desactivar" : "Activar",
+      esActivo ? "desactivar" : "activar",
+      usuario.id,
+    );
     botonEstado.dataset.nombre = `${usuario.nombre} ${usuario.apellido}`;
 
     // Botón de rol: alterna entre admin y cliente.
     const esAdmin = usuario.rol === "admin";
-    const botonRol = crearBoton(esAdmin ? "Hacer cliente" : "Hacer admin", esAdmin ? "hacer-cliente" : "hacer-admin", usuario.id);
+    const botonRol = crearBoton(
+      esAdmin ? "Hacer cliente" : "Hacer admin",
+      esAdmin ? "hacer-cliente" : "hacer-admin",
+      usuario.id,
+    );
     botonRol.dataset.nombre = `${usuario.nombre} ${usuario.apellido}`;
 
     fila.cells[COL_ACCIONES].append(
@@ -149,14 +95,6 @@ const cargarUsuarios = async () => {
 
 const cerrarDetalle = () => {
   document.getElementById("detalle-usuario").hidden = true;
-};
-
-const agregarDato = (contenedor, etiqueta, valor) => {
-  const parrafo = document.createElement("p");
-  const negrita = document.createElement("strong");
-  negrita.textContent = `${etiqueta}: `;
-  parrafo.append(negrita, valor);
-  contenedor.append(parrafo);
 };
 
 const mostrarDetalle = async (id) => {
@@ -280,7 +218,10 @@ const cambiarEstado = async (id, nombre, nuevoEstado) => {
 
   try {
     await usuariosApi.cambiarEstado(id, nuevoEstado);
-    mostrarMensaje("exito", `Usuario ${nuevoEstado === "activo" ? "activado" : "desactivado"} correctamente`);
+    mostrarMensaje(
+      "exito",
+      `Usuario ${nuevoEstado === "activo" ? "activado" : "desactivado"} correctamente`,
+    );
     await cargarUsuarios();
   } catch (error) {
     mostrarMensaje("error", error.message);
@@ -335,12 +276,9 @@ const iniciar = () => {
     if (accion === "hacer-cliente") cambiarRol(id, boton.dataset.nombre, "cliente");
   });
 
-  mostrarEnTabla("Cargando usuarios...");
+  mostrarMensajeEnTabla("Cargando usuarios...");
   cargarUsuarios();
 };
 
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", iniciar);
-} else {
-  iniciar();
-}
+mostrarEnTabla("Cargando usuarios...");
+cargarUsuarios();

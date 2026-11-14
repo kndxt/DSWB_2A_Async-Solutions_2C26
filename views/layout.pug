@@ -1,3 +1,6 @@
+//- Disponible en todas las vistas: true si quien navega es administrador.
+- var esAdmin = usuario && usuario.rol === "admin"
+
 doctype html
 html(lang="es")
   head
@@ -6,14 +9,17 @@ html(lang="es")
     title
       block title
         | Urbana Cult
-    link(rel="stylesheet" href="/css/general.css")
+    include includes/estilos.pug
+    block estilos
 
-  body
+  body(data-rol=usuario ? usuario.rol : "" data-usuario-id=usuario ? usuario.id : "")
     header
       include includes/navbar.pug
 
     main
+      include includes/mensajes.pug
       block content
 
     block scripts
-    script(type="module" src="/js/sesion.js")
+    script(type="module" src="/js/core/sesion.js")
+    script(type="module" src="/js/core/menu.js")

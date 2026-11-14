@@ -1,29 +1,12 @@
-// Vista de Salas: listado, detalle, alta y edición sobre la API /salas.
-// Usa apiFetch (apiClient.js) para consumir la API y renderTable (tabla.js) para la tabla.
-// Es un módulo ES: se carga con <script type="module"> y sus nombres no se mezclan con otros scripts.
-import { apiFetch } from "./apiClient.js";
-import { renderTable } from "./tabla.js";
-
-// apiFetch pasa las opciones tal cual a fetch, así que el JSON se arma acá.
-const enviarJson = (metodo, datos) => ({
-  method: metodo,
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(datos),
-});
-
-const salasApi = {
-  listar: () => apiFetch("/salas"),
-  obtener: (id) => apiFetch(`/salas/${id}`),
-  crear: (datos) => apiFetch("/salas", enviarJson("POST", datos)),
-  actualizar: (id, datos) => apiFetch(`/salas/${id}`, enviarJson("PUT", datos)),
-};
+import { renderTable, mostrarMensajeEnTabla } from "../utils/tabla.js";
+import { crearBoton, agregarDato, alCargarDOM } from "../utils/dom.js";
+import { leerNumero } from "../utils/formularios.js";
+import { formatearPrecio, textoOGuion } from "../utils/formato.js";
+import { mostrarMensaje, limpiarMensajes } from "../core/mensajes.js";
+import { esAdmin } from "../core/rol.js";
+import { salasApi } from "../api/salasApi.js";
 
 const ESTADOS_SALA = ["activa", "inactiva"];
-
-const formatearPrecio = (valor) =>
-  `$ ${Number(valor).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-
-const textoOGuion = (valor) => (valor === undefined || valor === null || valor === "" ? "—" : String(valor));
 
 // Columnas de la tabla (formato que espera renderTable). "Acciones" se rellena después con botones.
 const COLUMNAS = [
@@ -44,53 +27,10 @@ const tabla = document.getElementById("tabla-salas");
 const cuerpoTabla = tabla.querySelector("tbody");
 const formulario = () => document.getElementById("form-sala");
 
-// ---- Mensajes ----
-// Mismo marcado que includes/mensajes.pug.
-
-const mostrarMensaje = (tipo, texto) => {
-  let contenedor = document.getElementById("mensajes");
-  if (!contenedor) {
-    contenedor = document.createElement("div");
-    contenedor.id = "mensajes";
-    const principal = document.querySelector("main");
-    if (principal) principal.prepend(contenedor);
-    else document.body.prepend(contenedor);
-  }
-  const esExito = tipo === "exito";
-  const aviso = document.createElement("p");
-  aviso.className = `mensaje ${esExito ? "mensaje-exito" : "mensaje-error"}`;
-  aviso.setAttribute("role", esExito ? "status" : "alert");
-  aviso.textContent = texto;
-  contenedor.replaceChildren(aviso);
-};
-
-const limpiarMensajes = () => {
-  const contenedor = document.getElementById("mensajes");
-  if (contenedor) contenedor.replaceChildren();
-};
-
 // ---- Listado ----
 
 // Muestra un texto (cargando, vacío o error) ocupando todo el ancho de la tabla.
-const mostrarEnTabla = (texto) => {
-  renderTable(tabla, COLUMNAS, []);
-  const fila = document.createElement("tr");
-  const celda = document.createElement("td");
-  celda.className = "vacio";
-  celda.colSpan = COLUMNAS.length;
-  celda.textContent = texto;
-  fila.append(celda);
-  cuerpoTabla.replaceChildren(fila);
-};
-
-const crearBoton = (texto, accion, id) => {
-  const boton = document.createElement("button");
-  boton.type = "button";
-  boton.textContent = texto;
-  boton.dataset.accion = accion;
-  boton.dataset.id = id;
-  return boton;
-};
+const mostrarEnTabla = (texto) => mostrarMensajeEnTabla(tabla, COLUMNAS, texto);
 
 // renderTable solo escribe texto: acá se agregan la clase de fila, la etiqueta de estado y los botones.
 const decorarFilas = (salas) => {
@@ -99,11 +39,15 @@ const decorarFilas = (salas) => {
     if (sala.estado === "inactiva") fila.className = "sala-inactiva";
 
     const etiqueta = document.createElement("span");
-    etiqueta.className = `estado ${ESTADOS_SALA.includes(sala.estado) ? `estado-${sala.estado}` : ""}`.trim();
+    etiqueta.className =
+      `estado ${ESTADOS_SALA.includes(sala.estado) ? `estado-${sala.estado}` : ""}`.trim();
     etiqueta.textContent = textoOGuion(sala.estado);
     fila.cells[COL_ESTADO].replaceChildren(etiqueta);
 
-    fila.cells[COL_ACCIONES].append(crearBoton("Ver", "ver", sala.id), " ", crearBoton("Editar", "editar", sala.id));
+    fila.cells[COL_ACCIONES].append(crearBoton("Ver", "ver", sala.id));
+    if (esAdmin()) {
+      fila.cells[COL_ACCIONES].append(" ", crearBoton("Editar", "editar", sala.id));
+    }
   });
 };
 
@@ -128,14 +72,6 @@ const cerrarDetalle = () => {
   document.getElementById("detalle-sala").hidden = true;
 };
 
-const agregarDato = (contenedor, etiqueta, valor) => {
-  const parrafo = document.createElement("p");
-  const negrita = document.createElement("strong");
-  negrita.textContent = `${etiqueta}: `;
-  parrafo.append(negrita, valor);
-  contenedor.append(parrafo);
-};
-
 const mostrarDetalle = async (id) => {
   limpiarMensajes();
   try {
@@ -148,7 +84,11 @@ const mostrarDetalle = async (id) => {
     agregarDato(contenedor, "Dirección", textoOGuion(sala.direccion));
     agregarDato(contenedor, "Precio de reserva", formatearPrecio(sala.precioReserva));
     agregarDato(contenedor, "Estado", textoOGuion(sala.estado));
-    agregarDato(contenedor, "Responsable", `${textoOGuion(responsable.nombre)} ${responsable.apellido ?? ""}`.trim());
+    agregarDato(
+      contenedor,
+      "Responsable",
+      `${textoOGuion(responsable.nombre)} ${responsable.apellido ?? ""}`.trim(),
+    );
     agregarDato(contenedor, "Teléfono del responsable", textoOGuion(responsable.telefono));
     agregarDato(contenedor, "Email del responsable", textoOGuion(responsable.email));
     document.getElementById("detalle-sala").hidden = false;
@@ -206,10 +146,6 @@ const abrirEdicion = async (id) => {
     mostrarMensaje("error", error.message);
   }
 };
-
-// Un campo numérico vacío se envía sin valor (alta) o como null (edición), para que
-// sea el backend quien responda con su mensaje de dato obligatorio o inválido.
-const leerNumero = (texto, valorVacio) => (texto.trim() === "" ? valorVacio : Number(texto));
 
 const leerFormulario = (esEdicion) => {
   const campos = formulario().elements;
@@ -282,8 +218,4 @@ const iniciar = () => {
   cargarSalas();
 };
 
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", iniciar);
-} else {
-  iniciar();
-}
+alCargarDOM(iniciar);
