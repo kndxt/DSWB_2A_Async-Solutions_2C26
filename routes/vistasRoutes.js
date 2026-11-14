@@ -39,4 +39,11 @@ router.get(
 
 router.get("/reservas", autenticarOpcional, renderizarReservas);
 
+// Ruta TEMPORAL para probar el chat, mientras se espera al front
+// ELIMINAR LUEGO (!!!)
+
+router.get("/chat-prueba", autenticarOpcional, (req, res) => {
+  res.render("chat-prueba");
+});
+
 export default router;

@@ -17,7 +17,11 @@ Proyecto desarrollado en el marco de la Tecnicatura Superior en Desarrollo de So
 - **Reservas:** gestión de reservas de salas y control de superposición.
 - **Entradas:** consulta y compra de entradas, con control de disponibilidad según la capacidad del espacio.
 - **Interfaz web:** vistas renderizadas con Pug e integración con la API.
-- **Actualizaciones en tiempo real:** comunicación mediante Socket.IO e integración de Gemini en el chat.
+- **Chat en tiempo real:** intercambio de mensajes entre usuarios autenticados mediante Socket.IO, con notificaciones de conexión y desconexión e integración de Gemini para responder consultas desde la conversación.
+
+## Limitaciones y mejoras pendientes
+
+- **Ventas concurrentes:** el sistema verifica la disponibilidad de entradas según la capacidad del espacio y las ventas registradas, pero todavía no garantiza la consistencia ante solicitudes simultáneas. Es necesario incorporar mecanismos adicionales para evitar sobreventas en escenarios de concurrencia.
 
 ## Tecnologías y herramientas
 
@@ -103,42 +107,40 @@ Proyecto desarrollado en el marco de la Tecnicatura Superior en Desarrollo de So
 
 ## Comandos disponibles
 
-| Comando | Descripción |
-|---|---|
-| `npm start` | Inicia el servidor. |
-| `npm run dev` | Inicia el servidor en modo desarrollo con reinicio automático. |
-| `npm test` | Ejecuta las pruebas automatizadas. |
-| `npm run seed:verificar` | Verifica los datos de seed. |
-| `npm run seed:local` | Ejecuta el seed en una base de datos local. |
-| `npm run seed` | Ejecuta el seed en MongoDB Atlas. |
-| `npm run format` | Formatea los archivos del proyecto con Prettier. |
-| `npm run format:check` | Verifica el formato sin modificar los archivos. |
-| `npm run probar:gemini` | Ejecuta el script de prueba de integración con Gemini. |
+| Comando                  | Descripción                                                    |
+| ------------------------ | -------------------------------------------------------------- |
+| `npm start`              | Inicia el servidor.                                            |
+| `npm run dev`            | Inicia el servidor en modo desarrollo con reinicio automático. |
+| `npm test`               | Ejecuta las pruebas automatizadas.                             |
+| `npm run seed:verificar` | Verifica los datos de seed.                                    |
+| `npm run seed:local`     | Ejecuta el seed en una base de datos local.                    |
+| `npm run seed`           | Ejecuta el seed en MongoDB Atlas.                              |
+| `npm run format`         | Formatea los archivos del proyecto con Prettier.               |
+| `npm run format:check`   | Verifica el formato sin modificar los archivos.                |
+| `npm run probar:gemini`  | Ejecuta el script de prueba de integración con Gemini.         |
 
 ## Documentación
 
 La documentación técnica se encuentra organizada por tema:
 
-| Documento | Contenido |
-|---|---|
-| [API.md](./API.md) | Endpoints, parámetros, permisos y comportamiento de la API. |
-| [ARCHITECTURE.md](./ARCHITECTURE.md) | Organización interna, capas, responsabilidades y decisiones de arquitectura. |
-| [ERRORS.md](./ERRORS.md) | Clases de error, códigos y manejo de excepciones. |
-| [tests/README.md](./tests/README.md) | Configuración, ejecución y organización de las pruebas. |
-| [Guía de carga de datos de prueba](./scripts/GuiaCarga.md) | Bases de datos, comandos de seed, medidas de seguridad, datos generados y escenarios para verificar las reglas de negocio. |
+| Documento                            | Contenido                                                                                                                  |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
+| [API.md](./API.md)                   | Endpoints, parámetros, permisos y comportamiento de la API.                                                                |
+| [ARCHITECTURE.md](./ARCHITECTURE.md) | Organización interna, capas, responsabilidades y decisiones de arquitectura.                                               |
+| [ERRORS.md](./ERRORS.md)             | Clases de error, códigos y manejo de excepciones.                                                                          |
+| [CHAT.md](./docs/CHAT.md)            | Funcionamiento del chat en tiempo real, eventos Socket.IO, integración con Gemini, validaciones y límites.                 |
+| [tests/README.md](./tests/README.md) | Configuración, ejecución y organización de las pruebas.                                                                    |
+| [scripts/SEED.md](./scripts/SEED.md) | Bases de datos, comandos de seed, medidas de seguridad, datos generados y escenarios para verificar las reglas de negocio. |
+
 ## Equipo y responsabilidades
 
 **Async Solutions — Grupo 11**
 
-| Integrante | Área de responsabilidad | Issues de trabajo |
-|---|---|---|
-| **[Federico](https://github.com/federicosd06-dev)** | Refactorización del frontend, organización de vistas y funcionalidades diferenciadas según el rol del usuario. | [#88 — Refactorización del frontend y funcionalidades según el rol](https://github.com/kndxt/DSWB_2A_Async-Solutions_2C26/issues/88) |
-| **[Candelaria](https://github.com/kndxt)** | Infraestructura, configuración de base de datos, datos de prueba y despliegue en Render. También comunicación en tiempo real e integración de Gemini. | [#85 — Infraestructura, seed y despliegue](https://github.com/kndxt/DSWB_2A_Async-Solutions_2C26/issues/85) · [#89 — Chat en tiempo real e integración de IA](https://github.com/kndxt/DSWB_2A_Async-Solutions_2C26/issues/89) |
-| **[Victoria](https://github.com/mvjhart)** | Refactorización del backend, separación de responsabilidades entre capas y centralización del manejo de errores. | [#87 — Refactorización del backend y manejo de errores](https://github.com/kndxt/DSWB_2A_Async-Solutions_2C26/issues/87) |
-| **[Marcos](https://github.com/Marcos028)** | Autenticación, gestión de usuarios y control de acceso mediante roles y permisos. | [#86 — Autenticación, usuarios y control de acceso](https://github.com/kndxt/DSWB_2A_Async-Solutions_2C26/issues/86) |
+| Integrante                                          | Área de responsabilidad                                                                                                                               | Issues de trabajo                                                                                                                                                                                                              |
+| --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **[Federico](https://github.com/federicosd06-dev)** | Refactorización del frontend, organización de vistas y funcionalidades diferenciadas según el rol del usuario.                                        | [#88 — Refactorización del frontend y funcionalidades según el rol](https://github.com/kndxt/DSWB_2A_Async-Solutions_2C26/issues/88)                                                                                           |
+| **[Candelaria](https://github.com/kndxt)**          | Infraestructura, configuración de base de datos, datos de prueba y despliegue en Render. También comunicación en tiempo real e integración de Gemini. | [#85 — Infraestructura, seed y despliegue](https://github.com/kndxt/DSWB_2A_Async-Solutions_2C26/issues/85) · [#89 — Chat en tiempo real e integración de IA](https://github.com/kndxt/DSWB_2A_Async-Solutions_2C26/issues/89) |
+| **[Victoria](https://github.com/mvjhart)**          | Refactorización del backend, separación de responsabilidades entre capas y centralización del manejo de errores.                                      | [#87 — Refactorización del backend y manejo de errores](https://github.com/kndxt/DSWB_2A_Async-Solutions_2C26/issues/87)                                                                                                       |
+| **[Marcos](https://github.com/Marcos028)**          | Autenticación, gestión de usuarios y control de acceso mediante roles y permisos.                                                                     | [#86 — Autenticación, usuarios y control de acceso](https://github.com/kndxt/DSWB_2A_Async-Solutions_2C26/issues/86)                                                                                                           |
 
 Los issues enlazados documentan los objetivos, el alcance y el seguimiento de las tareas correspondientes a cada área de trabajo.
-
-## Limitaciones y mejoras pendientes
-
-- **Ventas concurrentes:** el sistema verifica la disponibilidad de entradas según la capacidad del espacio y las ventas registradas, pero todavía no garantiza la consistencia ante solicitudes simultáneas. Es necesario incorporar mecanismos adicionales para evitar sobreventas en escenarios de concurrencia.

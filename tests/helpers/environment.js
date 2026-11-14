@@ -45,7 +45,7 @@ let secuencia = 0;
  *
  * Con { sockets: true } también inicializa Socket.IO.
  */
-export async function iniciarEntorno({ sockets = false } = {}) {
+export async function iniciarEntorno({ sockets = false, opcionesChat = {} } = {}) {
   await conectarDB();
 
   console.log(`\n[tests] MongoDB: ${mongoose.connection.name} (${mongoose.connection.host})`);
@@ -53,7 +53,7 @@ export async function iniciarEntorno({ sockets = false } = {}) {
   server = http.createServer(app);
 
   if (sockets) {
-    inicializarSockets(server);
+    inicializarSockets(server, opcionesChat);
   }
 
   await new Promise((resolve, reject) => {

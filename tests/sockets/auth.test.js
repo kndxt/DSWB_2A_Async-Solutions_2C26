@@ -9,13 +9,13 @@ import {
   cerrarClientes,
   crearUsuario,
   crearSesion,
-  esperarEvento,
   esperarHasta,
   Usuario,
 } from "../helpers/environment.js";
 import { obtenerIO } from "../../sockets/index.js";
 import { revalidarSocket } from "../../sockets/authSocket.js";
 import { EVENTOS } from "../../sockets/eventos.js";
+import { UnauthorizedError, ForbiddenError } from "../../errors/errores.js";
 
 before(() => iniciarEntorno({ sockets: true }));
 after(cerrarEntorno);
@@ -38,7 +38,7 @@ afterEach(async () => {
 
 test("un cliente con token válido se conecta y el servidor guarda su identidad", async () => {
   const usuario = await crearUsuario();
-  const sesion = crearSesion(usuario);          
+  const sesion = crearSesion(usuario);
   const cliente = await conectarCliente({ extraHeaders: sesion });
 
   assert.equal(cliente.connected, true);
@@ -50,11 +50,9 @@ test("un cliente con token válido se conecta y el servidor guarda su identidad"
   assert.match(socketServidor.data.usuario.nombre, new RegExp(usuario.nombre));
   assert.ok(typeof socketServidor.data.expiraEn === "number");
   assert.ok(socketServidor.data.expiraEn > Date.now());
-  assert.equal(
-    socketServidor.data.token,
-    sesion.Cookie.slice("token=".length),         
-  );
+  assert.equal(socketServidor.data.token, sesion.Cookie.slice("token=".length));
 });
+
 // ============================================================
 // CONEXIONES RECHAZADAS
 // ============================================================
@@ -99,10 +97,25 @@ test("rechaza conexiones de usuarios inexistentes", async () => {
 test("rechaza conexiones de usuarios inactivos", async () => {
   const usuario = await crearUsuario({ estado: "inactivo" });
 
+  await assert.rejects(conectarCliente({ extraHeaders: crearSesion(usuario) }), /No autorizado/);
+});
+
+test("rechaza la conexión con un mensaje genérico si falla la consulta del usuario", async (t) => {
+  const usuario = await crearUsuario();
+  const errorBD = new Error("Error de conexión con MongoDB");
+
+  t.mock.method(Usuario, "obtenerPorId", async () => {
+    throw errorBD;
+  });
+
+  const registrarError = t.mock.method(console, "error", () => {});
+
   await assert.rejects(
     conectarCliente({ extraHeaders: crearSesion(usuario) }),
-    /No autorizado/,
+    /No se pudo validar la conexión/,
   );
+
+  assert.equal(registrarError.mock.callCount(), 1);
 });
 
 // ============================================================
@@ -120,35 +133,86 @@ test("revalidarSocket devuelve true si el token sigue vigente y el usuario activ
   assert.equal(socketServidor.connected, true);
 });
 
-test("revalidarSocket expulsa al socket cuando el token venció", async () => {
+test("revalidarSocket propaga UnauthorizedError cuando el token venció sin desconectar el socket", async () => {
   const usuario = await crearUsuario();
   const cliente = await conectarCliente({ extraHeaders: crearSesion(usuario) });
 
   const socketServidor = await socketServidorUnico();
+  let sesionesExpiradas = 0;
+
+  cliente.on(EVENTOS.SESION_EXPIRADA, () => {
+    sesionesExpiradas++;
+  });
 
   // Forzamos el vencimiento sin esperar una hora.
   socketServidor.data.expiraEn = Date.now() - 1;
 
-  const esperandoExpiracion = esperarEvento(cliente, EVENTOS.SESION_EXPIRADA);
-  const resultado = await revalidarSocket(socketServidor);
+  await assert.rejects(revalidarSocket(socketServidor), UnauthorizedError);
 
-  assert.equal(resultado, false);
-  await esperandoExpiracion;
-  await esperarHasta(() => cliente.disconnected === true);
+  assert.equal(sesionesExpiradas, 0);
+  assert.equal(socketServidor.connected, true);
+  assert.equal(cliente.connected, true);
 });
 
-test("revalidarSocket expulsa al socket cuando el usuario fue desactivado", async () => {
+test("revalidarSocket propaga UnauthorizedError cuando el usuario ya no existe", async (t) => {
   const usuario = await crearUsuario();
   const cliente = await conectarCliente({ extraHeaders: crearSesion(usuario) });
 
   const socketServidor = await socketServidorUnico();
+  let sesionesExpiradas = 0;
+
+  cliente.on(EVENTOS.SESION_EXPIRADA, () => {
+    sesionesExpiradas++;
+  });
+
+  t.mock.method(Usuario, "obtenerPorId", async () => null);
+
+  await assert.rejects(revalidarSocket(socketServidor), UnauthorizedError);
+
+  assert.equal(sesionesExpiradas, 0);
+  assert.equal(socketServidor.connected, true);
+  assert.equal(cliente.connected, true);
+});
+
+test("revalidarSocket propaga ForbiddenError si el usuario fue desactivado sin desconectar el socket", async () => {
+  const usuario = await crearUsuario();
+  const cliente = await conectarCliente({ extraHeaders: crearSesion(usuario) });
+
+  const socketServidor = await socketServidorUnico();
+  let sesionesExpiradas = 0;
+
+  cliente.on(EVENTOS.SESION_EXPIRADA, () => {
+    sesionesExpiradas++;
+  });
 
   await Usuario.actualizar(usuario.id, { estado: "inactivo" });
 
-  const esperandoExpiracion = esperarEvento(cliente, EVENTOS.SESION_EXPIRADA);
-  const resultado = await revalidarSocket(socketServidor);
+  await assert.rejects(revalidarSocket(socketServidor), ForbiddenError);
 
-  assert.equal(resultado, false);
-  await esperandoExpiracion;
-  await esperarHasta(() => cliente.disconnected === true);
+  assert.equal(sesionesExpiradas, 0);
+  assert.equal(socketServidor.connected, true);
+  assert.equal(cliente.connected, true);
+});
+
+test("revalidarSocket propaga errores de infraestructura sin desconectar el socket", async (t) => {
+  const usuario = await crearUsuario();
+  const cliente = await conectarCliente({ extraHeaders: crearSesion(usuario) });
+
+  const socketServidor = await socketServidorUnico();
+  const errorBD = new Error("Error de conexión con MongoDB");
+  let sesionesExpiradas = 0;
+
+  cliente.on(EVENTOS.SESION_EXPIRADA, () => {
+    sesionesExpiradas++;
+  });
+
+  t.mock.method(Usuario, "obtenerPorId", async () => {
+    throw errorBD;
+  });
+
+  await assert.rejects(revalidarSocket(socketServidor), (error) => error === errorBD);
+
+  assert.equal(sesionesExpiradas, 0);
+  assert.equal(socketServidor.connected, true);
+  assert.equal(cliente.connected, true);
 });

@@ -112,7 +112,7 @@ Para operar sobre un evento hace falta su `id`: se obtiene con `GET /eventos` o 
 | Login correcto                    | `POST /usuarios/login` con `usuario1@example.com` y `Prueba001!`                                 | 200                                                       |
 | Sala inactiva                     | `POST /eventos` con el `id` de `Sala de prueba 16`                                               | 400, la sala está inactiva                                |
 | Superposición de eventos          | `POST /eventos` en `Sala de prueba 1` con fechas que se pisen con las del evento con pocos cupos | 400, el evento se superpone con otro                      |
-| Baja de sala con eventos próximos | `PATCH /salas/:id` con `estado: "inactiva"` sobre `Sala de prueba 2`                             | 409, tiene eventos próximos activos                       |
+| Baja de sala con eventos próximos | `PUT /salas/:id` con `estado: "inactiva"` sobre `Sala de prueba 2`                               | 400, tiene eventos próximos activos                       |
 | Baja de sala sin eventos próximos | El mismo pedido sobre `Sala de prueba 12` o `Sala de prueba 9`                                   | 200                                                       |
 | Reservas                          | `GET /reservas`                                                                                  | 20 reservas, una por evento, a nombre de usuarios activos |
 

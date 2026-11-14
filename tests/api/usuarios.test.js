@@ -214,39 +214,210 @@ describe("PUT /usuarios/:id - actualización", () => {
 // -----------------------------------------------------------------------------
 
 describe("PATCH /usuarios/:id/estado - cambio de estado", () => {
-  // Actualización del estado y protección de otros campos.
+  // Cambio exitoso y protección de otros campos.
   test("cambia el estado e ignora otros campos enviados", async () => {
     const headers = await sesionAdmin();
     const usuario = await crearUsuario();
 
-    const actualizado = await peticion(`/usuarios/${usuario.id}/estado`, {
+    const response = await peticion(`/usuarios/${usuario.id}/estado`, {
       method: "PATCH",
       headers,
       body: {
         estado: "inactivo",
         nombre: "No modificar",
+        rol: ROLES_USUARIO.ADMIN,
       },
     });
 
-    const body = await respuestaJSON(actualizado);
+    const body = await respuestaJSON(response);
 
-    assert.equal(actualizado.status, 200);
+    assert.equal(response.status, 200);
     assert.equal(body.estado, "inactivo");
     assert.equal(body.nombre, "Usuario");
+    assert.equal(body.rol, ROLES_USUARIO.CLIENTE);
   });
 
-  // Validación del enum de estados.
+  // También debe permitir reactivar usuarios.
+  test("permite volver a activar un usuario inactivo", async () => {
+    const headers = await sesionAdmin();
+    const usuario = await crearUsuario({ estado: "inactivo" });
+
+    const response = await peticion(`/usuarios/${usuario.id}/estado`, {
+      method: "PATCH",
+      headers,
+      body: { estado: "activo" },
+    });
+
+    const body = await respuestaJSON(response);
+
+    assert.equal(response.status, 200);
+    assert.equal(body.estado, "activo");
+  });
+
+  // Validación de valores permitidos.
   test("rechaza valores de estado inválidos", async () => {
     const headers = await sesionAdmin();
     const usuario = await crearUsuario();
 
-    const invalido = await peticion(`/usuarios/${usuario.id}/estado`, {
+    const response = await peticion(`/usuarios/${usuario.id}/estado`, {
       method: "PATCH",
       headers,
       body: { estado: "bloqueado" },
     });
 
+    assert.equal(response.status, 400);
+  });
+
+  // Validación de datos obligatorios.
+  test("rechaza la solicitud si no se envía el estado", async () => {
+    const headers = await sesionAdmin();
+    const usuario = await crearUsuario();
+
+    const response = await peticion(`/usuarios/${usuario.id}/estado`, {
+      method: "PATCH",
+      headers,
+      body: {},
+    });
+
+    assert.equal(response.status, 400);
+  });
+
+  // Validación de identificadores y existencia.
+  test("distingue ID inválido y usuario inexistente", async () => {
+    const headers = await sesionAdmin();
+
+    const invalido = await peticion("/usuarios/no-es-un-id/estado", {
+      method: "PATCH",
+      headers,
+      body: { estado: "inactivo" },
+    });
+
+    const inexistente = await peticion(
+      "/usuarios/000000000000000000000001/estado",
+      {
+        method: "PATCH",
+        headers,
+        body: { estado: "inactivo" },
+      },
+    );
+
     assert.equal(invalido.status, 400);
+    assert.equal(inexistente.status, 404);
+  });
+});
+
+// -----------------------------------------------------------------------------
+// PATCH /usuarios/:id/rol - Cambio de rol
+// -----------------------------------------------------------------------------
+
+describe("PATCH /usuarios/:id/rol - cambio de rol", () => {
+  // Cambio de cliente a administrador.
+  test("permite cambiar un cliente a administrador", async () => {
+    const headers = await sesionAdmin();
+    const usuario = await crearUsuario({ rol: ROLES_USUARIO.CLIENTE });
+
+    const response = await peticion(`/usuarios/${usuario.id}/rol`, {
+      method: "PATCH",
+      headers,
+      body: { rol: ROLES_USUARIO.ADMIN },
+    });
+
+    const body = await respuestaJSON(response);
+
+    assert.equal(response.status, 200);
+    assert.equal(body.rol, ROLES_USUARIO.ADMIN);
+    assert.equal(body.email, usuario.email);
+  });
+
+  // Cambio de administrador a cliente.
+  test("permite cambiar un administrador a cliente", async () => {
+    const headers = await sesionAdmin();
+    const usuario = await crearUsuario({ rol: ROLES_USUARIO.ADMIN });
+
+    const response = await peticion(`/usuarios/${usuario.id}/rol`, {
+      method: "PATCH",
+      headers,
+      body: { rol: ROLES_USUARIO.CLIENTE },
+    });
+
+    const body = await respuestaJSON(response);
+
+    assert.equal(response.status, 200);
+    assert.equal(body.rol, ROLES_USUARIO.CLIENTE);
+  });
+
+  // Validación de valores permitidos.
+  test("rechaza valores de rol inválidos", async () => {
+    const headers = await sesionAdmin();
+    const usuario = await crearUsuario();
+
+    const response = await peticion(`/usuarios/${usuario.id}/rol`, {
+      method: "PATCH",
+      headers,
+      body: { rol: "superadmin" },
+    });
+
+    assert.equal(response.status, 400);
+  });
+
+  // Validación de datos obligatorios.
+  test("rechaza la solicitud si no se envía el rol", async () => {
+    const headers = await sesionAdmin();
+    const usuario = await crearUsuario();
+
+    const response = await peticion(`/usuarios/${usuario.id}/rol`, {
+      method: "PATCH",
+      headers,
+      body: {},
+    });
+
+    assert.equal(response.status, 400);
+  });
+
+  // Validación de identificadores y existencia.
+  test("distingue ID inválido y usuario inexistente", async () => {
+    const headers = await sesionAdmin();
+
+    const invalido = await peticion("/usuarios/no-es-un-id/rol", {
+      method: "PATCH",
+      headers,
+      body: { rol: ROLES_USUARIO.ADMIN },
+    });
+
+    const inexistente = await peticion(
+      "/usuarios/000000000000000000000001/rol",
+      {
+        method: "PATCH",
+        headers,
+        body: { rol: ROLES_USUARIO.ADMIN },
+      },
+    );
+
+    assert.equal(invalido.status, 400);
+    assert.equal(inexistente.status, 404);
+  });
+
+  // Los campos ajenos a la operación no deben modificarse.
+  test("ignora otros campos enviados junto con el rol", async () => {
+    const headers = await sesionAdmin();
+    const usuario = await crearUsuario();
+
+    const response = await peticion(`/usuarios/${usuario.id}/rol`, {
+      method: "PATCH",
+      headers,
+      body: {
+        rol: ROLES_USUARIO.ADMIN,
+        estado: "inactivo",
+        nombre: "No modificar",
+      },
+    });
+
+    const body = await respuestaJSON(response);
+
+    assert.equal(response.status, 200);
+    assert.equal(body.rol, ROLES_USUARIO.ADMIN);
+    assert.equal(body.estado, "activo");
+    assert.equal(body.nombre, "Usuario");
   });
 });
 
@@ -331,6 +502,54 @@ describe("Autenticación y autorización de usuarios", () => {
       method: "PATCH",
       headers,
       body: { estado: "inactivo" },
+    });
+
+    assert.equal(response.status, 403);
+  });
+
+  test("PATCH /usuarios/:id/estado requiere sesión", async () => {
+    const usuario = await crearUsuario();
+
+    const response = await peticion(`/usuarios/${usuario.id}/estado`, {
+      method: "PATCH",
+      body: { estado: "inactivo" },
+    });
+
+    assert.equal(response.status, 401);
+  });
+
+  test("PATCH /usuarios/:id/rol requiere sesión", async () => {
+    const usuario = await crearUsuario();
+
+    const response = await peticion(`/usuarios/${usuario.id}/rol`, {
+      method: "PATCH",
+      body: { rol: ROLES_USUARIO.ADMIN },
+    });
+
+    assert.equal(response.status, 401);
+  });
+
+  test("PATCH /usuarios/:id/estado rechaza a clientes autenticados", async () => {
+    const headers = await sesionCliente();
+    const usuario = await crearUsuario();
+
+    const response = await peticion(`/usuarios/${usuario.id}/estado`, {
+      method: "PATCH",
+      headers,
+      body: { estado: "inactivo" },
+    });
+
+    assert.equal(response.status, 403);
+  });
+
+  test("PATCH /usuarios/:id/rol rechaza a clientes autenticados", async () => {
+    const headers = await sesionCliente();
+    const usuario = await crearUsuario();
+
+    const response = await peticion(`/usuarios/${usuario.id}/rol`, {
+      method: "PATCH",
+      headers,
+      body: { rol: ROLES_USUARIO.ADMIN },
     });
 
     assert.equal(response.status, 403);
