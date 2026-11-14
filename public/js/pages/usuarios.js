@@ -3,6 +3,7 @@ import { crearBoton, agregarDato, alCargarDOM } from "../utils/dom.js";
 import { textoOGuion } from "../utils/formato.js";
 import { mostrarMensaje, limpiarMensajes } from "../core/mensajes.js";
 import { usuariosApi } from "../api/usuariosApi.js";
+import { idUsuarioActual } from "../core/rol.js";
 
 const ESTADOS_USUARIO = ["activo", "inactivo"];
 
@@ -64,15 +65,18 @@ const decorarFilas = (usuarios) => {
     );
     botonRol.dataset.nombre = `${usuario.nombre} ${usuario.apellido}`;
 
+    const esPropio = usuario.id === idUsuarioActual();
+
     fila.cells[COL_ACCIONES].append(
       crearBoton("Ver", "ver", usuario.id),
       " ",
       crearBoton("Editar", "editar", usuario.id),
-      " ",
-      botonEstado,
-      " ",
-      botonRol,
     );
+
+    // Nadie puede cambiar su propio estado ni su propio rol.
+    if (!esPropio) {
+      fila.cells[COL_ACCIONES].append(" ", botonEstado, " ", botonRol);
+    }
   });
 };
 

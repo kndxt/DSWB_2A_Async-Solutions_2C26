@@ -1,11 +1,22 @@
 import bcrypt from "bcryptjs";
 import Usuario from "../models/usuarioModel.js";
-import { NotFoundError, ConflictError } from "../errors/errores.js";
+import { NotFoundError, ConflictError, ForbiddenError } from "../errors/errores.js";
 
 // Campos que se pueden modificar. El estado y el rol tienen endpoints propios.
 const CAMPOS_EDITABLES = ["nombre", "apellido", "email", "telefono", "password"];
 
 const HASH_ROUNDS = 10;
+
+/**
+ * Impide que un administrador modifique su propio estado o su propio rol.
+ */
+const impedirAutoModificacion = (id, solicitante, mensaje) => {
+  const solicitanteId = solicitante.id ?? solicitante._id;
+
+  if (String(solicitanteId) === String(id)) {
+    throw new ForbiddenError(mensaje);
+  }
+};
 
 /**
  * Obtiene todos los usuarios.
@@ -84,8 +95,11 @@ const actualizar = async (id, datos) => {
 
 /**
  * Cambia el estado de un usuario.
+ * Un administrador no puede cambiar el estado de su propia cuenta.
  */
-const cambiarEstado = async (id, estado) => {
+const cambiarEstado = async (id, estado, solicitante) => {
+  impedirAutoModificacion(id, solicitante, "No podés cambiar el estado de tu propia cuenta");
+
   const usuario = await Usuario.actualizar(id, { estado });
 
   if (!usuario) {
@@ -97,8 +111,11 @@ const cambiarEstado = async (id, estado) => {
 
 /**
  * Cambia el rol de un usuario.
+ * Un administrador no puede cambiar el rol de su propia cuenta.
  */
-const cambiarRol = async (id, rol) => {
+const cambiarRol = async (id, rol, solicitante) => {
+  impedirAutoModificacion(id, solicitante, "No podés cambiar el rol de tu propia cuenta");
+
   const usuario = await Usuario.actualizar(id, { rol });
 
   if (!usuario) {
