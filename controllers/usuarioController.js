@@ -29,14 +29,14 @@ const actualizarUsuario = async (req, res) => {
 
 // PATCH /usuarios/:id/estado
 const cambiarEstadoUsuario = async (req, res) => {
-  const usuario = await usuarioService.cambiarEstado(req.params.id, req.body.estado);
+  const usuario = await usuarioService.cambiarEstado(req.params.id, req.body.estado, req.usuario);
 
   res.status(200).json(usuario);
 };
 
 // PATCH /usuarios/:id/rol
 const cambiarRolUsuario = async (req, res) => {
-  const usuario = await usuarioService.cambiarRol(req.params.id, req.body.rol);
+  const usuario = await usuarioService.cambiarRol(req.params.id, req.body.rol, req.usuario);
 
   res.status(200).json(usuario);
 };

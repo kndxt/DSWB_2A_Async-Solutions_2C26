@@ -21,7 +21,12 @@ Proyecto desarrollado en el marco de la Tecnicatura Superior en Desarrollo de So
 
 ## Limitaciones y mejoras pendientes
 
+## Limitaciones y mejoras pendientes
+
 - **Ventas concurrentes:** el sistema verifica la disponibilidad de entradas según la capacidad del espacio y las ventas registradas, pero todavía no garantiza la consistencia ante solicitudes simultáneas. Es necesario incorporar mecanismos adicionales para evitar sobreventas en escenarios de concurrencia.
+- **Operaciones en nombre de un cliente:** las entradas se registran siempre a nombre de quien tiene la sesión iniciada, y las reservas se generan al crear un evento, a nombre del usuario indicado por el administrador. No se registra quién realizó cada operación, por lo que un administrador no puede vender entradas a un cliente.
+- **Administradores:** un administrador no puede cambiar su propio rol ni su propio estado, pero el sistema no impide que dos administradores se degraden entre sí hasta quedar sin ninguno.
+- **Chat sin historial:** los mensajes no se almacenan, y mientras no hay conexión no se pueden enviar mensajes.
 
 ## Tecnologías y herramientas
 
@@ -125,9 +130,9 @@ La documentación técnica se encuentra organizada por tema:
 
 | Documento                            | Contenido                                                                                                                  |
 | ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
-| [API.md](./API.md)                   | Endpoints, parámetros, permisos y comportamiento de la API.                                                                |
-| [ARCHITECTURE.md](./ARCHITECTURE.md) | Organización interna, capas, responsabilidades y decisiones de arquitectura.                                               |
-| [ERRORS.md](./ERRORS.md)             | Clases de error, códigos y manejo de excepciones.                                                                          |
+| [API.md](./docs/API.md)                   | Endpoints, parámetros, permisos y comportamiento de la API.                                                                |
+| [ARCHITECTURE.md](./docs/ARCHITECTURE.md) | Organización interna, capas, responsabilidades y decisiones de arquitectura.                                               |
+| [ERRORS.md](./docs/ERRORS.md)             | Clases de error, códigos y manejo de excepciones.                                                                          |
 | [CHAT.md](./docs/CHAT.md)            | Funcionamiento del chat en tiempo real, eventos Socket.IO, integración con Gemini, validaciones y límites.                 |
 | [tests/README.md](./tests/README.md) | Configuración, ejecución y organización de las pruebas.                                                                    |
 | [scripts/SEED.md](./scripts/SEED.md) | Bases de datos, comandos de seed, medidas de seguridad, datos generados y escenarios para verificar las reglas de negocio. |

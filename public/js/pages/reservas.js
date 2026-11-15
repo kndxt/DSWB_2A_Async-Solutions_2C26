@@ -8,7 +8,6 @@ import {
 } from "../utils/formato.js";
 import { mostrarMensaje, limpiarMensajes } from "../core/mensajes.js";
 import { reservasApi } from "../api/reservasApi.js";
-import { esAdmin } from "../core/rol.js";
 
 const COLUMNAS = [
   {
@@ -26,21 +25,6 @@ const COLUMNAS = [
   { label: "Precio registrado", value: (r) => formatearPrecio(r.precioFinal) },
 ];
 
-// Solo el administrador la ve, y únicamente si la API devuelve el dato.
-const COLUMNA_REGISTRADA_POR = {
-  label: "Registrada por",
-  value: (r) => {
-    const registrante = r.registradaPor;
-    if (!registrante) return "—";
-    return `${textoOGuion(registrante.nombre)} ${registrante.apellido ?? ""}`.trim();
-  },
-};
-
-const columnasPara = (reservas) =>
-  esAdmin() && reservas.some((r) => r.registradaPor)
-    ? [...COLUMNAS, COLUMNA_REGISTRADA_POR]
-    : COLUMNAS;
-
 const tabla = document.getElementById("tabla-reservas");
 
 // Muestra un texto (cargando, vacío o error) ocupando todo el ancho de la tabla.
@@ -56,7 +40,7 @@ const cargarReservas = async () => {
       return;
     }
 
-    renderTable(tabla, columnasPara(reservas), reservas);
+    renderTable(tabla, COLUMNAS, reservas);
   } catch (error) {
     mostrarEnTabla("No se pudieron cargar las reservas.");
     mostrarMensaje("error", error.message);

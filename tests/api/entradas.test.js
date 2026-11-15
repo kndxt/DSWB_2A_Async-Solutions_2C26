@@ -653,11 +653,14 @@ describe("GET /vistas/entradas/:eventoId - vista", () => {
     assert.ok(html.includes(sala.nombre));
   });
 
-  test("rechaza el acceso a la vista sin una sesión autenticada", async () => {
-    const response = await peticion(`/vistas/entradas/${ID_INEXISTENTE}`);
-
-    assert.equal(response.status, 401);
+  test("redirige al login cuando se accede a la vista sin una sesión autenticada", async () => {
+  const response = await peticion(`/vistas/entradas/${ID_INEXISTENTE}`, {
+    redirect: "manual",
   });
+
+  assert.equal(response.status, 302);
+  assert.equal(response.headers.get("location"), "/vistas/login");
+});
 
   test("rechaza el acceso a la vista para un cliente autenticado", async () => {
     const { headers } = await sesionCliente();
