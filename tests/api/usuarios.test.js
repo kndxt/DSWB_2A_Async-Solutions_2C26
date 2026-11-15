@@ -292,17 +292,31 @@ describe("PATCH /usuarios/:id/estado - cambio de estado", () => {
       body: { estado: "inactivo" },
     });
 
-    const inexistente = await peticion(
-      "/usuarios/000000000000000000000001/estado",
-      {
-        method: "PATCH",
-        headers,
-        body: { estado: "inactivo" },
-      },
-    );
+    const inexistente = await peticion("/usuarios/000000000000000000000001/estado", {
+      method: "PATCH",
+      headers,
+      body: { estado: "inactivo" },
+    });
 
     assert.equal(invalido.status, 400);
     assert.equal(inexistente.status, 404);
+  });
+
+  // Un administrador no puede desactivar su propia cuenta.
+  test("rechaza que un administrador cambie su propio estado", async () => {
+    const admin = await crearUsuario({ rol: ROLES_USUARIO.ADMIN });
+    const headers = crearSesion(admin);
+
+    const response = await peticion(`/usuarios/${admin.id}/estado`, {
+      method: "PATCH",
+      headers,
+      body: { estado: "inactivo" },
+    });
+
+    assert.equal(response.status, 403);
+
+    const guardado = await Usuario.findById(admin.id);
+    assert.equal(guardado.estado, "activo");
   });
 });
 
@@ -384,14 +398,11 @@ describe("PATCH /usuarios/:id/rol - cambio de rol", () => {
       body: { rol: ROLES_USUARIO.ADMIN },
     });
 
-    const inexistente = await peticion(
-      "/usuarios/000000000000000000000001/rol",
-      {
-        method: "PATCH",
-        headers,
-        body: { rol: ROLES_USUARIO.ADMIN },
-      },
-    );
+    const inexistente = await peticion("/usuarios/000000000000000000000001/rol", {
+      method: "PATCH",
+      headers,
+      body: { rol: ROLES_USUARIO.ADMIN },
+    });
 
     assert.equal(invalido.status, 400);
     assert.equal(inexistente.status, 404);
@@ -418,6 +429,23 @@ describe("PATCH /usuarios/:id/rol - cambio de rol", () => {
     assert.equal(body.rol, ROLES_USUARIO.ADMIN);
     assert.equal(body.estado, "activo");
     assert.equal(body.nombre, "Usuario");
+  });
+
+  // Un administrador no puede quitarse a sí mismo el rol de administrador.
+  test("rechaza que un administrador cambie su propio rol", async () => {
+    const admin = await crearUsuario({ rol: ROLES_USUARIO.ADMIN });
+    const headers = crearSesion(admin);
+
+    const response = await peticion(`/usuarios/${admin.id}/rol`, {
+      method: "PATCH",
+      headers,
+      body: { rol: ROLES_USUARIO.CLIENTE },
+    });
+
+    assert.equal(response.status, 403);
+
+    const guardado = await Usuario.findById(admin.id);
+    assert.equal(guardado.rol, ROLES_USUARIO.ADMIN);
   });
 });
 
@@ -463,6 +491,17 @@ describe("Autenticación y autorización de usuarios", () => {
     assert.equal(response.status, 401);
   });
 
+  test("PATCH /usuarios/:id/rol requiere sesión", async () => {
+    const usuario = await crearUsuario();
+
+    const response = await peticion(`/usuarios/${usuario.id}/rol`, {
+      method: "PATCH",
+      body: { rol: ROLES_USUARIO.ADMIN },
+    });
+
+    assert.equal(response.status, 401);
+  });
+
   // Los clientes autenticados no pueden acceder a operaciones administrativas.
   test("GET /usuarios rechaza a clientes autenticados", async () => {
     const headers = await sesionCliente();
@@ -492,41 +531,6 @@ describe("Autenticación y autorización de usuarios", () => {
     });
 
     assert.equal(response.status, 403);
-  });
-
-  test("PATCH /usuarios/:id/estado rechaza a clientes autenticados", async () => {
-    const headers = await sesionCliente();
-    const usuario = await crearUsuario();
-
-    const response = await peticion(`/usuarios/${usuario.id}/estado`, {
-      method: "PATCH",
-      headers,
-      body: { estado: "inactivo" },
-    });
-
-    assert.equal(response.status, 403);
-  });
-
-  test("PATCH /usuarios/:id/estado requiere sesión", async () => {
-    const usuario = await crearUsuario();
-
-    const response = await peticion(`/usuarios/${usuario.id}/estado`, {
-      method: "PATCH",
-      body: { estado: "inactivo" },
-    });
-
-    assert.equal(response.status, 401);
-  });
-
-  test("PATCH /usuarios/:id/rol requiere sesión", async () => {
-    const usuario = await crearUsuario();
-
-    const response = await peticion(`/usuarios/${usuario.id}/rol`, {
-      method: "PATCH",
-      body: { rol: ROLES_USUARIO.ADMIN },
-    });
-
-    assert.equal(response.status, 401);
   });
 
   test("PATCH /usuarios/:id/estado rechaza a clientes autenticados", async () => {
