@@ -203,6 +203,7 @@ Ambas operaciones responden `200 OK` y devuelven los datos actualizados.
 **Errores posibles para ambas operaciones:**
 
 - `400 Bad Request`: identificador inválido, campo obligatorio ausente o valor no permitido.
+- `403 Forbidden`: el administrador intenta cambiar el estado o el rol de su propia cuenta.
 - `404 Not Found`: usuario inexistente.
 
 #### Consideraciones de seguridad

@@ -25,7 +25,7 @@ Proyecto desarrollado en el marco de la Tecnicatura Superior en Desarrollo de So
 
 - **Ventas concurrentes:** el sistema verifica la disponibilidad de entradas según la capacidad del espacio y las ventas registradas, pero todavía no garantiza la consistencia ante solicitudes simultáneas. Es necesario incorporar mecanismos adicionales para evitar sobreventas en escenarios de concurrencia.
 - **Operaciones en nombre de un cliente:** las entradas se registran siempre a nombre de quien tiene la sesión iniciada, y las reservas se generan al crear un evento, a nombre del usuario indicado por el administrador. No se registra quién realizó cada operación, por lo que un administrador no puede vender entradas a un cliente.
-- **Administradores:** un administrador no puede cambiar su propio rol ni su propio estado, pero el sistema no impide que dos administradores se degraden entre sí hasta quedar sin ninguno.
+- - **Administradores:** un administrador no puede cambiar su propio rol ni su propio estado, por lo que en operaciones secuenciales siempre queda al menos un administrador activo. Ante dos operaciones simultáneas entre administradores, el sistema no garantiza esa condición.
 - **Chat sin historial:** los mensajes no se almacenan, y mientras no hay conexión no se pueden enviar mensajes.
 
 ## Tecnologías y herramientas
